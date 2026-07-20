@@ -1,0 +1,150 @@
+// .awards {
+//     padding-top: clamp(30px, 3.5vw, 50px);
+//     position: relative;
+//     padding-bottom: clamp(70px, 7.5vw,140px);
+//     .art {
+//         position: absolute;
+//         top: 0;
+//         left: 50%;
+//         transform: translateX(-50%);
+//         width: min(100%, 1020px);
+//     }
+
+//     .awards-container {
+//         position: relative;
+
+//         .section__heading-content {
+//             background-color: #fff;
+
+//             p {
+//                 width: 90%;
+//             }
+//         }
+
+//         .awards__list {
+//             width: min(100%, 1220px);
+//             margin-inline: auto;
+//             margin-top: clamp(15px, 5.5vw, 100px);
+//             display: grid;
+//             grid-template-columns: repeat(2, 1fr);
+//             gap: clamp(40px, 7.5vw, 170px);
+//             @media(max-width:768px){
+//                 grid-template-columns: repeat(1, 1fr);
+//             }
+//             .item {
+//                 // display: grid;
+//                 // grid-template-columns: .75fr 1fr;
+//                 // gap: clamp(10px, 2.5vw, 40px);
+//                 &:nth-child(2){
+//                     margin-top: 90px;
+//                     @media(max-width:768px){
+//                         margin-top: 0;
+
+//                     }
+//                 }
+//                 @media(max-width:768px){
+//                     text-align: center;
+//                 }
+//                 .img__holder {
+//                     max-width: 130px;
+//                     padding-bottom: clamp(10px, 3.5vw, 50px);
+//                     @media(max-width:768px){
+//                         margin-inline: auto;
+//                         max-width: 100px;
+//                     }
+//                     img {
+//                         max-width: 100%;
+//                         display: block;
+//                         width: 100%;
+//                     }
+//                 }
+
+//                 .content {
+
+//                     .title {
+//                         color: #0085D7;
+//                         font-family: var(--primary-font);
+//                         font-size: clamp(14px, 3.5vw, 45px);
+//                         line-height: 1.33;
+//                         font-weight: 500;
+//                         padding-bottom: clamp(10px, 3.5vw, 50px);
+//                         text-transform: capitalize;
+//                     }
+
+//                     p {
+//                         font-size: clamp(10px, 2.5vw, 20px);
+//                     }
+//                 }
+//             }
+//         }
+//     }
+// }
+.awards {
+    padding-top: clamp(30px, 3.5vw, 50px);
+    position: relative;
+    padding-bottom: clamp(60px, 5.5vw, 150px);
+    .art {
+        position: absolute;
+        top: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: min(100%, 1020px);
+    }
+
+    .awards-container {
+        position: relative;
+
+        .section__heading-content {
+            background-color: #fff;
+
+            p {
+                width: 90%;
+            }
+        }
+
+        .awards__list {
+            width: min(100%, 1100px);
+            margin-inline: auto;
+            margin-top: clamp(15px, 4.5vw, 50px);
+
+            .item {
+                display: grid;
+                grid-template-columns: .75fr 1fr;
+                gap: clamp(10px, 2.5vw, 40px);
+
+                .img__holder {
+                    display: flex;
+                    align-items: flex-end;
+
+                    img {
+                        display: block;
+                        width: 100%;
+                    }
+                }
+
+                .content {
+                    padding-top: 25%;
+
+                    @media(max-width:425px) {
+                        padding-top: 10px;
+                        padding-bottom: 20px;
+                    }
+
+                    .title {
+                        color: #0085D7;
+                        font-family: var(--primary-font);
+                        font-size: clamp(14px, 3.5vw, 45px);
+                        line-height: 1.33;
+                        font-weight: 500;
+                        padding-bottom: clamp(10px, 3.5vw, 50px);
+                        text-transform: capitalize;
+                    }
+
+                    p {
+                        font-size: clamp(10px, 2.5vw, 20px);
+                    }
+                }
+            }
+        }
+    }
+}

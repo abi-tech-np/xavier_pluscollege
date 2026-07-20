@@ -1,0 +1,67 @@
+.course_section {
+    padding-block: clamp(30px, 4.5vw, 100px) clamp(60px, 15.5vw, 280px);
+    position: relative;
+    overflow: hidden;
+
+    .courses_container {
+        .section__heading-content {
+            padding: clamp(10px, 2.5vw, 20px);
+            width: min(100%, 873px);
+            position: relative;
+            background-color: #fff;
+
+            p {
+                font-size: clamp(12px, 2.5vw, 24px);
+                color: #8E8E8E;
+
+            }
+
+            .courses__btns {
+                padding: 10px;
+                background-color: #F9F3F3;
+                display: flex;
+
+                button {
+                    width: clamp(130px, 16.5vw, 450px);
+                    height: clamp(35px, 3.5vw, 60px);
+                    border: none;
+                    outline: unset;
+                    color: #0085D7;
+                    cursor: pointer;
+                    transition: color .25s linear, background-color .25s linear;
+                    font-family: var(--primary-font);
+                    font-size: clamp(6px, 2vw, 23px);
+                    background-color: transparent;
+                    text-transform: capitalize;
+                    &:hover {
+                        background-color: #0085D7;
+                        color: #fff;
+                    }
+                    @media (max-width: 1440px) {
+                        font-size: clamp(10px, 2vw, 18px);
+                    }
+                     @media (max-width: 1100px) {
+                        height: clamp(35px, 5.5vw, 100px);
+                    }
+
+                }
+
+                .active {
+                    background-color: #0085D7;
+                    color: #fff;
+                }
+            }
+        }
+        .subject-list{
+            padding-left: clamp(50px, 9.5vw, 180px);
+            padding-top: clamp(20px, 6.5vw, 50px);
+            ul{
+                list-style-type: disc;
+                li{
+                    font-size: clamp(25px, 4.5vw, 45px);
+
+                }
+              }
+        }
+    }
+}

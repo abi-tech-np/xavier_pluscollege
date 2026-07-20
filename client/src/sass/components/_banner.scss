@@ -1,0 +1,61 @@
+.banner {
+    margin-bottom: clamp(75px, 8vw, 150px);
+    .container-lg {
+        position: relative;
+       
+        @media (max-width: 575px) {
+            padding: 0;
+        }
+    }
+    .banner__image.overlay {
+        image {
+            opacity: 0.15;
+        }
+    }
+
+    .overlay-text {
+        position: absolute;
+        top: 58%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        text-align: center;
+        font-family: var(--primary-font);
+        width: 90%;
+        .page__title {
+            font-size: clamp(24px, 4.5vw, 75px);
+            color: #3a405b;
+            font-weight: 400;
+            text-transform: capitalize;
+            line-height: 1.07;
+            span {
+                color: var(--highlight-color);
+            }
+        }
+        .breadcrumb {
+            font-size: clamp(10px, 2.5vw, 30px);
+            line-height: 1;
+            margin-top: clamp(9px, 2.5vw, 38px);
+            color: #69686a;
+            display: flex;
+            gap: clamp(7px, 2.5vw, 20px);
+            justify-content: center;
+            li {
+                &:last-child {
+                    a {
+                        pointer-events: none;
+                        color: #69686a;
+                    }
+                }
+            }
+            a {
+                color: #121212;
+                transition: color 0.25s linear;
+                text-transform: capitalize;
+
+                &:hover {
+                    color: #69686a;
+                }
+            }
+        }
+    }
+}

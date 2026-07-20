@@ -1,0 +1,39 @@
+.acdemicAward {
+    padding-block: clamp(20px, 4.5vw, 80px) clamp(40px, 12.5vw, 100px);
+    position: relative;
+
+    .art {
+        position: absolute;
+        top: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: min(100%, 1020px);
+    }
+
+    .academics__container {
+        .section__heading-content {
+            padding: clamp(10px, 2.5vw, 20px);
+            width: min(100%, 973px);
+            position: relative;
+            background-color: #fff;
+
+            h2 {
+                font-size: clamp(30px, 3.5vw, 80px);
+                .subTitle {
+                    font-size: clamp(9px, 1vw, 20px);
+                    color: #868686;
+                }
+            }
+           
+            .club__desc {
+                line-height: clamp(18px, 2.5vw, 35px);
+                .club__title{
+                    font-weight: 800;
+                    font-size: clamp(18px, 2.5vw, 30px);
+                    padding-top: clamp(10px, 2.5vw, 20px);
+
+                }
+            }
+        }
+    }
+}

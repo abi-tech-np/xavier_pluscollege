@@ -1,0 +1,30 @@
+// Helper
+@import "./helper/fonts";
+@import "./helper/global";
+@import "./helper/container";
+
+// components
+@import "./components/header";
+@import "./components/popup";
+@import "./components/footer";
+@import "./components/courses";
+@import "./components/cta__pass-rate";
+@import './components/banner';
+@import "./components/contact-details";
+@import "./components/course-details";
+@import './components/awards';
+@import './components/infrastructure__component';
+@import './components/lifeAtXavier__component';
+@import './components/brochure';
+@import './components/upcoming-events_component';
+@import './components/footer-passrate';
+@import './components/testimonial';
+
+// pages
+
+@import "./pages/home";
+@import "./pages/aboutpage";
+@import "./pages/academicAwardCeremony";
+@import "./pages/graduationpage";
+@import "./pages/upcoming-events";
+@import "./pages/applypage";

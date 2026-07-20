@@ -1,0 +1,54 @@
+.footer__passrate {
+    margin-bottom: -10%;
+    margin-top: 5rem;
+    position: relative;
+    z-index: 1;
+
+    @media (min-width: 1920px) {
+        margin-bottom: -190px;
+    }
+
+    .footer__CTA-container {
+        width: min(100%, 1178px);
+        margin-inline: auto;
+        text-align: center;
+        display: flex;
+        flex-direction: column;
+        gap: clamp(15px, 3.5vw, 50px);
+        background-color: #fff;
+        padding: clamp(40px, 3.5vw, 70px) clamp(20px, 3.5vw, 40px);
+
+        .cta__heading {
+            font-size: clamp(18px, 3.5vw, 50px);
+            text-transform: capitalize;
+            line-height: 1;
+            font-weight: 400;
+            color: #8E8E8E;
+
+            span {
+                font-size: clamp(20px, 3.5vw, 70px);
+                color: #0DA6DF;
+                display: block;
+                font-family: var(--primary-font);
+                font-weight: 500;
+            }
+        }
+
+        p {
+            font-size: clamp(10px, 2.5vw, 25px);
+            width: 80%;
+            margin-inline: auto;
+            color: #8E8E8E;
+
+            @media (max-width: 768px) {
+                width: 100%;
+            }
+        }
+
+        .btns {
+            display: flex;
+            justify-content: center;
+            gap: clamp(25px, 3.5vw, 50px);
+        }
+    }
+}

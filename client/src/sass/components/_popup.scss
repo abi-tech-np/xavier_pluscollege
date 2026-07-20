@@ -1,0 +1,112 @@
+.popup-menu {
+    height: 100%;
+    width: 100%;
+    background-color: rgba($color: #000000, $alpha: .6);
+    // opacity: .6;
+    position: fixed;
+    z-index: 17;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    display: none;
+    top: 0;
+
+    .popup-menu__bg-overlay {
+        background: rgba(0, 0, 0, 0);
+        height: 100%;
+        width: 100%;
+        position: fixed;
+        left: 0;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 0;
+        -webkit-transition: background 0.15s linear;
+        -o-transition: background 0.15s linear;
+        transition: background 0.15s linear;
+    }
+}
+
+.popup-menu-open {
+    z-index: 99999 !important;
+    opacity: 1 !important;
+    overflow-y: hidden !important;
+    display: flex;
+
+    @media(max-width:430px) {
+        flex-direction: column;
+    }
+}
+
+.popup-menu__inner {
+    position: relative;
+    // width: 50%;
+    margin: 0 15px;
+    // height: 100%;
+    border: 5px solid #fefefe;
+    border-radius: 4px;
+    line-height: 0;
+    z-index: 1;
+
+    // @media(max-width:1024px) and (orientation: landscape){
+    //     height: 70%;
+    // }
+    // @media(max-width:815px){
+    //     height: auto;
+    // }
+    @media(min-width:1024px) {
+        width: 40%;
+    }
+
+    @media(max-width:1024px) {
+        width: 89%;
+    }
+
+    // @media(max-width:430px) {
+    //     // margin-bottom: 20px;
+    //     width: 70%;
+    // }
+
+    @media(max-width:1024px) and (orientation: landscape) {
+        width: auto;
+        max-height: 89%;
+        height: auto;
+        max-width: 60%;
+    }
+
+    // temporary for Two popup Events
+    &:nth-child(2){
+        @media(max-width:430px) {
+            margin-top: 20px;
+        }
+    }
+    @media(max-width:430px) {
+       width: auto;
+       max-height: 40%;
+       height: auto;
+       aspect-ratio: 1 / 1;
+    }
+
+    // temporary for Two popup Events
+    img {
+        width: 100%;
+        max-height: 100%;
+        object-fit: contain;
+    }
+
+    .popup-menu__closebtn {
+        position: absolute;
+        background-color: #fefefe;
+        padding: 8px;
+        border-radius: 50%;
+
+        top:0;
+        right: 0;
+        transform: translate(50%, -50%);
+        svg {
+            width: 12px;
+            height: 12px;
+            color: #bababa;
+        }
+    }
+}

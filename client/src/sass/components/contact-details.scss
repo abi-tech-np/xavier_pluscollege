@@ -1,0 +1,113 @@
+.contact {
+    padding-top: clamp(30px, 3.5vw, 50px);
+    position: relative;
+
+    .art {
+        position: absolute;
+        top: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: min(100%, 1227px);
+    }
+
+    .contact-container {
+        position: relative;
+
+        .section__heading-content {
+            background-color: #fff;
+
+            p {
+                width: 90%;
+            }
+        }
+    }
+    .map-container {
+        margin-bottom: clamp(80px, 12vw, 150px);
+        margin-top: clamp(60px, 12vw, 100px);
+
+        .mask {
+            width: 100%;
+            margin: 0 auto;
+            position: relative;
+            -webkit-mask-image: url("/images/homepage-mask.svg");
+            mask-image: url("/images/homepage-mask.svg");
+            -webkit-mask-repeat: no-repeat;
+            mask-repeat: no-repeat;
+            -webkit-mask-position: center center;
+            -webkit-mask-size: cover;
+            mask-position: bottom center;
+            mask-size: cover;
+            object-fit: cover;
+            height:  clamp(250px, 40vw, 700px);
+
+        }
+    }
+
+    .contact_details {
+        &-container {
+            display: grid;
+            width: min(100%, 1100px);
+            margin-inline: auto;
+            gap: clamp(10px, 2.5vw, 25px);
+            position: relative;
+            grid-template-columns: repeat(3, 1fr);
+            @media (max-width: 991px) {
+                grid-template-columns: repeat(2, 1fr);
+                row-gap: 60px;
+            }
+            @media (max-width: 575px) {
+                grid-template-columns: repeat(1, 1fr);
+            }
+            .card {
+                display: flex;
+                background: #ffff;
+                text-align: center;
+                margin-left: auto;
+                margin-right: auto;
+                .card__body {
+                    display: flex;
+                    flex-direction: column;
+                    padding: 0 15px clamp(33px, 4.5vw, 66px);
+                    --dynamic-width: clamp(75px, 8vw, 100px);
+                    img {
+                        width: var(--dynamic-width);
+                        aspect-ratio: 1;
+                        margin-inline: auto;
+                        margin-top: calc((var(--dynamic-width) / 2) * -1);
+                    }
+                    .card__title {
+                        font-size: clamp(20px, 2.75vw, 35px);
+                        margin-top: clamp(25px, 2vw, 50px);
+                        color: var(--title-color);
+                        line-height: 1;
+                        font-weight: 500;
+                        font-family: var(--primary-font);
+                    }
+                    p {
+                        margin-top: clamp(15px, 4.5vw, 30px);
+                        font-size: clamp(10px, 2.5vw, 20px);
+                        color: #121212;
+                        a{
+                            transition: color .25s linear;
+                            &:hover{
+                                color: var(--hover-color);
+                            }
+                        }
+                    }
+                }
+            }
+            .email-card {
+                color: #a4c93a;
+                --hover-color: #a4c93a;
+            }
+            .phone-card {
+                color: #ea195d;
+                --hover-color: #ea195d;
+            }
+            .address-card {
+                color: #019b9d;
+                --hover-color: #019b9d;
+            }
+        }
+    }
+}
