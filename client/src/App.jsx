@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import axios from 'axios';
 import Layout from './layouts/Layout';
 import Home from './pages/Home';
 import ContactUs from './pages/ContactUs';
@@ -39,6 +40,28 @@ import ManageMetas from './pages/admin/ManageMetas';
 import ManageActivityLogs from './pages/admin/ManageActivityLogs';
 
 const App = () => {
+  useEffect(() => {
+    // Global interceptor for Auth errors
+    const interceptor = axios.interceptors.response.use(
+      (response) => response,
+      (error) => {
+        if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+          // Token is invalid or expired
+          if (window.location.pathname.startsWith('/admin') && window.location.pathname !== '/admin/login') {
+            localStorage.removeItem('adminToken');
+            localStorage.removeItem('adminUser');
+            window.location.href = '/admin/login';
+          }
+        }
+        return Promise.reject(error);
+      }
+    );
+
+    return () => {
+      axios.interceptors.response.eject(interceptor);
+    };
+  }, []);
+
   return (
     <BrowserRouter>
       <Routes>

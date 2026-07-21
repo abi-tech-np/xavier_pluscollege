@@ -22,19 +22,9 @@ const AdminLogin = () => {
                 password
             });
             
-            // Handle Remember Me
-            const storage = rememberMe ? localStorage : sessionStorage;
-            storage.setItem('adminToken', res.data.token);
-            storage.setItem('adminUser', JSON.stringify(res.data.user));
-            
-            // Also ensure we clear the other storage just in case
-            if (rememberMe) {
-                sessionStorage.removeItem('adminToken');
-                sessionStorage.removeItem('adminUser');
-            } else {
-                localStorage.removeItem('adminToken');
-                localStorage.removeItem('adminUser');
-            }
+            // Always store in localStorage because other components hardcode localStorage
+            localStorage.setItem('adminToken', res.data.token);
+            localStorage.setItem('adminUser', JSON.stringify(res.data.user));
 
             navigate('/admin');
         } catch (err) {

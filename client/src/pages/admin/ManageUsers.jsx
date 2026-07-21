@@ -9,7 +9,10 @@ const ManageUsers = () => {
     const [searchQuery, setSearchQuery] = useState('');
     const [perPage, setPerPage] = useState(10);
     
-    // Modal state
+    const [isEditing, setIsEditing] = useState(false);
+    const [editUser, setEditUser] = useState({ id: null, name: '', email: '', role: '' });
+    
+    // Modal state for New User
     const [showModal, setShowModal] = useState(false);
     const [formData, setFormData] = useState({ name: '', email: '', password: '', role: '' });
 
@@ -37,6 +40,7 @@ const ManageUsers = () => {
     }, []);
 
     const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
+    const handleEditChange = (e) => setEditUser({ ...editUser, [e.target.name]: e.target.value });
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -51,11 +55,152 @@ const ManageUsers = () => {
         }
     };
 
+    const handleEditSubmit = async (e) => {
+        e.preventDefault();
+        try {
+            await axios.put(`http://localhost:5000/api/admin/users/${editUser.id}`, {
+                name: editUser.name,
+                email: editUser.email,
+                role: editUser.role
+            }, getAuthHeaders());
+            setIsEditing(false);
+            fetchData();
+        } catch (error) {
+            console.error('Failed to update', error);
+            alert('Failed to update user');
+        }
+    };
+
+    const handleDelete = async (id) => {
+        if (window.confirm('Are you sure you want to delete this user?')) {
+            try {
+                await axios.delete(`http://localhost:5000/api/admin/users/${id}`, getAuthHeaders());
+                setIsEditing(false);
+                fetchData();
+            } catch (error) {
+                console.error('Failed to delete', error);
+                alert('Failed to delete user');
+            }
+        }
+    };
+
+    const openEdit = (user) => {
+        setEditUser({
+            id: user.id,
+            name: user.name,
+            email: user.email,
+            role: user.roles && user.roles.length > 0 ? user.roles[0] : ''
+        });
+        setIsEditing(true);
+    };
+
     // Filter users based on search
     const filteredUsers = users.filter(u => 
         u.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
         u.email.toLowerCase().includes(searchQuery.toLowerCase())
     );
+
+    if (isEditing) {
+        return (
+            <div style={{ padding: '0 1rem', fontFamily: "'Inter', sans-serif" }}>
+                {/* Header */}
+                <div style={{ marginBottom: '2rem' }}>
+                    <div style={{ fontSize: '0.85rem', color: '#a1a1aa', display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                        <span style={{ cursor: 'pointer' }} onClick={() => setIsEditing(false)}>Users</span>
+                        <span>&gt;</span>
+                        <span style={{ color: '#fafafa' }}>Edit</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <h1 style={{ fontSize: '1.75rem', fontWeight: 'bold', color: '#ffffff', margin: 0 }}>Edit User</h1>
+                        <button 
+                            type="button"
+                            onClick={() => handleDelete(editUser.id)}
+                            style={{ 
+                                backgroundColor: '#ef4444', color: '#ffffff', border: 'none', padding: '0.5rem 1.5rem', borderRadius: '0.375rem', fontWeight: '600', cursor: 'pointer'
+                            }}
+                        >
+                            Delete
+                        </button>
+                    </div>
+                </div>
+
+                <form onSubmit={handleEditSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', alignItems: 'start' }}>
+                        
+                        {/* Name Field */}
+                        <div>
+                            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: '#d4d4d8', marginBottom: '0.5rem' }}>
+                                Name <span style={{ color: '#ef4444' }}>*</span>
+                            </label>
+                            <input 
+                                type="text" 
+                                name="name" 
+                                value={editUser.name} 
+                                onChange={handleEditChange} 
+                                required 
+                                style={{
+                                    width: '100%', padding: '0.625rem 0.75rem', borderRadius: '0.5rem',
+                                    backgroundColor: '#18181b', border: '1px solid #27272a', color: '#fafafa', outline: 'none'
+                                }}
+                            />
+                        </div>
+
+                        {/* Email Field */}
+                        <div>
+                            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: '#d4d4d8', marginBottom: '0.5rem' }}>
+                                Email <span style={{ color: '#ef4444' }}>*</span>
+                            </label>
+                            <input 
+                                type="email" 
+                                name="email" 
+                                value={editUser.email} 
+                                onChange={handleEditChange} 
+                                required 
+                                style={{
+                                    width: '100%', padding: '0.625rem 0.75rem', borderRadius: '0.5rem',
+                                    backgroundColor: '#18181b', border: '1px solid #27272a', color: '#fafafa', outline: 'none'
+                                }}
+                            />
+                        </div>
+                        
+                        {/* Roles Field */}
+                        <div>
+                            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: '#d4d4d8', marginBottom: '0.5rem' }}>
+                                Roles <span style={{ color: '#ef4444' }}>*</span>
+                            </label>
+                            <select
+                                name="role"
+                                value={editUser.role}
+                                onChange={handleEditChange}
+                                required
+                                style={{
+                                    width: '100%', padding: '0.625rem 0.75rem', borderRadius: '0.5rem',
+                                    backgroundColor: '#18181b', border: '1px solid #27272a', color: '#fafafa', outline: 'none', appearance: 'none'
+                                }}
+                            >
+                                <option value="" disabled>Select a role...</option>
+                                {roles.map(r => (
+                                    <option key={r.id} value={r.name}>{r.name}</option>
+                                ))}
+                            </select>
+                        </div>
+                    </div>
+
+                    {/* Form Actions Footer */}
+                    <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem', paddingBottom: '2rem' }}>
+                        <button type="submit" style={{ 
+                            backgroundColor: '#fbbf24', color: '#000', border: 'none', padding: '0.5rem 1.5rem', borderRadius: '0.375rem', fontWeight: '600', cursor: 'pointer'
+                        }}>Save changes</button>
+                        
+                        <button type="button" onClick={() => setIsEditing(false)} style={{ 
+                            backgroundColor: '#27272a', color: '#fafafa', border: '1px solid #3f3f46', padding: '0.5rem 1.5rem', borderRadius: '0.375rem', fontWeight: '500', cursor: 'pointer'
+                        }}>Cancel</button>
+                    </div>
+
+                </form>
+            </div>
+        );
+    }
 
     return (
         <div style={{ padding: '0 1rem', position: 'relative' }}>
@@ -119,6 +264,13 @@ const ManageUsers = () => {
                             <div>
                                 <label style={{ color: '#d4d4d8', fontSize: '0.85rem', marginBottom: '0.5rem', display: 'block' }}>Password</label>
                                 <input type="password" name="password" value={formData.password} onChange={handleChange} required style={{ width: '100%', padding: '0.5rem', borderRadius: '0.375rem', backgroundColor: '#27272a', border: '1px solid #3f3f46', color: '#fff' }} />
+                            </div>
+                            <div>
+                                <label style={{ color: '#d4d4d8', fontSize: '0.85rem', marginBottom: '0.5rem', display: 'block' }}>Role</label>
+                                <select name="role" value={formData.role} onChange={handleChange} required style={{ width: '100%', padding: '0.5rem', borderRadius: '0.375rem', backgroundColor: '#27272a', border: '1px solid #3f3f46', color: '#fff' }}>
+                                    <option value="" disabled>Select role</option>
+                                    {roles.map(r => <option key={r.id} value={r.name}>{r.name}</option>)}
+                                </select>
                             </div>
                             <button type="submit" style={{ marginTop: '1rem', padding: '0.75rem', backgroundColor: '#fbbf24', color: '#000', border: 'none', borderRadius: '0.375rem', fontWeight: '600', cursor: 'pointer' }}>
                                 Create User
@@ -242,17 +394,20 @@ const ManageUsers = () => {
                                             {new Date(user.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                                         </td>
                                         <td style={{ padding: '1rem 1.5rem', textAlign: 'right' }}>
-                                            <button style={{ 
-                                                display: 'flex', 
-                                                alignItems: 'center', 
-                                                gap: '0.3rem', 
-                                                backgroundColor: 'transparent', 
-                                                border: 'none', 
-                                                color: '#fbbf24', 
-                                                fontWeight: '600',
-                                                cursor: 'pointer',
-                                                fontSize: '0.85rem'
-                                            }}>
+                                            <button 
+                                                onClick={() => openEdit(user)}
+                                                style={{ 
+                                                    display: 'flex', 
+                                                    alignItems: 'center', 
+                                                    gap: '0.3rem', 
+                                                    backgroundColor: 'transparent', 
+                                                    border: 'none', 
+                                                    color: '#fbbf24', 
+                                                    fontWeight: '600',
+                                                    cursor: 'pointer',
+                                                    fontSize: '0.85rem'
+                                                }}
+                                            >
                                                 <Edit2 size={14} /> Edit
                                             </button>
                                         </td>

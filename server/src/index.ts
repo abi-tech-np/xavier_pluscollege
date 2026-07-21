@@ -13,9 +13,48 @@ const app = express();
 const prisma = new PrismaClient({});
 const PORT = process.env.PORT || 5000;
 
+const serializeBigInt = (obj: any) => {
+    return JSON.parse(JSON.stringify(obj, (key, value) =>
+        typeof value === 'bigint'
+            ? value.toString()
+            : value // return everything else unchanged
+    ));
+};
+
 app.use(cors());
 app.use(express.json());
 app.use('/storage', express.static(path.join(__dirname, '../storage')));
+// GET /api/popups
+app.get('/api/popups', async (req, res) => {
+    try {
+        const activePopups = await prisma.popups.findMany({
+            where: { status: true },
+            orderBy: { created_at: 'desc' }
+        });
+        
+        // Fetch media for these popups
+        const media = await prisma.media.findMany({
+            where: {
+                model_type: 'App\\Models\\Popup',
+                model_id: { in: activePopups.map(p => p.id) }
+            }
+        });
+
+        const data = activePopups.map(popup => {
+            const popupMedia = media.find(m => m.model_id === popup.id);
+            return {
+                ...popup,
+                imageUrl: popupMedia ? `/storage/${popupMedia.id}/${popupMedia.file_name}` : null
+            };
+        });
+
+        res.json(serializeBigInt(data));
+    } catch (e) {
+        console.error('Failed to fetch popups', e);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
 app.use('/api/admin', adminRouter);
 
 // Helper to fetch media for polymorphic relations

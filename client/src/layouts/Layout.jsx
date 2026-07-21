@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 import Header from '../components/Header';
 import Footer from '../components/Footer';
+import Popup from '../components/Popup';
 import { initApp } from '../js/app.js';
 
 const Layout = () => {
@@ -35,6 +36,7 @@ const Layout = () => {
                 <Outlet />
             </main>
             <Footer />
+            <Popup />
         </>
     );
 };

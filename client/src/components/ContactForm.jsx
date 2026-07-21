@@ -28,54 +28,89 @@ const ContactForm = () => {
         }
     };
 
+    const inputStyle = {
+        padding: '12px 15px', 
+        borderRadius: '4px', 
+        border: '1px solid #73b8ba', 
+        fontSize: '12px', 
+        outline: 'none',
+        width: '100%',
+        boxSizing: 'border-box'
+    };
+
+    const labelStyle = {
+        fontSize: '15px', 
+        color: '#444', 
+        fontWeight: '500'
+    };
+
+    const columnStyle = {
+        display: 'flex', 
+        flexDirection: 'column', 
+        gap: '8px'
+    };
+
     return (
-        <form className="contact__form" onSubmit={handleSubmit}>
-            <div className="input-group">
-                <input 
-                    type="text" 
-                    name="name" 
-                    placeholder="Full Name" 
-                    required 
-                    value={formData.name}
-                    onChange={handleChange}
-                />
-            </div>
-            <div className="group-wrapper">
-                <div className="input-group">
+        <form className="contact__form" onSubmit={handleSubmit} style={{ maxWidth: '800px', margin: '0 auto', fontFamily: 'var(--primary-font, sans-serif)' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px', marginBottom: '25px' }}>
+                <div style={columnStyle}>
+                    <label style={labelStyle}>Name</label>
+                    <input 
+                        type="text" 
+                        name="name" 
+                        placeholder="Name" 
+                        required 
+                        value={formData.name}
+                        onChange={handleChange}
+                        style={inputStyle}
+                    />
+                </div>
+                <div style={columnStyle}>
+                    <label style={labelStyle}>Email</label>
                     <input 
                         type="email" 
                         name="email" 
-                        placeholder="E-mail" 
+                        placeholder="Email" 
                         required 
                         value={formData.email}
                         onChange={handleChange}
+                        style={inputStyle}
                     />
                 </div>
-                <div className="input-group">
+            </div>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '30px', marginBottom: '25px' }}>
+                <div style={columnStyle}>
+                    <label style={labelStyle}>Contact</label>
                     <input 
                         type="tel" 
                         name="contact" 
-                        placeholder="Phone no." 
+                        placeholder="Contact" 
                         required 
                         value={formData.contact}
                         onChange={handleChange}
+                        style={inputStyle}
                     />
                 </div>
+                <div></div>
             </div>
-            <div className="input-group">
+
+            <div style={{ ...columnStyle, marginBottom: '25px' }}>
+                <label style={labelStyle}>Message</label>
                 <textarea 
                     name="message" 
-                    cols="30" 
                     rows="4" 
-                    placeholder="Message" 
                     value={formData.message}
                     onChange={handleChange}
+                    style={{ ...inputStyle, resize: 'vertical' }}
                 ></textarea>
             </div>
-            {status === 'success' && <p style={{ color: 'green', marginTop: '10px' }}>Your message has been sent successfully!</p>}
-            {status === 'error' && <p style={{ color: 'red', marginTop: '10px' }}>Something went wrong. Please try again.</p>}
-            <button className="btn" type="submit" disabled={status === 'submitting'}>
-                <span>{status === 'submitting' ? 'Submitting...' : 'Submit'}</span>
+            
+            {status === 'success' && <p style={{ color: 'green', margin: '0 0 15px 0', fontWeight: '500' }}>Your message has been sent successfully!</p>}
+            {status === 'error' && <p style={{ color: 'red', margin: '0 0 15px 0', fontWeight: '500' }}>Something went wrong. Please try again.</p>}
+            
+            <button type="submit" disabled={status === 'submitting'} style={{ padding: '10px 30px', background: '#0085D7', color: '#fff', border: 'none', borderRadius: '4px', fontSize: '14px', cursor: 'pointer', fontWeight: '500' }}>
+                {status === 'submitting' ? 'Submitting...' : 'Apply Now'}
             </button>
         </form>
     );

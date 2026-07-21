@@ -195,7 +195,7 @@ router.delete('/courses/:id', async (req, res) => {
 // --- Contacts ---
 router.get('/contacts', async (req, res) => {
     try {
-        const items = await prisma.contacts.findMany();
+        const items = await prisma.contacts.findMany({ orderBy: { created_at: 'desc' } });
         res.json(serializeBigInt(items));
     } catch (e) { res.status(500).json({ error: 'Server error' }); }
 });
@@ -209,16 +209,65 @@ router.delete('/contacts/:id', async (req, res) => {
 // --- Popups ---
 router.get('/popups', async (req, res) => {
     try {
-        const items = await prisma.popups.findMany();
+        const items = await prisma.popups.findMany({ orderBy: { created_at: 'desc' } });
         res.json(serializeBigInt(items));
     } catch (e) { res.status(500).json({ error: 'Server error' }); }
 });
-router.post('/popups', async (req, res) => {
+
+router.post('/popups', upload.fields([{ name: 'image', maxCount: 1 }]), async (req, res) => {
     try {
         const { title, link, status } = req.body;
-        const newItem = await prisma.popups.create({ data: { title, link, status: status ?? true, created_at: new Date(), updated_at: new Date() } });
+        const isStatusTrue = status === 'true' || status === true;
+        
+        const newItem = await prisma.popups.create({ 
+            data: { 
+                title, 
+                link, 
+                status: isStatusTrue, 
+                created_at: new Date(), 
+                updated_at: new Date() 
+            } 
+        });
+
+        // Handle file uploads (Media table)
+        const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+        
+        if (files?.image?.[0]) {
+            const file = files.image[0];
+            const mediaRecord = await prisma.media.create({
+                data: {
+                    model_type: 'App\\Models\\Popup',
+                    model_id: newItem.id,
+                    uuid: crypto.randomUUID(),
+                    collection_name: 'popup_image',
+                    name: file.originalname.split('.')[0],
+                    file_name: file.filename,
+                    mime_type: file.mimetype,
+                    disk: 'public',
+                    size: file.size,
+                    manipulations: '{}',
+                    custom_properties: '{}',
+                    generated_conversions: '{}',
+                    responsive_images: '{}',
+                    created_at: new Date(),
+                    updated_at: new Date()
+                }
+            });
+
+            const fs = require('fs');
+            const path = require('path');
+            const targetDir = path.join(__dirname, '../../storage', mediaRecord.id.toString());
+            if (!fs.existsSync(targetDir)) {
+                fs.mkdirSync(targetDir, { recursive: true });
+            }
+            fs.renameSync(file.path, path.join(targetDir, file.filename));
+        }
+
         res.json(serializeBigInt(newItem));
-    } catch (e) { res.status(500).json({ error: 'Server error' }); }
+    } catch (e) { 
+        console.error('Error creating popup:', e);
+        res.status(500).json({ error: 'Server error' }); 
+    }
 });
 router.put('/popups/:id', async (req, res) => {
     try {
@@ -539,6 +588,45 @@ router.post('/users', async (req, res) => {
         res.json(serializeBigInt(newItem));
     } catch (e) { res.status(500).json({ error: 'Server error' }); }
 });
+router.put('/users/:id', async (req, res) => {
+    try {
+        const { name, email, role } = req.body;
+        const userId = BigInt(req.params.id as string);
+        
+        // Update user
+        const updatedUser = await prisma.users.update({
+            where: { id: userId },
+            data: { name, email }
+        });
+
+        // Update role if provided
+        if (role) {
+            // First find the role to get its ID
+            const roleRecord = await prisma.roles.findFirst({ where: { name: role } });
+            if (roleRecord) {
+                // Delete existing roles for this user
+                await prisma.model_has_roles.deleteMany({
+                    where: { model_id: userId, model_type: 'App\\Models\\User' }
+                });
+                
+                // Assign new role
+                await prisma.model_has_roles.create({
+                    data: {
+                        role_id: roleRecord.id,
+                        model_type: 'App\\Models\\User',
+                        model_id: userId
+                    }
+                });
+            }
+        }
+        
+        res.json({ success: true, user: serializeBigInt(updatedUser) });
+    } catch (e) {
+        console.error('Update user error', e);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
 router.delete('/users/:id', async (req, res) => {
     try {
         await prisma.users.delete({ where: { id: BigInt(req.params.id as string) } });
