@@ -33,6 +33,10 @@ import ManagePopups from './pages/admin/ManagePopups';
 import ManageUpcomingEvents from './pages/admin/ManageUpcomingEvents';
 import ManageRoles from './pages/admin/ManageRoles';
 import ManageUsers from './pages/admin/ManageUsers';
+import ManageEventSettings from './pages/admin/ManageEventSettings';
+import ManageEventRegistrations from './pages/admin/ManageEventRegistrations';
+import ManageMetas from './pages/admin/ManageMetas';
+import ManageActivityLogs from './pages/admin/ManageActivityLogs';
 
 const App = () => {
   return (
@@ -72,6 +76,10 @@ const App = () => {
           <Route path="upcoming-events" element={<ManageUpcomingEvents />} />
           <Route path="roles" element={<ManageRoles />} />
           <Route path="users" element={<ManageUsers />} />
+          <Route path="event-settings" element={<ManageEventSettings />} />
+          <Route path="event-registrations" element={<ManageEventRegistrations />} />
+          <Route path="metas" element={<ManageMetas />} />
+          <Route path="activity-logs" element={<ManageActivityLogs />} />
         </Route>
       </Routes>
     </BrowserRouter>

@@ -3,6 +3,8 @@ import { PrismaClient } from '../../generated/prisma';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { authenticateJWT, AuthRequest } from '../middlewares/auth';
+import { upload } from '../middlewares/upload';
+import crypto from 'crypto';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -263,16 +265,95 @@ router.delete('/upcoming-events/:id', async (req, res) => {
 // --- Life At Xaviers ---
 router.get('/life-at-xaviers', async (req, res) => {
     try {
-        const items = await prisma.life_at_xaviers.findMany({ where: { deleted_at: null } });
+        const items = await prisma.life_at_xaviers.findMany({ 
+            where: { deleted_at: null },
+            orderBy: { created_at: 'desc' }
+        });
         res.json(serializeBigInt(items));
     } catch (e) { res.status(500).json({ error: 'Server error' }); }
 });
-router.post('/life-at-xaviers', async (req, res) => {
+
+router.post('/life-at-xaviers', upload.fields([
+    { name: 'thumbnail', maxCount: 1 },
+    { name: 'og_image', maxCount: 1 }
+]), async (req, res) => {
     try {
-        const { title, slug, status } = req.body;
-        const newItem = await prisma.life_at_xaviers.create({ data: { title, slug, status: status ?? true, created_at: new Date(), updated_at: new Date() } });
+        const { title, slug, status, meta_title, meta_description, meta_schema } = req.body;
+        const isStatusTrue = status === 'true' || status === true;
+
+        // 1. Create main record
+        const newItem = await prisma.life_at_xaviers.create({ 
+            data: { 
+                title, 
+                slug, 
+                status: isStatusTrue, 
+                created_at: new Date(), 
+                updated_at: new Date() 
+            } 
+        });
+
+        // 2. Insert into metas
+        if (meta_title || meta_description || meta_schema) {
+            await prisma.metas.create({
+                data: {
+                    metaable_type: 'App\\Models\\LifeAtXavier',
+                    metaable_id: newItem.id,
+                    title: meta_title || null,
+                    description: meta_description || null,
+                    schema: meta_schema || null,
+                    created_at: new Date(),
+                    updated_at: new Date()
+                }
+            });
+        }
+
+        // 3. Handle file uploads (Media table)
+        const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+        
+        const saveMedia = async (file: Express.Multer.File, collectionName: string) => {
+            const mediaRecord = await prisma.media.create({
+                data: {
+                    model_type: 'App\\Models\\LifeAtXavier',
+                    model_id: newItem.id,
+                    uuid: crypto.randomUUID(),
+                    collection_name: collectionName,
+                    name: file.originalname.split('.')[0],
+                    file_name: file.filename,
+                    mime_type: file.mimetype,
+                    disk: 'public',
+                    size: file.size,
+                    manipulations: '{}',
+                    custom_properties: '{}',
+                    generated_conversions: '{}',
+                    responsive_images: '{}',
+                    created_at: new Date(),
+                    updated_at: new Date()
+                }
+            });
+
+            // Move file to matching Spatie Media Library folder structure (server/storage/{media.id}/{filename})
+            const fs = require('fs');
+            const path = require('path');
+            const targetDir = path.join(__dirname, '../../storage', mediaRecord.id.toString());
+            if (!fs.existsSync(targetDir)) {
+                fs.mkdirSync(targetDir, { recursive: true });
+            }
+            fs.renameSync(file.path, path.join(targetDir, file.filename));
+        };
+
+        if (files?.thumbnail?.[0]) {
+            await saveMedia(files.thumbnail[0], 'thumbnail');
+        }
+        
+        if (files?.og_image?.[0]) {
+            await saveMedia(files.og_image[0], 'og_image'); // Assuming OG uses a different collection name or we can store it in metas
+        }
+
         res.json(serializeBigInt(newItem));
-    } catch (e) { res.status(500).json({ error: 'Server error' }); }
+    } catch (e) { 
+        console.error(e); 
+        res.status(500).json({ error: 'Server error' }); 
+    }
 });
 router.put('/life-at-xaviers/:id', async (req, res) => {
     try {
@@ -334,11 +415,120 @@ router.delete('/roles/:id', async (req, res) => {
     } catch (e) { res.status(500).json({ error: 'Server error' }); }
 });
 
+// --- Event Settings ---
+router.get('/event-settings', async (req, res) => {
+    try {
+        let settings = await prisma.event_settings.findFirst();
+        if (!settings) {
+            settings = await prisma.event_settings.create({ data: { created_at: new Date(), updated_at: new Date() } });
+        }
+        res.json(serializeBigInt(settings));
+    } catch (e) { res.status(500).json({ error: 'Server error' }); }
+});
+router.put('/event-settings', async (req, res) => {
+    try {
+        const data = req.body;
+        // Find first id
+        const first = await prisma.event_settings.findFirst();
+        if (first) {
+            const updated = await prisma.event_settings.update({ where: { id: first.id }, data: { ...data, updated_at: new Date() } });
+            res.json(serializeBigInt(updated));
+        } else {
+            res.status(404).json({ error: 'Settings not found' });
+        }
+    } catch (e) { console.error(e); res.status(500).json({ error: 'Server error' }); }
+});
+
+// --- Event Registrations ---
+router.get('/event-registrations', async (req, res) => {
+    try {
+        const items = await prisma.event_registrations.findMany({ orderBy: { created_at: 'desc' } });
+        res.json(serializeBigInt(items));
+    } catch (e) { res.status(500).json({ error: 'Server error' }); }
+});
+router.delete('/event-registrations/:id', async (req, res) => {
+    try {
+        await prisma.event_registrations.delete({ where: { id: BigInt(req.params.id as string) } });
+        res.json({ success: true });
+    } catch (e) { res.status(500).json({ error: 'Server error' }); }
+});
+
+// --- SEO Metas ---
+router.get('/metas', async (req, res) => {
+    try {
+        const items = await prisma.metas.findMany({ where: { deleted_at: null } });
+        res.json(serializeBigInt(items));
+    } catch (e) { res.status(500).json({ error: 'Server error' }); }
+});
+router.post('/metas', async (req, res) => {
+    try {
+        const { metaable_type, metaable_id, title, description, schema, status } = req.body;
+        const newItem = await prisma.metas.create({ 
+            data: { 
+                metaable_type, 
+                metaable_id: BigInt(metaable_id), 
+                title, 
+                description, 
+                schema, 
+                status: status ?? true, 
+                created_at: new Date(), 
+                updated_at: new Date() 
+            } 
+        });
+        res.json(serializeBigInt(newItem));
+    } catch (e) { console.error(e); res.status(500).json({ error: 'Server error' }); }
+});
+router.put('/metas/:id', async (req, res) => {
+    try {
+        const { title, description, schema, status } = req.body;
+        const item = await prisma.metas.update({ 
+            where: { id: BigInt(req.params.id as string) }, 
+            data: { title, description, schema, status, updated_at: new Date() } 
+        });
+        res.json(serializeBigInt(item));
+    } catch (e) { res.status(500).json({ error: 'Server error' }); }
+});
+router.delete('/metas/:id', async (req, res) => {
+    try {
+        await prisma.metas.update({ where: { id: BigInt(req.params.id as string) }, data: { deleted_at: new Date() } });
+        res.json({ success: true });
+    } catch (e) { res.status(500).json({ error: 'Server error' }); }
+});
+
+// --- Activity Logs ---
+router.get('/activity-logs', async (req, res) => {
+    try {
+        const items = await prisma.activity_log.findMany({ 
+            orderBy: { created_at: 'desc' },
+            take: 100 // Limit to recent 100
+        });
+        res.json(serializeBigInt(items));
+    } catch (e) { res.status(500).json({ error: 'Server error' }); }
+});
+
 // --- Users ---
 router.get('/users', async (req, res) => {
     try {
-        const items = await prisma.users.findMany();
-        res.json(serializeBigInt(items));
+        const items = await prisma.users.findMany({
+            orderBy: { created_at: 'desc' }
+        });
+        
+        const userRoles = await prisma.model_has_roles.findMany({
+            where: {
+                model_type: 'App\\Models\\User',
+                model_id: { in: items.map(i => i.id) }
+            },
+            include: { roles: true }
+        });
+
+        const usersWithRoles = items.map(user => {
+            const roles = userRoles
+                .filter(ur => ur.model_id === user.id)
+                .map(ur => ur.roles.name);
+            return { ...user, roles };
+        });
+
+        res.json(serializeBigInt(usersWithRoles));
     } catch (e) { res.status(500).json({ error: 'Server error' }); }
 });
 router.post('/users', async (req, res) => {

@@ -38,7 +38,7 @@ app.get('/api/life-at-xavier', async (req, res) => {
     try {
         const take = req.query.limit ? parseInt(req.query.limit as string, 10) : undefined;
         const items = await prisma.life_at_xaviers.findMany({
-            where: { status: true },
+            where: { status: true, deleted_at: null },
             orderBy: { created_at: 'desc' },
             ...(take ? { take } : {})
         });
@@ -63,7 +63,7 @@ app.get('/api/life-at-xavier', async (req, res) => {
 app.get('/api/life-at-xavier/:slug', async (req, res) => {
     try {
         const item = await prisma.life_at_xaviers.findFirst({
-            where: { slug: req.params.slug, status: true }
+            where: { slug: req.params.slug, status: true, deleted_at: null }
         });
         
         if (!item) {
@@ -94,7 +94,7 @@ app.get('/api/news-and-events', async (req, res) => {
     try {
         const take = req.query.limit ? parseInt(req.query.limit as string, 10) : undefined;
         const items = await prisma.news_and_events.findMany({
-            where: { status: true },
+            where: { status: true, deleted_at: null },
             orderBy: { created_at: 'desc' },
             ...(take ? { take } : {})
         });
@@ -119,7 +119,7 @@ app.get('/api/news-and-events', async (req, res) => {
 app.get('/api/news-and-events/:slug', async (req, res) => {
     try {
         const item = await prisma.news_and_events.findFirst({
-            where: { slug: req.params.slug, status: true }
+            where: { slug: req.params.slug, status: true, deleted_at: null }
         });
         
         if (item) {
@@ -142,7 +142,7 @@ app.get('/api/upcoming-events', async (req, res) => {
     try {
         const take = req.query.limit ? parseInt(req.query.limit as string, 10) : undefined;
         const items = await prisma.upcoming_events.findMany({
-            where: { status: true },
+            where: { status: true, deleted_at: null },
             orderBy: { start_date: 'asc' },
             ...(take ? { take } : {})
         });

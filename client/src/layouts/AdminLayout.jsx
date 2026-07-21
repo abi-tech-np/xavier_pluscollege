@@ -3,7 +3,8 @@ import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { 
     LayoutDashboard, BookOpen, FileText, PhoneCall, 
     Play, Megaphone, Target, FastForward, 
-    ShieldCheck, Users, ChevronDown, ChevronUp, LogOut
+    ShieldCheck, Users, ChevronDown, ChevronUp, LogOut,
+    Settings as SettingsIcon, Ticket, Search, Activity
 } from 'lucide-react';
 import '../admin.css';
 
@@ -68,6 +69,9 @@ const AdminLayout = () => {
                                     <Link to="/admin/applications" className={location.pathname === '/admin/applications' ? 'active' : ''} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: location.pathname === '/admin/applications' ? '#f59e0b' : '#a1a1aa' }}>
                                         <FileText size={16} /> Apply
                                     </Link>
+                                    <Link to="/admin/event-registrations" className={location.pathname === '/admin/event-registrations' ? 'active' : ''} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: location.pathname === '/admin/event-registrations' ? '#f59e0b' : '#a1a1aa' }}>
+                                        <Ticket size={16} /> Event Registrations
+                                    </Link>
                                     <Link to="/admin/contacts" className={location.pathname === '/admin/contacts' ? 'active' : ''} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: location.pathname === '/admin/contacts' ? '#f59e0b' : '#a1a1aa' }}>
                                         <PhoneCall size={16} /> Contact
                                     </Link>
@@ -95,6 +99,9 @@ const AdminLayout = () => {
                                     <Link to="/admin/popups" className={location.pathname === '/admin/popups' ? 'active' : ''} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: location.pathname === '/admin/popups' ? '#f59e0b' : '#a1a1aa' }}>
                                         <Target size={16} /> Popup
                                     </Link>
+                                    <Link to="/admin/metas" className={location.pathname === '/admin/metas' ? 'active' : ''} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: location.pathname === '/admin/metas' ? '#f59e0b' : '#a1a1aa' }}>
+                                        <Search size={16} /> SEO Metas
+                                    </Link>
                                     <Link to="/admin/upcoming-events" className={location.pathname === '/admin/upcoming-events' ? 'active' : ''} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: location.pathname === '/admin/upcoming-events' ? '#f59e0b' : '#a1a1aa' }}>
                                         <FastForward size={16} /> Upcoming Events
                                     </Link>
@@ -113,11 +120,17 @@ const AdminLayout = () => {
                             </div>
                             {openSettings && (
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem', marginTop: '0.5rem' }}>
+                                    <Link to="/admin/event-settings" className={location.pathname === '/admin/event-settings' ? 'active' : ''} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: location.pathname === '/admin/event-settings' ? '#f59e0b' : '#a1a1aa' }}>
+                                        <SettingsIcon size={16} /> Event Settings
+                                    </Link>
                                     <Link to="/admin/roles" className={location.pathname === '/admin/roles' ? 'active' : ''} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: location.pathname === '/admin/roles' ? '#f59e0b' : '#a1a1aa' }}>
                                         <ShieldCheck size={16} /> Roles
                                     </Link>
                                     <Link to="/admin/users" className={location.pathname === '/admin/users' ? 'active' : ''} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: location.pathname === '/admin/users' ? '#f59e0b' : '#a1a1aa' }}>
                                         <Users size={16} /> Users
+                                    </Link>
+                                    <Link to="/admin/activity-logs" className={location.pathname === '/admin/activity-logs' ? 'active' : ''} style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: location.pathname === '/admin/activity-logs' ? '#f59e0b' : '#a1a1aa' }}>
+                                        <Activity size={16} /> Activity Logs
                                     </Link>
                                 </div>
                             )}
