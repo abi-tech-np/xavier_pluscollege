@@ -103,7 +103,7 @@ router.put('/news/:id', async (req: AuthRequest, res: Response) => {
         const { id } = req.params;
         const { title, slug, content, status } = req.body;
         const updatedItem = await prisma.news_and_events.update({
-            where: { id: BigInt(id) },
+            where: { id: BigInt(id as string) },
             data: { title, slug, content, status, updated_at: new Date() }
         });
         res.json({ ...updatedItem, id: updatedItem.id.toString() });
@@ -115,7 +115,7 @@ router.put('/news/:id', async (req: AuthRequest, res: Response) => {
 router.delete('/news/:id', async (req: AuthRequest, res: Response) => {
     try {
         const { id } = req.params;
-        await prisma.news_and_events.delete({ where: { id: BigInt(id) } });
+        await prisma.news_and_events.delete({ where: { id: BigInt(id as string) } });
         res.json({ success: true });
     } catch (error) {
         res.status(500).json({ error: 'Internal server error' });
@@ -148,7 +148,7 @@ router.get('/applications', async (req: AuthRequest, res: Response) => {
 router.delete('/applications/:id', async (req: AuthRequest, res: Response) => {
     try {
         const { id } = req.params;
-        await prisma.applies.delete({ where: { id: BigInt(id) } });
+        await prisma.applies.delete({ where: { id: BigInt(id as string) } });
         res.json({ success: true });
     } catch (error) {
         res.status(500).json({ error: 'Internal server error' });
@@ -179,13 +179,13 @@ router.post('/courses', async (req, res) => {
 router.put('/courses/:id', async (req, res) => {
     try {
         const { course } = req.body;
-        const item = await prisma.courses.update({ where: { id: BigInt(req.params.id) }, data: { course, updated_at: new Date() } });
+        const item = await prisma.courses.update({ where: { id: BigInt(req.params.id as string) }, data: { course, updated_at: new Date() } });
         res.json(serializeBigInt(item));
     } catch (e) { res.status(500).json({ error: 'Server error' }); }
 });
 router.delete('/courses/:id', async (req, res) => {
     try {
-        await prisma.courses.update({ where: { id: BigInt(req.params.id) }, data: { deleted_at: new Date() } });
+        await prisma.courses.update({ where: { id: BigInt(req.params.id as string) }, data: { deleted_at: new Date() } });
         res.json({ success: true });
     } catch (e) { res.status(500).json({ error: 'Server error' }); }
 });
@@ -199,7 +199,7 @@ router.get('/contacts', async (req, res) => {
 });
 router.delete('/contacts/:id', async (req, res) => {
     try {
-        await prisma.contacts.delete({ where: { id: BigInt(req.params.id) } });
+        await prisma.contacts.delete({ where: { id: BigInt(req.params.id as string) } });
         res.json({ success: true });
     } catch (e) { res.status(500).json({ error: 'Server error' }); }
 });
@@ -221,13 +221,13 @@ router.post('/popups', async (req, res) => {
 router.put('/popups/:id', async (req, res) => {
     try {
         const { title, link, status } = req.body;
-        const item = await prisma.popups.update({ where: { id: BigInt(req.params.id) }, data: { title, link, status, updated_at: new Date() } });
+        const item = await prisma.popups.update({ where: { id: BigInt(req.params.id as string) }, data: { title, link, status, updated_at: new Date() } });
         res.json(serializeBigInt(item));
     } catch (e) { res.status(500).json({ error: 'Server error' }); }
 });
 router.delete('/popups/:id', async (req, res) => {
     try {
-        await prisma.popups.delete({ where: { id: BigInt(req.params.id) } });
+        await prisma.popups.delete({ where: { id: BigInt(req.params.id as string) } });
         res.json({ success: true });
     } catch (e) { res.status(500).json({ error: 'Server error' }); }
 });
@@ -249,13 +249,13 @@ router.post('/upcoming-events', async (req, res) => {
 router.put('/upcoming-events/:id', async (req, res) => {
     try {
         const { title, time, content, location, status } = req.body;
-        const item = await prisma.upcoming_events.update({ where: { id: BigInt(req.params.id) }, data: { title, time, content, location, status, updated_at: new Date() } });
+        const item = await prisma.upcoming_events.update({ where: { id: BigInt(req.params.id as string) }, data: { title, time, content, location, status, updated_at: new Date() } });
         res.json(serializeBigInt(item));
     } catch (e) { res.status(500).json({ error: 'Server error' }); }
 });
 router.delete('/upcoming-events/:id', async (req, res) => {
     try {
-        await prisma.upcoming_events.delete({ where: { id: BigInt(req.params.id) } });
+        await prisma.upcoming_events.delete({ where: { id: BigInt(req.params.id as string) } });
         res.json({ success: true });
     } catch (e) { res.status(500).json({ error: 'Server error' }); }
 });
@@ -277,13 +277,13 @@ router.post('/life-at-xaviers', async (req, res) => {
 router.put('/life-at-xaviers/:id', async (req, res) => {
     try {
         const { title, slug, status } = req.body;
-        const item = await prisma.life_at_xaviers.update({ where: { id: BigInt(req.params.id) }, data: { title, slug, status, updated_at: new Date() } });
+        const item = await prisma.life_at_xaviers.update({ where: { id: BigInt(req.params.id as string) }, data: { title, slug, status, updated_at: new Date() } });
         res.json(serializeBigInt(item));
     } catch (e) { res.status(500).json({ error: 'Server error' }); }
 });
 router.delete('/life-at-xaviers/:id', async (req, res) => {
     try {
-        await prisma.life_at_xaviers.update({ where: { id: BigInt(req.params.id) }, data: { deleted_at: new Date() } });
+        await prisma.life_at_xaviers.update({ where: { id: BigInt(req.params.id as string) }, data: { deleted_at: new Date() } });
         res.json({ success: true });
     } catch (e) { res.status(500).json({ error: 'Server error' }); }
 });
@@ -329,7 +329,7 @@ router.post('/roles', async (req, res) => {
 });
 router.delete('/roles/:id', async (req, res) => {
     try {
-        await prisma.roles.delete({ where: { id: BigInt(req.params.id) } });
+        await prisma.roles.delete({ where: { id: BigInt(req.params.id as string) } });
         res.json({ success: true });
     } catch (e) { res.status(500).json({ error: 'Server error' }); }
 });
@@ -351,7 +351,7 @@ router.post('/users', async (req, res) => {
 });
 router.delete('/users/:id', async (req, res) => {
     try {
-        await prisma.users.delete({ where: { id: BigInt(req.params.id) } });
+        await prisma.users.delete({ where: { id: BigInt(req.params.id as string) } });
         res.json({ success: true });
     } catch (e) { res.status(500).json({ error: 'Server error' }); }
 });
