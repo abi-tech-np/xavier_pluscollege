@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import path from 'path';
 import { PrismaClient } from '../generated/prisma';
+import adminRouter from './routes/admin';
 
 // Patch BigInt to serialize nicely in JSON
 (BigInt.prototype as any).toJSON = function () {
@@ -15,6 +16,7 @@ const PORT = process.env.PORT || 5000;
 app.use(cors());
 app.use(express.json());
 app.use('/storage', express.static(path.join(__dirname, '../storage')));
+app.use('/api/admin', adminRouter);
 
 // Helper to fetch media for polymorphic relations
 const getMediaForModels = async (modelType: string, modelIds: bigint[]) => {
