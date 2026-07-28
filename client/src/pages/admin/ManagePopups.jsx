@@ -7,7 +7,7 @@ const ManagePopups = () => {
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
     const [perPage, setPerPage] = useState(10);
-    
+
     // Create state
     const [isCreating, setIsCreating] = useState(false);
     const [formData, setFormData] = useState({
@@ -23,7 +23,7 @@ const ManagePopups = () => {
 
     const fetchPopups = async () => {
         try {
-            const res = await axios.get('http://localhost:5000/api/admin/popups', getAuthHeaders());
+            const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/admin/popups`, getAuthHeaders());
             setPopups(res.data);
         } catch (error) {
             console.error('Failed to fetch popups', error);
@@ -61,15 +61,15 @@ const ManagePopups = () => {
                 data.append('image', formData.image);
             }
 
-            await axios.post('http://localhost:5000/api/admin/popups', data, {
-                headers: { 
+            await axios.post(`${import.meta.env.VITE_API_URL}/api/admin/popups`, data, {
+                headers: {
                     ...getAuthHeaders().headers,
-                    'Content-Type': 'multipart/form-data' 
+                    'Content-Type': 'multipart/form-data'
                 }
             });
-            
+
             fetchPopups();
-            
+
             if (createAnother) {
                 setFormData({ title: '', link: '', status: true, image: null });
             } else {
@@ -84,7 +84,7 @@ const ManagePopups = () => {
     const handleDelete = async (id) => {
         if (window.confirm('Are you sure you want to delete this popup?')) {
             try {
-                await axios.delete(`http://localhost:5000/api/admin/popups/${id}`, getAuthHeaders());
+                await axios.delete(`${import.meta.env.VITE_API_URL}/api/admin/popups/${id}`, getAuthHeaders());
                 fetchPopups();
             } catch (error) {
                 console.error('Failed to delete popup', error);
@@ -93,7 +93,7 @@ const ManagePopups = () => {
         }
     };
 
-    const filteredPopups = popups.filter(p => 
+    const filteredPopups = popups.filter(p =>
         (p.title && p.title.toLowerCase().includes(searchQuery.toLowerCase()))
     );
 
@@ -109,25 +109,25 @@ const ManagePopups = () => {
                     <h1 style={{ fontSize: '1.75rem', fontWeight: 'bold', color: '#ffffff', margin: 0 }}>Create Popup</h1>
                 </div>
 
-                <div style={{ 
-                    backgroundColor: '#18181b', 
-                    borderRadius: '0.75rem', 
+                <div style={{
+                    backgroundColor: '#18181b',
+                    borderRadius: '0.75rem',
                     border: '1px solid #27272a',
                     padding: '2rem',
                     marginBottom: '1.5rem'
                 }}>
                     <form id="create-form" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                        
+
                         <div>
                             <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: '#d4d4d8', marginBottom: '0.5rem' }}>
                                 Title <span style={{ color: '#ef4444' }}>*</span>
                             </label>
-                            <input 
-                                type="text" 
-                                name="title" 
-                                value={formData.title} 
-                                onChange={handleCreateChange} 
-                                required 
+                            <input
+                                type="text"
+                                name="title"
+                                value={formData.title}
+                                onChange={handleCreateChange}
+                                required
                                 style={{
                                     width: '100%', padding: '0.625rem 0.75rem', borderRadius: '0.5rem',
                                     backgroundColor: '#18181b', border: '1px solid #27272a', color: '#fafafa', outline: 'none'
@@ -139,18 +139,18 @@ const ManagePopups = () => {
                             <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: '#d4d4d8', marginBottom: '0.5rem' }}>
                                 Link
                             </label>
-                            <input 
-                                type="text" 
-                                name="link" 
-                                value={formData.link} 
-                                onChange={handleCreateChange} 
+                            <input
+                                type="text"
+                                name="link"
+                                value={formData.link}
+                                onChange={handleCreateChange}
                                 style={{
                                     width: '100%', padding: '0.625rem 0.75rem', borderRadius: '0.5rem',
                                     backgroundColor: '#18181b', border: '1px solid #27272a', color: '#fafafa', outline: 'none'
                                 }}
                             />
                         </div>
-                        
+
                         <div>
                             <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: '#d4d4d8', marginBottom: '0.5rem' }}>
                                 Image <span style={{ color: '#ef4444' }}>*</span>
@@ -165,14 +165,14 @@ const ManagePopups = () => {
                                 cursor: 'pointer',
                                 position: 'relative'
                             }}>
-                                <input 
-                                    type="file" 
-                                    accept="image/*" 
-                                    onChange={handleFileChange} 
+                                <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={handleFileChange}
                                     required
                                     style={{
                                         position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', opacity: 0, cursor: 'pointer'
-                                    }} 
+                                    }}
                                 />
                                 {formData.image ? (
                                     <span style={{ color: '#fbbf24' }}>{formData.image.name}</span>
@@ -189,12 +189,12 @@ const ManagePopups = () => {
                                 width: '44px',
                                 height: '24px'
                             }}>
-                                <input 
-                                    type="checkbox" 
+                                <input
+                                    type="checkbox"
                                     name="status"
-                                    checked={formData.status} 
+                                    checked={formData.status}
                                     onChange={handleCreateChange}
-                                    style={{ opacity: 0, width: 0, height: 0 }} 
+                                    style={{ opacity: 0, width: 0, height: 0 }}
                                 />
                                 <span style={{
                                     position: 'absolute',
@@ -224,15 +224,15 @@ const ManagePopups = () => {
                 </div>
 
                 <div style={{ display: 'flex', gap: '1rem' }}>
-                    <button onClick={(e) => handleCreateSubmit(e, false)} style={{ 
+                    <button onClick={(e) => handleCreateSubmit(e, false)} style={{
                         backgroundColor: '#fbbf24', color: '#000', border: 'none', padding: '0.6rem 1.25rem', borderRadius: '0.375rem', fontWeight: '600', cursor: 'pointer'
                     }}>Create</button>
-                    
-                    <button onClick={(e) => handleCreateSubmit(e, true)} style={{ 
+
+                    <button onClick={(e) => handleCreateSubmit(e, true)} style={{
                         backgroundColor: '#27272a', color: '#fafafa', border: '1px solid #3f3f46', padding: '0.6rem 1.25rem', borderRadius: '0.375rem', fontWeight: '500', cursor: 'pointer'
                     }}>Create & create another</button>
-                    
-                    <button onClick={() => setIsCreating(false)} style={{ 
+
+                    <button onClick={() => setIsCreating(false)} style={{
                         backgroundColor: '#18181b', color: '#fafafa', border: '1px solid #3f3f46', padding: '0.6rem 1.25rem', borderRadius: '0.375rem', fontWeight: '500', cursor: 'pointer'
                     }}>Cancel</button>
                 </div>
@@ -251,13 +251,13 @@ const ManagePopups = () => {
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <h1 style={{ fontSize: '2rem', fontWeight: 'bold', color: '#ffffff', margin: 0 }}>Popups</h1>
-                    <button 
+                    <button
                         onClick={() => setIsCreating(true)}
-                        style={{ 
-                            backgroundColor: '#fbbf24', 
-                            color: '#000000', 
-                            fontWeight: '600', 
-                            padding: '0.6rem 1.25rem', 
+                        style={{
+                            backgroundColor: '#fbbf24',
+                            color: '#000000',
+                            fontWeight: '600',
+                            padding: '0.6rem 1.25rem',
                             borderRadius: '0.375rem',
                             border: 'none',
                             cursor: 'pointer',
@@ -269,42 +269,42 @@ const ManagePopups = () => {
             </div>
 
             {/* Main Card Container */}
-            <div style={{ 
-                backgroundColor: '#18181b', 
-                borderRadius: '0.75rem', 
+            <div style={{
+                backgroundColor: '#18181b',
+                borderRadius: '0.75rem',
                 border: '1px solid #27272a',
-                overflow: 'hidden' 
+                overflow: 'hidden'
             }}>
-                
+
                 {/* Toolbar */}
-                <div style={{ 
-                    padding: '1rem 1.5rem', 
-                    display: 'flex', 
+                <div style={{
+                    padding: '1rem 1.5rem',
+                    display: 'flex',
                     justifyContent: 'flex-end',
                     borderBottom: '1px solid #27272a'
                 }}>
-                    <div style={{ 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        backgroundColor: '#27272a', 
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        backgroundColor: '#27272a',
                         borderRadius: '0.375rem',
                         padding: '0.4rem 0.75rem',
                         border: '1px solid #3f3f46'
                     }}>
                         <Search size={16} color="#71717a" style={{ marginRight: '0.5rem' }} />
-                        <input 
-                            type="text" 
-                            placeholder="Search" 
+                        <input
+                            type="text"
+                            placeholder="Search"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            style={{ 
-                                backgroundColor: 'transparent', 
-                                border: 'none', 
-                                color: '#e4e4e7', 
+                            style={{
+                                backgroundColor: 'transparent',
+                                border: 'none',
+                                color: '#e4e4e7',
                                 outline: 'none',
                                 fontSize: '0.9rem',
                                 width: '200px'
-                            }} 
+                            }}
                         />
                     </div>
                 </div>
@@ -362,15 +362,15 @@ const ManagePopups = () => {
                                             {new Date(popup.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                                         </td>
                                         <td style={{ padding: '1rem 1.5rem', textAlign: 'right' }}>
-                                            <button 
+                                            <button
                                                 onClick={() => handleDelete(popup.id)}
-                                                style={{ 
-                                                    display: 'flex', 
-                                                    alignItems: 'center', 
-                                                    gap: '0.3rem', 
-                                                    backgroundColor: 'transparent', 
-                                                    border: 'none', 
-                                                    color: '#ef4444', 
+                                                style={{
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '0.3rem',
+                                                    backgroundColor: 'transparent',
+                                                    border: 'none',
+                                                    color: '#ef4444',
                                                     fontWeight: '600',
                                                     cursor: 'pointer',
                                                     fontSize: '0.85rem'
@@ -386,10 +386,10 @@ const ManagePopups = () => {
                 </div>
 
                 {/* Footer Pagination */}
-                <div style={{ 
-                    padding: '1rem 1.5rem', 
-                    display: 'flex', 
-                    justifyContent: 'space-between', 
+                <div style={{
+                    padding: '1rem 1.5rem',
+                    display: 'flex',
+                    justifyContent: 'space-between',
                     alignItems: 'center',
                     borderTop: '1px solid #27272a',
                     backgroundColor: '#18181b'
@@ -399,10 +399,10 @@ const ManagePopups = () => {
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: '#a1a1aa', fontSize: '0.85rem' }}>
                         <span>Per page</span>
-                        <div style={{ 
-                            display: 'flex', 
-                            alignItems: 'center', 
-                            backgroundColor: '#27272a', 
+                        <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            backgroundColor: '#27272a',
                             border: '1px solid #3f3f46',
                             borderRadius: '0.375rem',
                             padding: '0.3rem 0.6rem',

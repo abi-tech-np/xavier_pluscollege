@@ -7,7 +7,7 @@ const UpcomingEvents = ({ limit }) => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const url = limit ? `http://localhost:5000/api/upcoming-events?limit=${limit}` : 'http://localhost:5000/api/upcoming-events';
+        const url = limit ? `${import.meta.env.VITE_API_URL}/api/upcoming-events?limit=${limit}` : `${import.meta.env.VITE_API_URL}/api/upcoming-events`;
         axios.get(url)
             .then(res => {
                 setUpcomingEvents(res.data);
@@ -26,7 +26,7 @@ const UpcomingEvents = ({ limit }) => {
 
         const startMonth = startDate.toLocaleString('en-US', { month: 'long' });
         const startDay = startDate.getDate();
-        
+
         const endMonth = endDate.toLocaleString('en-US', { month: 'long' });
         const endDay = endDate.getDate();
 
@@ -109,7 +109,7 @@ const UpcomingEvents = ({ limit }) => {
                         </p>
                     </div>
                     <div className="upcomingEvents__list">
-                        
+
                         {loading ? (
                             <p>Loading...</p>
                         ) : allEvents.map((event) => (

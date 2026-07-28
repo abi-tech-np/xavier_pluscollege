@@ -20,8 +20,8 @@ const ManageApplications = () => {
         try {
             setLoading(true);
             const [appsRes, coursesRes] = await Promise.all([
-                axios.get('http://localhost:5000/api/admin/applications', getAuthHeaders()),
-                axios.get('http://localhost:5000/api/admin/courses', getAuthHeaders())
+                axios.get(`${import.meta.env.VITE_API_URL}/api/admin/applications`, getAuthHeaders()),
+                axios.get(`${import.meta.env.VITE_API_URL}/api/admin/courses`, getAuthHeaders())
             ]);
             setApplications(appsRes.data);
             setCourses(coursesRes.data);
@@ -39,7 +39,7 @@ const ManageApplications = () => {
     const handleDelete = async (id) => {
         if (!window.confirm('Are you sure you want to delete this application?')) return;
         try {
-            await axios.delete(`http://localhost:5000/api/admin/applications/${id}`, getAuthHeaders());
+            await axios.delete(`${import.meta.env.VITE_API_URL}/api/admin/applications/${id}`, getAuthHeaders());
             fetchData();
         } catch (error) {
             console.error('Error deleting application:', error);
@@ -110,14 +110,14 @@ const ManageApplications = () => {
                     <Download size={16} /> Download CSV
                 </button>
             </div>
-            
+
             <div className="admin-card" style={{ marginBottom: '1.5rem' }}>
                 <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', alignItems: 'flex-end' }}>
                     <div className="admin-form-group" style={{ marginBottom: 0, flex: 1, minWidth: '200px' }}>
                         <label>Filter by Course</label>
-                        <select 
-                            value={courseFilter} 
-                            onChange={(e) => setCourseFilter(e.target.value)} 
+                        <select
+                            value={courseFilter}
+                            onChange={(e) => setCourseFilter(e.target.value)}
                             style={{ width: '100%', padding: '0.6rem', borderRadius: '0.375rem', backgroundColor: '#262626', color: '#fafafa', border: '1px solid #404040' }}
                         >
                             <option value="">All Courses</option>
@@ -128,19 +128,19 @@ const ManageApplications = () => {
                     </div>
                     <div className="admin-form-group" style={{ marginBottom: 0, flex: 1, minWidth: '150px' }}>
                         <label>Start Date</label>
-                        <input 
-                            type="date" 
-                            value={startDate} 
-                            onChange={(e) => setStartDate(e.target.value)} 
+                        <input
+                            type="date"
+                            value={startDate}
+                            onChange={(e) => setStartDate(e.target.value)}
                             style={{ width: '100%', padding: '0.6rem', borderRadius: '0.375rem', backgroundColor: '#262626', color: '#fafafa', border: '1px solid #404040' }}
                         />
                     </div>
                     <div className="admin-form-group" style={{ marginBottom: 0, flex: 1, minWidth: '150px' }}>
                         <label>End Date</label>
-                        <input 
-                            type="date" 
-                            value={endDate} 
-                            onChange={(e) => setEndDate(e.target.value)} 
+                        <input
+                            type="date"
+                            value={endDate}
+                            onChange={(e) => setEndDate(e.target.value)}
                             style={{ width: '100%', padding: '0.6rem', borderRadius: '0.375rem', backgroundColor: '#262626', color: '#fafafa', border: '1px solid #404040' }}
                         />
                     </div>
@@ -179,8 +179,8 @@ const ManageApplications = () => {
                                         <td style={{ fontWeight: 600, color: '#fafafa' }}>{item.gpa}</td>
                                         <td>{new Date(item.created_at).toLocaleDateString()}</td>
                                         <td>
-                                            <button 
-                                                className="admin-btn admin-btn-danger" 
+                                            <button
+                                                className="admin-btn admin-btn-danger"
                                                 onClick={() => handleDelete(item.id)}
                                             >
                                                 Delete

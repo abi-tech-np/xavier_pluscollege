@@ -4,7 +4,7 @@ import axios from 'axios';
 const ManageNews = () => {
     const [news, setNews] = useState([]);
     const [loading, setLoading] = useState(true);
-    
+
     // Form state
     const [isEditing, setIsEditing] = useState(false);
     const [currentId, setCurrentId] = useState(null);
@@ -22,7 +22,7 @@ const ManageNews = () => {
     const fetchNews = async () => {
         try {
             setLoading(true);
-            const res = await axios.get('http://localhost:5000/api/admin/news', getAuthHeaders());
+            const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/admin/news`, getAuthHeaders());
             setNews(res.data);
         } catch (error) {
             console.error('Error fetching news:', error);
@@ -55,9 +55,9 @@ const ManageNews = () => {
         e.preventDefault();
         try {
             if (isEditing) {
-                await axios.put(`http://localhost:5000/api/admin/news/${currentId}`, formData, getAuthHeaders());
+                await axios.put(`${import.meta.env.VITE_API_URL}/api/admin/news/${currentId}`, formData, getAuthHeaders());
             } else {
-                await axios.post('http://localhost:5000/api/admin/news', formData, getAuthHeaders());
+                await axios.post(`${import.meta.env.VITE_API_URL}/api/admin/news`, formData, getAuthHeaders());
             }
             fetchNews();
             handleCancel();
@@ -82,7 +82,7 @@ const ManageNews = () => {
     const handleDelete = async (id) => {
         if (!window.confirm('Are you sure you want to delete this news item?')) return;
         try {
-            await axios.delete(`http://localhost:5000/api/admin/news/${id}`, getAuthHeaders());
+            await axios.delete(`${import.meta.env.VITE_API_URL}/api/admin/news/${id}`, getAuthHeaders());
             fetchNews();
         } catch (error) {
             console.error('Error deleting news:', error);
@@ -107,49 +107,49 @@ const ManageNews = () => {
                     <div style={{ display: 'flex', gap: '1rem' }}>
                         <div className="admin-form-group" style={{ flex: 1 }}>
                             <label>Title</label>
-                            <input 
-                                type="text" 
-                                name="title" 
-                                value={formData.title} 
-                                onChange={handleChange} 
-                                required 
+                            <input
+                                type="text"
+                                name="title"
+                                value={formData.title}
+                                onChange={handleChange}
+                                required
                             />
                         </div>
                         <div className="admin-form-group" style={{ flex: 1 }}>
                             <label>
-                                Slug 
+                                Slug
                                 <span style={{ marginLeft: '10px', fontSize: '0.8rem', color: 'var(--admin-primary)', cursor: 'pointer' }} onClick={handleGenerateSlug}>
                                     (Generate from Title)
                                 </span>
                             </label>
-                            <input 
-                                type="text" 
-                                name="slug" 
-                                value={formData.slug} 
-                                onChange={handleChange} 
-                                required 
+                            <input
+                                type="text"
+                                name="slug"
+                                value={formData.slug}
+                                onChange={handleChange}
+                                required
                             />
                         </div>
                     </div>
-                    
+
                     <div className="admin-form-group">
                         <label>Content</label>
-                        <textarea 
-                            name="content" 
-                            rows="5" 
-                            value={formData.content} 
-                            onChange={handleChange} 
-                            required 
+                        <textarea
+                            name="content"
+                            rows="5"
+                            value={formData.content}
+                            onChange={handleChange}
+                            required
                         />
                     </div>
 
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.5rem' }}>
-                        <input 
-                            type="checkbox" 
-                            id="status" 
-                            name="status" 
-                            checked={formData.status} 
-                            onChange={handleChange} 
+                        <input
+                            type="checkbox"
+                            id="status"
+                            name="status"
+                            checked={formData.status}
+                            onChange={handleChange}
                             style={{ width: 'auto' }}
                         />
                         <label htmlFor="status">Published (Active)</label>
@@ -196,14 +196,14 @@ const ManageNews = () => {
                                         <td>{new Date(item.created_at).toLocaleDateString()}</td>
                                         <td>
                                             <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                                <button 
-                                                    className="admin-btn admin-btn-primary" 
+                                                <button
+                                                    className="admin-btn admin-btn-primary"
                                                     onClick={() => handleEdit(item)}
                                                 >
                                                     Edit
                                                 </button>
-                                                <button 
-                                                    className="admin-btn admin-btn-danger" 
+                                                <button
+                                                    className="admin-btn admin-btn-danger"
                                                     onClick={() => handleDelete(item.id)}
                                                 >
                                                     Delete

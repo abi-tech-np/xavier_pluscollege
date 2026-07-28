@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { 
-    Target, FastForward, Play, Megaphone, PhoneCall, FileText 
+import {
+    Target, FastForward, Play, Megaphone, PhoneCall, FileText
 } from 'lucide-react';
 
 const AdminDashboard = () => {
@@ -19,7 +19,7 @@ const AdminDashboard = () => {
         const fetchStats = async () => {
             try {
                 const token = localStorage.getItem('adminToken');
-                const res = await axios.get('http://localhost:5000/api/admin/stats', {
+                const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/admin/stats`, {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 setStats(res.data);
@@ -73,7 +73,7 @@ const AdminDashboard = () => {
                     Contents Hub
                 </h2>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem' }}>
-                    
+
                     <div style={cardStyle}>
                         <div style={headerStyle}>
                             <Target size={16} /> Total Popups
@@ -111,7 +111,7 @@ const AdminDashboard = () => {
                     Enquiries
                 </h2>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem' }}>
-                    
+
                     <div style={cardStyle}>
                         <div style={headerStyle}>
                             <PhoneCall size={16} /> Total Contacts

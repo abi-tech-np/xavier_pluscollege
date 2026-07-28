@@ -7,7 +7,7 @@ const NewsAndEventsList = ({ limit }) => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const url = limit ? `http://localhost:5000/api/news-and-events?limit=${limit}` : 'http://localhost:5000/api/news-and-events';
+        const url = limit ? `${import.meta.env.VITE_API_URL}/api/news-and-events?limit=${limit}` : `${import.meta.env.VITE_API_URL}/api/news-and-events`;
         axios.get(url)
             .then(res => {
                 setNewsAndEvents(res.data);

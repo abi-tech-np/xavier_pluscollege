@@ -13,7 +13,7 @@ const ManageEventRegistrations = () => {
     const fetchData = async () => {
         try {
             setLoading(true);
-            const res = await axios.get('http://localhost:5000/api/admin/event-registrations', getAuthHeaders());
+            const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/admin/event-registrations`, getAuthHeaders());
             setRegistrations(res.data);
         } catch (error) {
             console.error('Error fetching registrations:', error);
@@ -29,7 +29,7 @@ const ManageEventRegistrations = () => {
     const handleDelete = async (id) => {
         if (!window.confirm('Are you sure you want to delete this registration?')) return;
         try {
-            await axios.delete(`http://localhost:5000/api/admin/event-registrations/${id}`, getAuthHeaders());
+            await axios.delete(`${import.meta.env.VITE_API_URL}/api/admin/event-registrations/${id}`, getAuthHeaders());
             fetchData();
         } catch (error) {
             console.error('Error deleting registration:', error);
@@ -99,15 +99,15 @@ const ManageEventRegistrations = () => {
                                         <td>{item.email}</td>
                                         <td>{item.phone}</td>
                                         <td>
-                                            {item.is_waitlist ? 
-                                                <span className="admin-badge badge-pending">Waitlisted</span> : 
+                                            {item.is_waitlist ?
+                                                <span className="admin-badge badge-pending">Waitlisted</span> :
                                                 <span className="admin-badge badge-success">Confirmed</span>
                                             }
                                         </td>
                                         <td>{new Date(item.created_at).toLocaleDateString()}</td>
                                         <td>
-                                            <button 
-                                                className="admin-btn admin-btn-danger" 
+                                            <button
+                                                className="admin-btn admin-btn-danger"
                                                 onClick={() => handleDelete(item.id)}
                                             >
                                                 Delete

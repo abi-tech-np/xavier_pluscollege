@@ -92,7 +92,7 @@ const LifeAtXavierSinglePage = () => {
             setEventData(hardcodedData[slug]);
             setLoading(false);
         } else {
-            axios.get(`http://localhost:5000/api/life-at-xavier/${slug}`)
+            axios.get(`${import.meta.env.VITE_API_URL}/api/life-at-xavier/${slug}`)
                 .then(res => {
                     const dbData = res.data;
                     setEventData({

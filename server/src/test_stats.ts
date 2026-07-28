@@ -2,9 +2,11 @@ import jwt from 'jsonwebtoken';
 
 const token = jwt.sign({ id: '1', email: 'test@example.com' }, 'fallback-secret-key-for-development', { expiresIn: '24h' });
 
+const API_URL_BASE = process.env.API_URL_BASE || 'http://localhost:5000';
+
 async function testStats() {
     try {
-        const res = await fetch('http://localhost:5000/api/admin/stats', {
+        const res = await fetch(`${API_URL_BASE}/api/admin/stats`, {
             headers: { Authorization: `Bearer ${token}` }
         });
         const data = await res.json();

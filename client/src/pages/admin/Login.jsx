@@ -17,11 +17,11 @@ const AdminLogin = () => {
         setLoading(true);
 
         try {
-            const res = await axios.post('http://localhost:5000/api/admin/login', {
+            const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/admin/login`, {
                 email,
                 password
             });
-            
+
             // Always store in localStorage because other components hardcode localStorage
             localStorage.setItem('adminToken', res.data.token);
             localStorage.setItem('adminUser', JSON.stringify(res.data.user));
@@ -73,15 +73,15 @@ const AdminLogin = () => {
                             {error}
                         </div>
                     )}
-                    
+
                     <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                         <div>
                             <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: '#d4d4d8', marginBottom: '0.5rem' }}>
                                 Email address <span style={{ color: '#ef4444' }}>*</span>
                             </label>
-                            <input 
-                                type="email" 
-                                required 
+                            <input
+                                type="email"
+                                required
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 style={{
@@ -110,9 +110,9 @@ const AdminLogin = () => {
                                     Forgot password?
                                 </a>
                             </div>
-                            <input 
-                                type="password" 
-                                required 
+                            <input
+                                type="password"
+                                required
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 style={{
@@ -133,28 +133,28 @@ const AdminLogin = () => {
                         </div>
 
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <input 
-                                type="checkbox" 
-                                id="remember" 
+                            <input
+                                type="checkbox"
+                                id="remember"
                                 checked={rememberMe}
                                 onChange={(e) => setRememberMe(e.target.checked)}
-                                style={{ 
-                                    accentColor: '#fbbf24', 
-                                    cursor: 'pointer', 
-                                    width: '1rem', 
+                                style={{
+                                    accentColor: '#fbbf24',
+                                    cursor: 'pointer',
+                                    width: '1rem',
                                     height: '1rem',
                                     backgroundColor: '#27272a',
                                     border: '1px solid #3f3f46',
                                     borderRadius: '0.25rem'
-                                }} 
+                                }}
                             />
                             <label htmlFor="remember" style={{ fontSize: '0.875rem', color: '#d4d4d8', cursor: 'pointer' }}>
                                 Remember me
                             </label>
                         </div>
 
-                        <button 
-                            type="submit" 
+                        <button
+                            type="submit"
                             disabled={loading}
                             style={{
                                 width: '100%',

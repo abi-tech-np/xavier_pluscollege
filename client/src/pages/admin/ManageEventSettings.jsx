@@ -13,7 +13,7 @@ const ManageEventSettings = () => {
     const fetchSettings = async () => {
         try {
             setLoading(true);
-            const res = await axios.get('http://localhost:5000/api/admin/event-settings', getAuthHeaders());
+            const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/admin/event-settings`, getAuthHeaders());
             setSettings(res.data);
         } catch (error) {
             console.error('Error fetching event settings:', error);
@@ -37,7 +37,7 @@ const ManageEventSettings = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            await axios.put('http://localhost:5000/api/admin/event-settings', settings, getAuthHeaders());
+            await axios.put(`${import.meta.env.VITE_API_URL}/api/admin/event-settings`, settings, getAuthHeaders());
             alert('Settings updated successfully!');
             fetchSettings();
         } catch (error) {
@@ -51,10 +51,10 @@ const ManageEventSettings = () => {
     return (
         <div>
             <h2 style={{ fontSize: '1.5rem', fontWeight: '700', color: '#fafafa', marginBottom: '1.5rem' }}>Event Settings</h2>
-            
+
             <div className="admin-card">
                 <form onSubmit={handleSubmit} className="admin-form">
-                    
+
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
                         {/* Basic Info */}
                         <div>

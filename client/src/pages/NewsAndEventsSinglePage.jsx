@@ -40,10 +40,10 @@ const NewsAndEventsSinglePage = () => {
             return;
         }
 
-        axios.get(`http://localhost:5000/api/news-and-events/${slug}`)
+        axios.get(`${import.meta.env.VITE_API_URL}/api/news-and-events/${slug}`)
             .then(res => {
                 const data = res.data;
-                data.bannerImage = data.imageUrl || 'banner-bg.jpg'; 
+                data.bannerImage = data.imageUrl || 'banner-bg.jpg';
                 setEventData(data);
                 setLoading(false);
             })

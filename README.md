@@ -25,7 +25,7 @@ npm install
 # Start the development server
 npm run dev
 ```
-*This will run on `http://localhost:5000`.*
+*This will run on `API_URL_BASE`.*
 
 ### 2. Start the React Frontend (Terminal 2)
 The frontend is built with Vite for lightning-fast hot module replacement.
@@ -70,4 +70,4 @@ The application uses React Router (`BrowserRouter`) for client-side routing. All
 - **Unified Dynamic Routes:** Related pages (like the 7 distinct skills and studies pages) share a single reusable component (`SkillAndStudiesPage.jsx`) that changes its content based on the URL parameter.
 
 ### Image Handling
-Images that were uploaded via the legacy admin panel are stored in the database's polymorphic `media` table (Spatie Media Library). The Express API properly queries this table to construct the full image URL pointing directly to the Express server (e.g. `http://localhost:5000/storage/...`) for seamless backwards compatibility.
+Images that were uploaded via the legacy admin panel are stored in the database's polymorphic `media` table (Spatie Media Library). The Express API properly queries this table to construct the full image URL pointing directly to the Express server (e.g. `API_URL_BASE/storage/...`) for seamless backwards compatibility.

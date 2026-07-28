@@ -13,7 +13,7 @@ const ManageUpcomingEvents = () => {
 
     const fetchEvents = async () => {
         try {
-            const res = await axios.get('http://localhost:5000/api/admin/upcoming-events', getAuthHeaders());
+            const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/admin/upcoming-events`, getAuthHeaders());
             setEvents(res.data);
         } catch (error) {
             console.error('Failed to fetch', error);
@@ -31,7 +31,7 @@ const ManageUpcomingEvents = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            await axios.post('http://localhost:5000/api/admin/upcoming-events', formData, getAuthHeaders());
+            await axios.post(`${import.meta.env.VITE_API_URL}/api/admin/upcoming-events`, formData, getAuthHeaders());
             setFormData({ title: '', time: '', content: '', location: '' });
             fetchEvents();
         } catch (error) {
@@ -42,7 +42,7 @@ const ManageUpcomingEvents = () => {
     const handleDelete = async (id) => {
         if (window.confirm('Are you sure?')) {
             try {
-                await axios.delete(`http://localhost:5000/api/admin/upcoming-events/${id}`, getAuthHeaders());
+                await axios.delete(`${import.meta.env.VITE_API_URL}/api/admin/upcoming-events/${id}`, getAuthHeaders());
                 fetchEvents();
             } catch (error) {
                 console.error('Failed to delete', error);
@@ -53,7 +53,7 @@ const ManageUpcomingEvents = () => {
     return (
         <div>
             <h2 style={{ fontSize: '1.5rem', fontWeight: '700', color: '#fafafa', marginBottom: '1.5rem' }}>Manage Upcoming Events</h2>
-            
+
             <div className="admin-card">
                 <form onSubmit={handleSubmit} className="admin-form" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                     <div className="admin-form-group">

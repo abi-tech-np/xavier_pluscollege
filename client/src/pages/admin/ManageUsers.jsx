@@ -8,10 +8,10 @@ const ManageUsers = () => {
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
     const [perPage, setPerPage] = useState(10);
-    
+
     const [isEditing, setIsEditing] = useState(false);
     const [editUser, setEditUser] = useState({ id: null, name: '', email: '', role: '' });
-    
+
     // Modal state for New User
     const [showModal, setShowModal] = useState(false);
     const [formData, setFormData] = useState({ name: '', email: '', password: '', role: '' });
@@ -23,8 +23,8 @@ const ManageUsers = () => {
     const fetchData = async () => {
         try {
             const [usersRes, rolesRes] = await Promise.all([
-                axios.get('http://localhost:5000/api/admin/users', getAuthHeaders()),
-                axios.get('http://localhost:5000/api/admin/roles', getAuthHeaders())
+                axios.get(`${import.meta.env.VITE_API_URL}/api/admin/users`, getAuthHeaders()),
+                axios.get(`${import.meta.env.VITE_API_URL}/api/admin/roles`, getAuthHeaders())
             ]);
             setUsers(usersRes.data);
             setRoles(rolesRes.data);
@@ -45,7 +45,7 @@ const ManageUsers = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            await axios.post('http://localhost:5000/api/admin/users', formData, getAuthHeaders());
+            await axios.post(`${import.meta.env.VITE_API_URL}/api/admin/users`, formData, getAuthHeaders());
             setFormData({ name: '', email: '', password: '', role: '' });
             setShowModal(false);
             fetchData();
@@ -58,7 +58,7 @@ const ManageUsers = () => {
     const handleEditSubmit = async (e) => {
         e.preventDefault();
         try {
-            await axios.put(`http://localhost:5000/api/admin/users/${editUser.id}`, {
+            await axios.put(`${import.meta.env.VITE_API_URL}/api/admin/users/${editUser.id}`, {
                 name: editUser.name,
                 email: editUser.email,
                 role: editUser.role
@@ -74,7 +74,7 @@ const ManageUsers = () => {
     const handleDelete = async (id) => {
         if (window.confirm('Are you sure you want to delete this user?')) {
             try {
-                await axios.delete(`http://localhost:5000/api/admin/users/${id}`, getAuthHeaders());
+                await axios.delete(`${import.meta.env.VITE_API_URL}/api/admin/users/${id}`, getAuthHeaders());
                 setIsEditing(false);
                 fetchData();
             } catch (error) {
@@ -95,8 +95,8 @@ const ManageUsers = () => {
     };
 
     // Filter users based on search
-    const filteredUsers = users.filter(u => 
-        u.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    const filteredUsers = users.filter(u =>
+        u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         u.email.toLowerCase().includes(searchQuery.toLowerCase())
     );
 
@@ -112,10 +112,10 @@ const ManageUsers = () => {
                     </div>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                         <h1 style={{ fontSize: '1.75rem', fontWeight: 'bold', color: '#ffffff', margin: 0 }}>Edit User</h1>
-                        <button 
+                        <button
                             type="button"
                             onClick={() => handleDelete(editUser.id)}
-                            style={{ 
+                            style={{
                                 backgroundColor: '#ef4444', color: '#ffffff', border: 'none', padding: '0.5rem 1.5rem', borderRadius: '0.375rem', fontWeight: '600', cursor: 'pointer'
                             }}
                         >
@@ -126,18 +126,18 @@ const ManageUsers = () => {
 
                 <form onSubmit={handleEditSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', alignItems: 'start' }}>
-                        
+
                         {/* Name Field */}
                         <div>
                             <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: '#d4d4d8', marginBottom: '0.5rem' }}>
                                 Name <span style={{ color: '#ef4444' }}>*</span>
                             </label>
-                            <input 
-                                type="text" 
-                                name="name" 
-                                value={editUser.name} 
-                                onChange={handleEditChange} 
-                                required 
+                            <input
+                                type="text"
+                                name="name"
+                                value={editUser.name}
+                                onChange={handleEditChange}
+                                required
                                 style={{
                                     width: '100%', padding: '0.625rem 0.75rem', borderRadius: '0.5rem',
                                     backgroundColor: '#18181b', border: '1px solid #27272a', color: '#fafafa', outline: 'none'
@@ -150,19 +150,19 @@ const ManageUsers = () => {
                             <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: '#d4d4d8', marginBottom: '0.5rem' }}>
                                 Email <span style={{ color: '#ef4444' }}>*</span>
                             </label>
-                            <input 
-                                type="email" 
-                                name="email" 
-                                value={editUser.email} 
-                                onChange={handleEditChange} 
-                                required 
+                            <input
+                                type="email"
+                                name="email"
+                                value={editUser.email}
+                                onChange={handleEditChange}
+                                required
                                 style={{
                                     width: '100%', padding: '0.625rem 0.75rem', borderRadius: '0.5rem',
                                     backgroundColor: '#18181b', border: '1px solid #27272a', color: '#fafafa', outline: 'none'
                                 }}
                             />
                         </div>
-                        
+
                         {/* Roles Field */}
                         <div>
                             <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: '#d4d4d8', marginBottom: '0.5rem' }}>
@@ -188,11 +188,11 @@ const ManageUsers = () => {
 
                     {/* Form Actions Footer */}
                     <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem', paddingBottom: '2rem' }}>
-                        <button type="submit" style={{ 
+                        <button type="submit" style={{
                             backgroundColor: '#fbbf24', color: '#000', border: 'none', padding: '0.5rem 1.5rem', borderRadius: '0.375rem', fontWeight: '600', cursor: 'pointer'
                         }}>Save changes</button>
-                        
-                        <button type="button" onClick={() => setIsEditing(false)} style={{ 
+
+                        <button type="button" onClick={() => setIsEditing(false)} style={{
                             backgroundColor: '#27272a', color: '#fafafa', border: '1px solid #3f3f46', padding: '0.5rem 1.5rem', borderRadius: '0.375rem', fontWeight: '500', cursor: 'pointer'
                         }}>Cancel</button>
                     </div>
@@ -213,13 +213,13 @@ const ManageUsers = () => {
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <h1 style={{ fontSize: '2rem', fontWeight: 'bold', color: '#ffffff', margin: 0 }}>Users</h1>
-                    <button 
+                    <button
                         onClick={() => setShowModal(true)}
-                        style={{ 
-                            backgroundColor: '#fbbf24', 
-                            color: '#000000', 
-                            fontWeight: '600', 
-                            padding: '0.6rem 1.25rem', 
+                        style={{
+                            backgroundColor: '#fbbf24',
+                            color: '#000000',
+                            fontWeight: '600',
+                            padding: '0.6rem 1.25rem',
                             borderRadius: '0.375rem',
                             border: 'none',
                             cursor: 'pointer',
@@ -281,42 +281,42 @@ const ManageUsers = () => {
             )}
 
             {/* Main Card Container */}
-            <div style={{ 
-                backgroundColor: '#18181b', 
-                borderRadius: '0.75rem', 
+            <div style={{
+                backgroundColor: '#18181b',
+                borderRadius: '0.75rem',
                 border: '1px solid #27272a',
-                overflow: 'hidden' 
+                overflow: 'hidden'
             }}>
-                
+
                 {/* Toolbar */}
-                <div style={{ 
-                    padding: '1rem 1.5rem', 
-                    display: 'flex', 
+                <div style={{
+                    padding: '1rem 1.5rem',
+                    display: 'flex',
                     justifyContent: 'flex-end',
                     borderBottom: '1px solid #27272a'
                 }}>
-                    <div style={{ 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        backgroundColor: '#27272a', 
+                    <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        backgroundColor: '#27272a',
                         borderRadius: '0.375rem',
                         padding: '0.4rem 0.75rem',
                         border: '1px solid #3f3f46'
                     }}>
                         <Search size={16} color="#71717a" style={{ marginRight: '0.5rem' }} />
-                        <input 
-                            type="text" 
-                            placeholder="Search" 
+                        <input
+                            type="text"
+                            placeholder="Search"
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            style={{ 
-                                backgroundColor: 'transparent', 
-                                border: 'none', 
-                                color: '#e4e4e7', 
+                            style={{
+                                backgroundColor: 'transparent',
+                                border: 'none',
+                                color: '#e4e4e7',
                                 outline: 'none',
                                 fontSize: '0.9rem',
                                 width: '200px'
-                            }} 
+                            }}
                         />
                     </div>
                 </div>
@@ -373,9 +373,9 @@ const ManageUsers = () => {
                                             <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                                                 {user.roles && user.roles.length > 0 ? (
                                                     user.roles.map((role, idx) => (
-                                                        <span key={idx} style={{ 
-                                                            border: '1px solid rgba(245, 158, 11, 0.3)', 
-                                                            backgroundColor: 'rgba(245, 158, 11, 0.1)', 
+                                                        <span key={idx} style={{
+                                                            border: '1px solid rgba(245, 158, 11, 0.3)',
+                                                            backgroundColor: 'rgba(245, 158, 11, 0.1)',
                                                             color: '#fbbf24',
                                                             padding: '0.2rem 0.6rem',
                                                             borderRadius: '0.375rem',
@@ -394,15 +394,15 @@ const ManageUsers = () => {
                                             {new Date(user.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                                         </td>
                                         <td style={{ padding: '1rem 1.5rem', textAlign: 'right' }}>
-                                            <button 
+                                            <button
                                                 onClick={() => openEdit(user)}
-                                                style={{ 
-                                                    display: 'flex', 
-                                                    alignItems: 'center', 
-                                                    gap: '0.3rem', 
-                                                    backgroundColor: 'transparent', 
-                                                    border: 'none', 
-                                                    color: '#fbbf24', 
+                                                style={{
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '0.3rem',
+                                                    backgroundColor: 'transparent',
+                                                    border: 'none',
+                                                    color: '#fbbf24',
                                                     fontWeight: '600',
                                                     cursor: 'pointer',
                                                     fontSize: '0.85rem'
@@ -419,10 +419,10 @@ const ManageUsers = () => {
                 </div>
 
                 {/* Footer Pagination */}
-                <div style={{ 
-                    padding: '1rem 1.5rem', 
-                    display: 'flex', 
-                    justifyContent: 'space-between', 
+                <div style={{
+                    padding: '1rem 1.5rem',
+                    display: 'flex',
+                    justifyContent: 'space-between',
                     alignItems: 'center',
                     borderTop: '1px solid #27272a',
                     backgroundColor: '#18181b'
@@ -432,10 +432,10 @@ const ManageUsers = () => {
                     </div>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: '#a1a1aa', fontSize: '0.85rem' }}>
                         <span>Per page</span>
-                        <div style={{ 
-                            display: 'flex', 
-                            alignItems: 'center', 
-                            backgroundColor: '#27272a', 
+                        <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            backgroundColor: '#27272a',
                             border: '1px solid #3f3f46',
                             borderRadius: '0.375rem',
                             padding: '0.3rem 0.6rem',

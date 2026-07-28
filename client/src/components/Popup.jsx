@@ -13,7 +13,7 @@ const Popup = () => {
                     return;
                 }
 
-                const res = await axios.get('http://localhost:5000/api/popups');
+                const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/popups`);
                 if (res.data && res.data.length > 0) {
                     setPopup(res.data[0]);
                     setIsVisible(true);
@@ -34,7 +34,7 @@ const Popup = () => {
     if (!isVisible || !popup) return null;
 
     // Use absolute URL for the image if it's a relative path from the API
-    const imageSrc = popup.imageUrl ? `http://localhost:5000${popup.imageUrl}` : null;
+    const imageSrc = popup.imageUrl ? `${import.meta.env.VITE_API_URL}${popup.imageUrl}` : null;
 
     return (
         <div style={{
@@ -60,7 +60,7 @@ const Popup = () => {
                 flexDirection: 'column',
                 overflow: 'hidden'
             }}>
-                <button 
+                <button
                     onClick={handleClose}
                     style={{
                         position: 'absolute',
@@ -85,40 +85,40 @@ const Popup = () => {
 
                 {imageSrc && (
                     <div style={{ width: '100%', backgroundColor: '#f3f4f6', minHeight: '150px' }}>
-                        <img 
-                            src={imageSrc} 
-                            alt={popup.title || 'Popup Notice'} 
-                            style={{ 
-                                width: '100%', 
+                        <img
+                            src={imageSrc}
+                            alt={popup.title || 'Popup Notice'}
+                            style={{
+                                width: '100%',
                                 maxHeight: '500px',
                                 objectFit: 'contain',
-                                display: 'block' 
-                            }} 
+                                display: 'block'
+                            }}
                             onError={(e) => {
                                 e.target.style.display = 'none'; // Hide if broken
                             }}
                         />
                     </div>
                 )}
-                
+
                 <div style={{ padding: '24px', textAlign: 'center', flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
                     {popup.title && (
-                        <h2 style={{ 
-                            margin: '0 0 16px 0', 
-                            fontSize: '24px', 
-                            fontWeight: '700', 
+                        <h2 style={{
+                            margin: '0 0 16px 0',
+                            fontSize: '24px',
+                            fontWeight: '700',
                             color: '#111827',
                             lineHeight: '1.2'
                         }}>
                             {popup.title}
                         </h2>
                     )}
-                    
+
                     {popup.link && (
                         <div style={{ marginTop: '10px' }}>
-                            <a 
-                                href={popup.link} 
-                                target="_blank" 
+                            <a
+                                href={popup.link}
+                                target="_blank"
                                 rel="noopener noreferrer"
                                 style={{
                                     display: 'inline-block',

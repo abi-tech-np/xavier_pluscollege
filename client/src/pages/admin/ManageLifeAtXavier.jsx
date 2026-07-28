@@ -6,7 +6,7 @@ const ManageLifeAtXavier = () => {
     const [items, setItems] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isCreating, setIsCreating] = useState(false);
-    
+
     const [formData, setFormData] = useState({
         title: '',
         slug: '',
@@ -15,7 +15,7 @@ const ManageLifeAtXavier = () => {
         meta_description: '',
         meta_schema: ''
     });
-    
+
     const [thumbnail, setThumbnail] = useState(null);
     const [ogImage, setOgImage] = useState(null);
 
@@ -25,7 +25,7 @@ const ManageLifeAtXavier = () => {
 
     const fetchItems = async () => {
         try {
-            const res = await axios.get('http://localhost:5000/api/admin/life-at-xaviers', getAuthHeaders());
+            const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/admin/life-at-xaviers`, getAuthHeaders());
             setItems(res.data);
         } catch (error) {
             console.error('Failed to fetch', error);
@@ -69,12 +69,12 @@ const ManageLifeAtXavier = () => {
             if (thumbnail) submitData.append('thumbnail', thumbnail);
             if (ogImage) submitData.append('og_image', ogImage);
 
-            await axios.post('http://localhost:5000/api/admin/life-at-xaviers', submitData, {
+            await axios.post(`${import.meta.env.VITE_API_URL}/api/admin/life-at-xaviers`, submitData, {
                 headers: { ...getAuthHeaders().headers, 'Content-Type': 'multipart/form-data' }
             });
-            
+
             fetchItems();
-            
+
             if (shouldCreateAnother) {
                 setFormData({ title: '', slug: '', status: 'Publish', meta_title: '', meta_description: '', meta_schema: '' });
                 setThumbnail(null);
@@ -91,7 +91,7 @@ const ManageLifeAtXavier = () => {
     const handleDelete = async (id) => {
         if (window.confirm('Are you sure?')) {
             try {
-                await axios.delete(`http://localhost:5000/api/admin/life-at-xaviers/${id}`, getAuthHeaders());
+                await axios.delete(`${import.meta.env.VITE_API_URL}/api/admin/life-at-xaviers/${id}`, getAuthHeaders());
                 fetchItems();
             } catch (error) {
                 console.error('Failed to delete', error);
@@ -114,7 +114,7 @@ const ManageLifeAtXavier = () => {
 
                 {/* Grid Layout */}
                 <form onSubmit={(e) => handleSubmit(e, false)} style={{ display: 'grid', gridTemplateColumns: '1fr 350px', gap: '1.5rem', alignItems: 'start' }}>
-                    
+
                     {/* Left Column */}
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                         {/* Main Details Card */}
@@ -123,12 +123,12 @@ const ManageLifeAtXavier = () => {
                                 <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: '#d4d4d8', marginBottom: '0.5rem' }}>
                                     Event Title <span style={{ color: '#ef4444' }}>*</span>
                                 </label>
-                                <input 
-                                    type="text" 
-                                    name="title" 
-                                    value={formData.title} 
-                                    onChange={handleChange} 
-                                    required 
+                                <input
+                                    type="text"
+                                    name="title"
+                                    value={formData.title}
+                                    onChange={handleChange}
+                                    required
                                     style={{
                                         width: '100%', padding: '0.625rem 0.75rem', borderRadius: '0.5rem',
                                         backgroundColor: '#27272a', border: '1px solid #3f3f46', color: '#fafafa', outline: 'none'
@@ -142,8 +142,8 @@ const ManageLifeAtXavier = () => {
                                 <div style={{
                                     border: '1px dashed #3f3f46', borderRadius: '0.5rem', padding: '2rem', textAlign: 'center', backgroundColor: '#27272a', position: 'relative'
                                 }}>
-                                    <input 
-                                        type="file" 
+                                    <input
+                                        type="file"
                                         onChange={(e) => handleFileChange(e, setThumbnail)}
                                         accept="image/*"
                                         style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer' }}
@@ -167,7 +167,7 @@ const ManageLifeAtXavier = () => {
                                 <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: '#d4d4d8', marginBottom: '0.5rem' }}>
                                     Status <span style={{ color: '#ef4444' }}>*</span>
                                 </label>
-                                <select 
+                                <select
                                     name="status"
                                     value={formData.status}
                                     onChange={handleChange}
@@ -190,18 +190,18 @@ const ManageLifeAtXavier = () => {
                             <h3 style={{ fontSize: '1rem', fontWeight: '600', color: '#fafafa', margin: 0 }}>Meta</h3>
                             <ChevronUp size={16} color="#71717a" />
                         </div>
-                        
+
                         <div style={{ marginBottom: '1.5rem' }}>
                             <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: '#d4d4d8', marginBottom: '0.5rem' }}>Meta title</label>
-                            <input 
-                                type="text" name="meta_title" value={formData.meta_title} onChange={handleChange} 
+                            <input
+                                type="text" name="meta_title" value={formData.meta_title} onChange={handleChange}
                                 style={{ width: '100%', padding: '0.625rem 0.75rem', borderRadius: '0.5rem', backgroundColor: '#27272a', border: '1px solid #3f3f46', color: '#fafafa', outline: 'none' }}
                             />
                         </div>
 
                         <div style={{ marginBottom: '1.5rem' }}>
                             <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: '#d4d4d8', marginBottom: '0.5rem' }}>Meta Description</label>
-                            <textarea 
+                            <textarea
                                 name="meta_description" value={formData.meta_description} onChange={handleChange} rows="3"
                                 style={{ width: '100%', padding: '0.625rem 0.75rem', borderRadius: '0.5rem', backgroundColor: '#27272a', border: '1px solid #3f3f46', color: '#fafafa', outline: 'none', resize: 'vertical' }}
                             ></textarea>
@@ -215,8 +215,8 @@ const ManageLifeAtXavier = () => {
                             <div style={{
                                 border: '1px dashed #3f3f46', borderRadius: '0.5rem', padding: '2rem', textAlign: 'center', backgroundColor: '#27272a', position: 'relative'
                             }}>
-                                <input 
-                                    type="file" 
+                                <input
+                                    type="file"
                                     onChange={(e) => handleFileChange(e, setOgImage)}
                                     accept="image/*"
                                     style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer' }}
@@ -234,7 +234,7 @@ const ManageLifeAtXavier = () => {
                                 <label style={{ fontSize: '0.875rem', fontWeight: '500', color: '#d4d4d8' }}>Schema</label>
                                 <span style={{ fontSize: '0.75rem', color: '#71717a' }}>Please, provide full script tag for schema</span>
                             </div>
-                            <textarea 
+                            <textarea
                                 name="meta_schema" value={formData.meta_schema} onChange={handleChange} rows="3"
                                 style={{ width: '100%', padding: '0.625rem 0.75rem', borderRadius: '0.5rem', backgroundColor: '#27272a', border: '1px solid #3f3f46', color: '#fafafa', outline: 'none', resize: 'vertical' }}
                             ></textarea>
@@ -243,15 +243,15 @@ const ManageLifeAtXavier = () => {
 
                     {/* Form Actions Footer */}
                     <div style={{ gridColumn: 'span 2', display: 'flex', gap: '1rem', marginTop: '1rem', paddingBottom: '2rem' }}>
-                        <button type="submit" style={{ 
+                        <button type="submit" style={{
                             backgroundColor: '#fbbf24', color: '#000', border: 'none', padding: '0.5rem 1.5rem', borderRadius: '0.375rem', fontWeight: '600', cursor: 'pointer'
                         }}>Create</button>
-                        
-                        <button type="button" onClick={(e) => handleSubmit(e, true)} style={{ 
+
+                        <button type="button" onClick={(e) => handleSubmit(e, true)} style={{
                             backgroundColor: '#27272a', color: '#fafafa', border: '1px solid #3f3f46', padding: '0.5rem 1.5rem', borderRadius: '0.375rem', fontWeight: '500', cursor: 'pointer'
                         }}>Create & create another</button>
-                        
-                        <button type="button" onClick={() => setIsCreating(false)} style={{ 
+
+                        <button type="button" onClick={() => setIsCreating(false)} style={{
                             backgroundColor: '#18181b', color: '#fafafa', border: '1px solid #3f3f46', padding: '0.5rem 1.5rem', borderRadius: '0.375rem', fontWeight: '500', cursor: 'pointer'
                         }}>Cancel</button>
                     </div>
@@ -265,15 +265,15 @@ const ManageLifeAtXavier = () => {
         <div style={{ padding: '0 1rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
                 <h1 style={{ fontSize: '2rem', fontWeight: 'bold', color: '#ffffff', margin: 0 }}>Life At Xaviers</h1>
-                <button 
+                <button
                     onClick={() => setIsCreating(true)}
-                    style={{ 
+                    style={{
                         backgroundColor: '#fbbf24', color: '#000', fontWeight: '600', padding: '0.6rem 1.25rem', borderRadius: '0.375rem', border: 'none', cursor: 'pointer'
                     }}>
                     New entry
                 </button>
             </div>
-            
+
             <div className="admin-card">
                 {loading ? <p>Loading...</p> : (
                     <div className="admin-table-container">
@@ -292,7 +292,7 @@ const ManageLifeAtXavier = () => {
                                         <td style={{ padding: '1rem 1.5rem', color: '#d4d4d8', fontWeight: '500' }}>{item.title}</td>
                                         <td style={{ padding: '1rem 1.5rem', color: '#d4d4d8' }}>{item.slug}</td>
                                         <td style={{ padding: '1rem 1.5rem' }}>
-                                            <span style={{ 
+                                            <span style={{
                                                 backgroundColor: item.status ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)',
                                                 color: item.status ? '#22c55e' : '#ef4444',
                                                 border: `1px solid ${item.status ? 'rgba(34, 197, 94, 0.2)' : 'rgba(239, 68, 68, 0.2)'}`,

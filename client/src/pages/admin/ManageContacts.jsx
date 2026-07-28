@@ -12,7 +12,7 @@ const ManageContacts = () => {
 
     const fetchContacts = async () => {
         try {
-            const res = await axios.get('http://localhost:5000/api/admin/contacts', getAuthHeaders());
+            const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/admin/contacts`, getAuthHeaders());
             setContacts(res.data);
         } catch (error) {
             console.error('Failed to fetch', error);
@@ -28,7 +28,7 @@ const ManageContacts = () => {
     const handleDelete = async (id) => {
         if (window.confirm('Are you sure?')) {
             try {
-                await axios.delete(`http://localhost:5000/api/admin/contacts/${id}`, getAuthHeaders());
+                await axios.delete(`${import.meta.env.VITE_API_URL}/api/admin/contacts/${id}`, getAuthHeaders());
                 fetchContacts();
             } catch (error) {
                 console.error('Failed to delete', error);
@@ -39,7 +39,7 @@ const ManageContacts = () => {
     return (
         <div>
             <h2 style={{ fontSize: '1.5rem', fontWeight: '700', color: '#fafafa', marginBottom: '1.5rem' }}>Manage Contacts</h2>
-            
+
             <div className="admin-card">
                 {loading ? <p>Loading...</p> : (
                     <div className="admin-table-container">

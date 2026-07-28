@@ -5,7 +5,7 @@ import { Trash2, Edit2, Plus, Save } from 'lucide-react';
 const ManageMetas = () => {
     const [metas, setMetas] = useState([]);
     const [loading, setLoading] = useState(true);
-    
+
     // Form state
     const [showForm, setShowForm] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
@@ -26,7 +26,7 @@ const ManageMetas = () => {
     const fetchData = async () => {
         try {
             setLoading(true);
-            const res = await axios.get('http://localhost:5000/api/admin/metas', getAuthHeaders());
+            const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/admin/metas`, getAuthHeaders());
             setMetas(res.data);
         } catch (error) {
             console.error('Error fetching metas:', error);
@@ -73,9 +73,9 @@ const ManageMetas = () => {
         e.preventDefault();
         try {
             if (isEditing) {
-                await axios.put(`http://localhost:5000/api/admin/metas/${formData.id}`, formData, getAuthHeaders());
+                await axios.put(`${import.meta.env.VITE_API_URL}/api/admin/metas/${formData.id}`, formData, getAuthHeaders());
             } else {
-                await axios.post('http://localhost:5000/api/admin/metas', formData, getAuthHeaders());
+                await axios.post(`${import.meta.env.VITE_API_URL}/api/admin/metas`, formData, getAuthHeaders());
             }
             resetForm();
             fetchData();
@@ -88,7 +88,7 @@ const ManageMetas = () => {
     const handleDelete = async (id) => {
         if (!window.confirm('Are you sure you want to delete this SEO meta record?')) return;
         try {
-            await axios.delete(`http://localhost:5000/api/admin/metas/${id}`, getAuthHeaders());
+            await axios.delete(`${import.meta.env.VITE_API_URL}/api/admin/metas/${id}`, getAuthHeaders());
             fetchData();
         } catch (error) {
             console.error('Error deleting meta:', error);
@@ -133,7 +133,7 @@ const ManageMetas = () => {
                             <label>JSON-LD Schema (Optional)</label>
                             <textarea name="schema" value={formData.schema} onChange={handleChange} rows="4" style={{ fontFamily: 'monospace' }}></textarea>
                         </div>
-                        
+
                         <div className="admin-form-group" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                             <input type="checkbox" name="status" checked={formData.status} onChange={handleChange} />
                             <label style={{ marginBottom: 0 }}>Active</label>
@@ -173,21 +173,21 @@ const ManageMetas = () => {
                                         <td style={{ fontWeight: 600 }}>{item.metaable_id}</td>
                                         <td style={{ fontWeight: 500, color: '#fafafa' }}>{item.title || 'N/A'}</td>
                                         <td>
-                                            {item.status ? 
-                                                <span className="admin-badge badge-success">Active</span> : 
+                                            {item.status ?
+                                                <span className="admin-badge badge-success">Active</span> :
                                                 <span className="admin-badge badge-pending">Inactive</span>
                                             }
                                         </td>
                                         <td>
                                             <div style={{ display: 'flex', gap: '0.5rem' }}>
-                                                <button 
-                                                    className="admin-btn admin-btn-primary" 
+                                                <button
+                                                    className="admin-btn admin-btn-primary"
                                                     onClick={() => handleEdit(item)}
                                                 >
                                                     <Edit2 size={14} />
                                                 </button>
-                                                <button 
-                                                    className="admin-btn admin-btn-danger" 
+                                                <button
+                                                    className="admin-btn admin-btn-danger"
                                                     onClick={() => handleDelete(item.id)}
                                                 >
                                                     <Trash2 size={14} />

@@ -12,7 +12,7 @@ const UpcomingEventsPage = () => {
             window.initApp();
         }
 
-        axios.get('http://localhost:5000/api/upcoming-events')
+        axios.get(`${import.meta.env.VITE_API_URL}/api/upcoming-events`)
             .then(res => {
                 setUpcomingEvents(res.data);
                 setLoading(false);
@@ -38,7 +38,7 @@ const UpcomingEventsPage = () => {
         const startMonth = startDate.toLocaleString('en-US', { month: 'long' });
         const startDay = startDate.getDate();
         const startYear = startDate.getFullYear();
-        
+
         const endMonth = endDate.toLocaleString('en-US', { month: 'long' });
         const endDay = endDate.getDate();
         const endYear = endDate.getFullYear();
@@ -68,7 +68,7 @@ const UpcomingEventsPage = () => {
             <div className="upcoming_events">
                 <div className="container-lg">
                     <div className="upcoming_events__container">
-                        
+
                         {loading ? (
                             <p>Loading...</p>
                         ) : upcomingEvents.map((event) => (
