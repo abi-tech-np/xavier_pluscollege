@@ -1,7 +1,25 @@
 import "./bootstrap";
 gsap.registerPlugin(ScrollTrigger, MotionPathPlugin);
 
+export function cleanupApp() {
+    if (typeof ScrollTrigger !== 'undefined') {
+        const instances = ScrollTrigger.getAll();
+        console.log('[cleanupApp] Killing instances:', instances.length);
+        instances.forEach(t => t.kill());
+    }
+}
+
+export function refreshApp() {
+    if (typeof ScrollTrigger !== 'undefined') {
+        console.log('[refreshApp] ScrollTrigger instances:', ScrollTrigger.getAll().length);
+        ScrollTrigger.refresh();
+    }
+}
+
 export function initApp() {
+    console.log('[initApp] Creating new ScrollTrigger instances. Before cleanup:', typeof ScrollTrigger !== 'undefined' ? ScrollTrigger.getAll().length : 0);
+    cleanupApp(); // Kill old instances before creating new ones
+
 const header = document.querySelector("header");
 const logo = header.querySelector(".logo");
 

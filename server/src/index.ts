@@ -21,6 +21,18 @@ const serializeBigInt = (obj: any) => {
     ));
 };
 
+const slugify = (text: string): string => {
+    return text
+        .toString()
+        .toLowerCase()
+        .trim()
+        .replace(/\s+/g, '-')
+        .replace(/[^\w\-]+/g, '')
+        .replace(/\-\-+/g, '-')
+        .replace(/^-+/, '')
+        .replace(/-+$/, '');
+};
+
 app.use(cors());
 app.use(express.json());
 app.use('/storage', express.static(path.join(__dirname, '../storage')));
@@ -181,11 +193,53 @@ app.get('/api/upcoming-events', async (req, res) => {
     try {
         const take = req.query.limit ? parseInt(req.query.limit as string, 10) : undefined;
         const items = await prisma.upcoming_events.findMany({
-            where: { status: true, deleted_at: null },
+            where: { status: true },
             orderBy: { start_date: 'asc' },
             ...(take ? { take } : {})
         });
-        res.json(items);
+        // Include slug in response (generate from title if DB slug is null)
+        const data = items.map(item => ({
+            ...item,
+            slug: item.slug || slugify(item.title)
+        }));
+        res.json(serializeBigInt(data));
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// GET /api/upcoming-events/:slug
+app.get('/api/upcoming-events/:slug', async (req, res) => {
+    try {
+        const { slug } = req.params;
+
+        // First try to find by slug in DB
+        let item = await prisma.upcoming_events.findFirst({
+            where: { slug, status: true }
+        });
+
+        // If not found by slug, try matching by slugified title
+        if (!item) {
+            const allItems = await prisma.upcoming_events.findMany({
+                where: { status: true }
+            });
+            item = allItems.find(e => slugify(e.title) === slug) || null;
+        }
+
+        if (!item) {
+            return res.status(404).json({ error: 'Event not found' });
+        }
+
+        // Fetch media for this event
+        const media = await getMediaForModels('App\\Models\\UpcomingEvent', [item.id]);
+        const imageUrls = media.map(m => `${req.protocol}://${req.get('host')}/storage/${m.id}/${m.file_name}`);
+
+        res.json(serializeBigInt({
+            ...item,
+            slug: item.slug || slugify(item.title),
+            imageUrls
+        }));
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Internal server error' });
@@ -209,7 +263,7 @@ app.post('/api/contact', async (req, res) => {
                 updated_at: new Date()
             }
         });
-        res.status(201).json({ success: true, contact: newContact });
+        res.status(201).json({ success: true, contact: serializeBigInt(newContact) });
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Internal server error' });
@@ -222,7 +276,7 @@ app.get('/api/courses', async (req, res) => {
         const courses = await prisma.courses.findMany({
             where: { deleted_at: null }
         });
-        res.json(courses);
+        res.json(serializeBigInt(courses));
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Internal server error' });
@@ -232,9 +286,9 @@ app.get('/api/courses', async (req, res) => {
 // POST /api/apply
 app.post('/api/apply', async (req, res) => {
     try {
-        const { name, email, address, contact, school, gpa, course_id } = req.body;
+        const { name, email, address, contact, school, gpa, course } = req.body;
         
-        if (!name || !email || !address || !contact || !school || !gpa || !course_id) {
+        if (!name || !email || !address || !contact || !school || !gpa || !course) {
             return res.status(400).json({ error: 'All fields are required' });
         }
 
@@ -246,12 +300,12 @@ app.post('/api/apply', async (req, res) => {
                 contact: BigInt(contact),
                 school,
                 gpa,
-                course_id: BigInt(course_id),
+                course,
                 created_at: new Date(),
                 updated_at: new Date()
             }
         });
-        res.status(201).json({ success: true, application: newApply });
+        res.status(201).json({ success: true, application: serializeBigInt(newApply) });
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Internal server error' });

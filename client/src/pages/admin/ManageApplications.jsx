@@ -2,9 +2,13 @@ import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Download } from 'lucide-react';
 
+const COURSES = [
+    { category: '+2', courses: ['Science', 'Management', 'Humanities', 'Law'] },
+    { category: 'A Level', courses: ['Science', 'Non-Science', 'Humanities', 'Law'] },
+];
+
 const ManageApplications = () => {
     const [applications, setApplications] = useState([]);
-    const [courses, setCourses] = useState([]);
     const [loading, setLoading] = useState(true);
 
     // Filters
@@ -19,12 +23,8 @@ const ManageApplications = () => {
     const fetchData = async () => {
         try {
             setLoading(true);
-            const [appsRes, coursesRes] = await Promise.all([
-                axios.get('http://localhost:5000/api/admin/applications', getAuthHeaders()),
-                axios.get('http://localhost:5000/api/admin/courses', getAuthHeaders())
-            ]);
+            const appsRes = await axios.get('http://localhost:5000/api/admin/applications', getAuthHeaders());
             setApplications(appsRes.data);
-            setCourses(coursesRes.data);
         } catch (error) {
             console.error('Error fetching data:', error);
         } finally {
@@ -52,8 +52,7 @@ const ManageApplications = () => {
         let matchDate = true;
 
         if (courseFilter) {
-            // compare stringified ID just in case
-            matchCourse = String(app.course_id) === String(courseFilter);
+            matchCourse = app.course === courseFilter;
         }
 
         if (startDate || endDate) {
@@ -86,7 +85,7 @@ const ManageApplications = () => {
             `"${app.name}"`,
             `"${app.email}"`,
             `"${app.contact}"`,
-            `"${app.courses?.course || 'Unknown'}"`,
+            `"${app.course || 'Unknown'}"`,
             `"${app.gpa}"`,
             `"${new Date(app.created_at).toLocaleDateString()}"`
         ]);
@@ -121,8 +120,14 @@ const ManageApplications = () => {
                             style={{ width: '100%', padding: '0.6rem', borderRadius: '0.375rem', backgroundColor: '#262626', color: '#fafafa', border: '1px solid #404040' }}
                         >
                             <option value="">All Courses</option>
-                            {courses.map(course => (
-                                <option key={course.id} value={course.id}>{course.course}</option>
+                            {COURSES.map(group => (
+                                <optgroup key={group.category} label={group.category}>
+                                    {group.courses.map(c => (
+                                        <option key={`${group.category}-${c}`} value={`${group.category} - ${c}`}>
+                                            {group.category} - {c}
+                                        </option>
+                                    ))}
+                                </optgroup>
                             ))}
                         </select>
                     </div>
@@ -175,7 +180,7 @@ const ManageApplications = () => {
                                         <td style={{ fontWeight: 500, color: '#fafafa' }}>{item.name}</td>
                                         <td>{item.email}</td>
                                         <td>{item.contact}</td>
-                                        <td><span className="admin-badge badge-pending">{item.courses?.course || 'Unknown'}</span></td>
+                                        <td><span className="admin-badge badge-pending">{item.course || 'Unknown'}</span></td>
                                         <td style={{ fontWeight: 600, color: '#fafafa' }}>{item.gpa}</td>
                                         <td>{new Date(item.created_at).toLocaleDateString()}</td>
                                         <td>

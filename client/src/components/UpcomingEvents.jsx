@@ -19,6 +19,41 @@ const UpcomingEvents = ({ limit }) => {
             });
     }, []);
 
+    const hardcodedEvents = [
+        {
+            id: 'hc-1',
+            slug: '3rd-see-3v3-basketball-tournament',
+            title: '3rd SEE 3v3 Basketball Tournament',
+            start_date: '2024-06-06',
+            end_date: '2024-06-07',
+            time: null
+        },
+        {
+            id: 'hc-2',
+            slug: 'a-level-seminar',
+            title: 'A Level Seminar',
+            start_date: '2024-05-15',
+            end_date: '2024-05-15',
+            time: '10:30 am onwards '
+        },
+        {
+            id: 'hc-3',
+            slug: '2-seminar',
+            title: '+2 Seminar',
+            start_date: '2024-05-15',
+            end_date: '2024-05-15',
+            time: '10:30 am onwards'
+        },
+        {
+            id: 'hc-4',
+            slug: 'a-level-orientation-program',
+            title: <React.Fragment>A Level Orientation <br /> Program</React.Fragment>,
+            start_date: '2024-05-15',
+            end_date: '2024-05-15',
+            time: '10:00 am - 5:00 pm'
+        }
+    ];
+
     const renderDate = (startDateStr, endDateStr) => {
         if (!startDateStr) return null;
         const startDate = new Date(startDateStr);
@@ -63,37 +98,6 @@ const UpcomingEvents = ({ limit }) => {
         }
     };
 
-    const hardcodedEvents = [
-        {
-            id: 'hc-1',
-            title: '3rd SEE 3v3 Basketball Tournament',
-            start_date: '2024-06-06',
-            end_date: '2024-06-07',
-            time: null
-        },
-        {
-            id: 'hc-2',
-            title: 'A Level Seminar',
-            start_date: '2024-05-15',
-            end_date: '2024-05-15',
-            time: '10:30 am onwards '
-        },
-        {
-            id: 'hc-3',
-            title: '+2 Seminar',
-            start_date: '2024-05-15',
-            end_date: '2024-05-15',
-            time: '10:30 am onwards'
-        },
-        {
-            id: 'hc-4',
-            title: <React.Fragment>A Level Orientation <br /> Program</React.Fragment>,
-            start_date: '2024-05-15',
-            end_date: '2024-05-15',
-            time: '10:00 am - 5:00 pm'
-        }
-    ];
-
     const allEvents = [...upcomingEvents, ...hardcodedEvents];
 
     return (
@@ -114,7 +118,7 @@ const UpcomingEvents = ({ limit }) => {
                             <p>Loading...</p>
                         ) : allEvents.map((event) => (
                             <div className="item" key={event.id}>
-                                <Link className="upcoming-event-link" to="/upcoming-events"></Link>
+                                <Link className="upcoming-event-link" to={`/upcoming-events/${event.slug}`}></Link>
                                 <div className="date__container">
                                     {renderDate(event.start_date, event.end_date)}
                                 </div>
@@ -122,7 +126,7 @@ const UpcomingEvents = ({ limit }) => {
                                     <h4>{event.title}</h4>
                                     {event.time && <span>{event.time}</span>}
                                 </div>
-                                <Link className="item-readmore" to="/upcoming-events">Read more</Link>
+                                <Link className="item-readmore" to={`/upcoming-events/${event.slug}`}>Read more</Link>
                             </div>
                         ))}
 
