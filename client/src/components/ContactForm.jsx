@@ -19,7 +19,7 @@ const ContactForm = () => {
         e.preventDefault();
         try {
             setStatus('submitting');
-            await axios.post('http://localhost:5000/api/contact', formData);
+            await axios.post('https://plus.xavier.edu.np/plus-api/api/contact', formData);
             setStatus('success');
             setFormData({ name: '', email: '', contact: '', message: '' });
         } catch (error) {

@@ -13,7 +13,7 @@ const ManageEventSettings = () => {
     const fetchSettings = async () => {
         try {
             setLoading(true);
-            const res = await axios.get('http://localhost:5000/api/admin/event-settings', getAuthHeaders());
+            const res = await axios.get('https://plus.xavier.edu.np/plus-api/api/admin/event-settings', getAuthHeaders());
             setSettings(res.data);
         } catch (error) {
             console.error('Error fetching event settings:', error);
@@ -37,7 +37,7 @@ const ManageEventSettings = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            await axios.put('http://localhost:5000/api/admin/event-settings', settings, getAuthHeaders());
+            await axios.put('https://plus.xavier.edu.np/plus-api/api/admin/event-settings', settings, getAuthHeaders());
             alert('Settings updated successfully!');
             fetchSettings();
         } catch (error) {

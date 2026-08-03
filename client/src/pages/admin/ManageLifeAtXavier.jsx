@@ -25,7 +25,7 @@ const ManageLifeAtXavier = () => {
 
     const fetchItems = async () => {
         try {
-            const res = await axios.get('http://localhost:5000/api/admin/life-at-xaviers', getAuthHeaders());
+            const res = await axios.get('https://plus.xavier.edu.np/plus-api/api/admin/life-at-xaviers', getAuthHeaders());
             setItems(res.data);
         } catch (error) {
             console.error('Failed to fetch', error);
@@ -69,7 +69,7 @@ const ManageLifeAtXavier = () => {
             if (thumbnail) submitData.append('thumbnail', thumbnail);
             if (ogImage) submitData.append('og_image', ogImage);
 
-            await axios.post('http://localhost:5000/api/admin/life-at-xaviers', submitData, {
+            await axios.post('https://plus.xavier.edu.np/plus-api/api/admin/life-at-xaviers', submitData, {
                 headers: { ...getAuthHeaders().headers, 'Content-Type': 'multipart/form-data' }
             });
             
@@ -91,7 +91,7 @@ const ManageLifeAtXavier = () => {
     const handleDelete = async (id) => {
         if (window.confirm('Are you sure?')) {
             try {
-                await axios.delete(`http://localhost:5000/api/admin/life-at-xaviers/${id}`, getAuthHeaders());
+                await axios.delete(`https://plus.xavier.edu.np/plus-api/api/admin/life-at-xaviers/${id}`, getAuthHeaders());
                 fetchItems();
             } catch (error) {
                 console.error('Failed to delete', error);

@@ -23,7 +23,7 @@ const ManagePopups = () => {
 
     const fetchPopups = async () => {
         try {
-            const res = await axios.get('http://localhost:5000/api/admin/popups', getAuthHeaders());
+            const res = await axios.get('https://plus.xavier.edu.np/plus-api/api/admin/popups', getAuthHeaders());
             setPopups(res.data);
         } catch (error) {
             console.error('Failed to fetch popups', error);
@@ -61,7 +61,7 @@ const ManagePopups = () => {
                 data.append('image', formData.image);
             }
 
-            await axios.post('http://localhost:5000/api/admin/popups', data, {
+            await axios.post('https://plus.xavier.edu.np/plus-api/api/admin/popups', data, {
                 headers: { 
                     ...getAuthHeaders().headers,
                     'Content-Type': 'multipart/form-data' 
@@ -84,7 +84,7 @@ const ManagePopups = () => {
     const handleDelete = async (id) => {
         if (window.confirm('Are you sure you want to delete this popup?')) {
             try {
-                await axios.delete(`http://localhost:5000/api/admin/popups/${id}`, getAuthHeaders());
+                await axios.delete(`https://plus.xavier.edu.np/plus-api/api/admin/popups/${id}`, getAuthHeaders());
                 fetchPopups();
             } catch (error) {
                 console.error('Failed to delete popup', error);

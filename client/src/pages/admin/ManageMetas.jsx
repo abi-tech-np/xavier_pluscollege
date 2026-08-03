@@ -26,7 +26,7 @@ const ManageMetas = () => {
     const fetchData = async () => {
         try {
             setLoading(true);
-            const res = await axios.get('http://localhost:5000/api/admin/metas', getAuthHeaders());
+            const res = await axios.get('https://plus.xavier.edu.np/plus-api/api/admin/metas', getAuthHeaders());
             setMetas(res.data);
         } catch (error) {
             console.error('Error fetching metas:', error);
@@ -73,9 +73,9 @@ const ManageMetas = () => {
         e.preventDefault();
         try {
             if (isEditing) {
-                await axios.put(`http://localhost:5000/api/admin/metas/${formData.id}`, formData, getAuthHeaders());
+                await axios.put(`https://plus.xavier.edu.np/plus-api/api/admin/metas/${formData.id}`, formData, getAuthHeaders());
             } else {
-                await axios.post('http://localhost:5000/api/admin/metas', formData, getAuthHeaders());
+                await axios.post('https://plus.xavier.edu.np/plus-api/api/admin/metas', formData, getAuthHeaders());
             }
             resetForm();
             fetchData();
@@ -88,7 +88,7 @@ const ManageMetas = () => {
     const handleDelete = async (id) => {
         if (!window.confirm('Are you sure you want to delete this SEO meta record?')) return;
         try {
-            await axios.delete(`http://localhost:5000/api/admin/metas/${id}`, getAuthHeaders());
+            await axios.delete(`https://plus.xavier.edu.np/plus-api/api/admin/metas/${id}`, getAuthHeaders());
             fetchData();
         } catch (error) {
             console.error('Error deleting meta:', error);

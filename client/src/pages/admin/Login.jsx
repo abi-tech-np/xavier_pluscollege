@@ -17,7 +17,7 @@ const AdminLogin = () => {
         setLoading(true);
 
         try {
-            const res = await axios.post('http://localhost:5000/api/admin/login', {
+            const res = await axios.post('https://plus.xavier.edu.np/plus-api/api/admin/login', {
                 email,
                 password
             });

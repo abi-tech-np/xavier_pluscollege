@@ -13,7 +13,7 @@ const ManageCourses = () => {
 
     const fetchCourses = async () => {
         try {
-            const res = await axios.get('http://localhost:5000/api/admin/courses', getAuthHeaders());
+            const res = await axios.get('https://plus.xavier.edu.np/plus-api/api/admin/courses', getAuthHeaders());
             setCourses(res.data);
         } catch (error) {
             console.error('Failed to fetch', error);
@@ -29,7 +29,7 @@ const ManageCourses = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            await axios.post('http://localhost:5000/api/admin/courses', { course: courseName }, getAuthHeaders());
+            await axios.post('https://plus.xavier.edu.np/plus-api/api/admin/courses', { course: courseName }, getAuthHeaders());
             setCourseName('');
             fetchCourses();
         } catch (error) {
@@ -40,7 +40,7 @@ const ManageCourses = () => {
     const handleDelete = async (id) => {
         if (window.confirm('Are you sure?')) {
             try {
-                await axios.delete(`http://localhost:5000/api/admin/courses/${id}`, getAuthHeaders());
+                await axios.delete(`https://plus.xavier.edu.np/plus-api/api/admin/courses/${id}`, getAuthHeaders());
                 fetchCourses();
             } catch (error) {
                 console.error('Failed to delete', error);

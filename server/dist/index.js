@@ -1,29 +1,29 @@
-import express from 'express';
-import cors from 'cors';
-import path from 'path';
-import { PrismaClient } from '../generated/prisma';
-import adminRouter from './routes/admin';
-
+"use strict";
+var __importDefault = (this && this.__importDefault) || function (mod) {
+    return (mod && mod.__esModule) ? mod : { "default": mod };
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+const express_1 = __importDefault(require("express"));
+const cors_1 = __importDefault(require("cors"));
+const path_1 = __importDefault(require("path"));
+const prisma_1 = require("../generated/prisma");
+const admin_1 = __importDefault(require("./routes/admin"));
 // Patch BigInt to serialize nicely in JSON
-(BigInt.prototype as any).toJSON = function () {
+BigInt.prototype.toJSON = function () {
     return this.toString();
 };
-
-const app = express();
-const prisma = new PrismaClient({});
+const app = (0, express_1.default)();
+const prisma = new prisma_1.PrismaClient({});
 const PORT = process.env.PORT || 5000;
-
-const serializeBigInt = (obj: any) => {
-    return JSON.parse(JSON.stringify(obj, (key, value) =>
-        typeof value === 'bigint'
-            ? value.toString()
-            : value // return everything else unchanged
+const serializeBigInt = (obj) => {
+    return JSON.parse(JSON.stringify(obj, (key, value) => typeof value === 'bigint'
+        ? value.toString()
+        : value // return everything else unchanged
     ));
 };
-
-app.use(cors());
-app.use(express.json());
-app.use('/storage', express.static(path.join(__dirname, '../storage')));
+app.use((0, cors_1.default)());
+app.use(express_1.default.json());
+app.use('/storage', express_1.default.static(path_1.default.join(__dirname, '../storage')));
 // GET /api/popups
 app.get('/api/popups', async (req, res) => {
     try {
@@ -31,7 +31,6 @@ app.get('/api/popups', async (req, res) => {
             where: { status: true },
             orderBy: { created_at: 'desc' }
         });
-        
         // Fetch media for these popups
         const media = await prisma.media.findMany({
             where: {
@@ -39,7 +38,6 @@ app.get('/api/popups', async (req, res) => {
                 model_id: { in: activePopups.map(p => p.id) }
             }
         });
-
         const data = activePopups.map(popup => {
             const popupMedia = media.find(m => m.model_id === popup.id);
             return {
@@ -47,19 +45,18 @@ app.get('/api/popups', async (req, res) => {
                 imageUrl: popupMedia ? `/storage/${popupMedia.id}/${popupMedia.file_name}` : null
             };
         });
-
         res.json(serializeBigInt(data));
-    } catch (e) {
+    }
+    catch (e) {
         console.error('Failed to fetch popups', e);
         res.status(500).json({ error: 'Server error' });
     }
 });
-
-app.use('/api/admin', adminRouter);
-
+app.use('/api/admin', admin_1.default);
 // Helper to fetch media for polymorphic relations
-const getMediaForModels = async (modelType: string, modelIds: bigint[]) => {
-    if (modelIds.length === 0) return [];
+const getMediaForModels = async (modelType, modelIds) => {
+    if (modelIds.length === 0)
+        return [];
     return await prisma.media.findMany({
         where: {
             model_type: modelType,
@@ -67,23 +64,20 @@ const getMediaForModels = async (modelType: string, modelIds: bigint[]) => {
         }
     });
 };
-
 app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', message: 'Backend is running' });
 });
-
 // GET /api/life-at-xavier
 app.get('/api/life-at-xavier', async (req, res) => {
     try {
-        const take = req.query.limit ? parseInt(req.query.limit as string, 10) : undefined;
+        const take = req.query.limit ? parseInt(req.query.limit, 10) : undefined;
         const items = await prisma.life_at_xaviers.findMany({
-            where: { status: true },
+            where: { status: true, deleted_at: null },
             orderBy: { created_at: 'desc' },
             ...(take ? { take } : {})
         });
         const ids = items.map(item => item.id);
         const media = await getMediaForModels('App\\Models\\LifeAtXavier', ids);
-        
         const data = items.map(item => {
             const itemMedia = media.find(m => m.model_id === item.id);
             return {
@@ -92,54 +86,48 @@ app.get('/api/life-at-xavier', async (req, res) => {
             };
         });
         res.json(data);
-    } catch (error) {
+    }
+    catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
-
 // GET /api/life-at-xavier/:slug
 app.get('/api/life-at-xavier/:slug', async (req, res) => {
     try {
         const item = await prisma.life_at_xaviers.findFirst({
-            where: { slug: req.params.slug, status: true }
+            where: { slug: req.params.slug, status: true, deleted_at: null }
         });
-        
         if (!item) {
             return res.status(404).json({ error: 'Not found' });
         }
-
         const media = await getMediaForModels('App\\Models\\LifeAtXavier', [item.id]);
-        
         // Find all gallery images for this event
         const galleryMedia = media.filter(m => m.model_id === item.id);
         const galleryUrls = galleryMedia.map(m => `${req.protocol}://${req.get('host')}/storage/${m.id}/${m.file_name}`);
-
         const itemMedia = media.find(m => m.model_id === item.id);
-
         res.json({
             ...item,
             imageUrl: itemMedia ? `${req.protocol}://${req.get('host')}/storage/${itemMedia.id}/${itemMedia.file_name}` : null,
             galleryUrls
         });
-    } catch (error) {
+    }
+    catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
-
 // GET /api/news-and-events
 app.get('/api/news-and-events', async (req, res) => {
     try {
-        const take = req.query.limit ? parseInt(req.query.limit as string, 10) : undefined;
+        const take = req.query.limit ? parseInt(req.query.limit, 10) : undefined;
         const items = await prisma.news_and_events.findMany({
-            where: { status: true },
+            where: { status: true, deleted_at: null },
             orderBy: { created_at: 'desc' },
             ...(take ? { take } : {})
         });
         const ids = items.map(item => item.id);
         const media = await getMediaForModels('App\\Models\\NewsAndEvent', ids);
-        
         const data = items.map(item => {
             const itemMedia = media.find(m => m.model_id === item.id && m.collection_name === 'newsandevents.thumbnail');
             return {
@@ -148,19 +136,18 @@ app.get('/api/news-and-events', async (req, res) => {
             };
         });
         res.json(data);
-    } catch (error) {
+    }
+    catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
-
 // GET /api/news-and-events/:slug
 app.get('/api/news-and-events/:slug', async (req, res) => {
     try {
         const item = await prisma.news_and_events.findFirst({
-            where: { slug: req.params.slug, status: true }
+            where: { slug: req.params.slug, status: true, deleted_at: null }
         });
-        
         if (item) {
             const media = await getMediaForModels('App\\Models\\NewsAndEvent', [item.id]);
             const itemMedia = media.find(m => m.model_id === item.id && m.collection_name === 'newsandevents.thumbnail');
@@ -168,30 +155,31 @@ app.get('/api/news-and-events/:slug', async (req, res) => {
                 ...item,
                 imageUrl: itemMedia ? `${req.protocol}://${req.get('host')}/storage/${itemMedia.id}/${itemMedia.file_name}` : null
             });
-        } else {
+        }
+        else {
             res.status(404).json({ error: 'News or event not found' });
         }
-    } catch (error) {
+    }
+    catch (error) {
         res.status(500).json({ error: 'Error fetching news and event' });
     }
 });
-
 // GET /api/upcoming-events
 app.get('/api/upcoming-events', async (req, res) => {
     try {
-        const take = req.query.limit ? parseInt(req.query.limit as string, 10) : undefined;
+        const take = req.query.limit ? parseInt(req.query.limit, 10) : undefined;
         const items = await prisma.upcoming_events.findMany({
-            where: { status: true },
+            where: { status: true, deleted_at: null },
             orderBy: { start_date: 'asc' },
             ...(take ? { take } : {})
         });
         res.json(items);
-    } catch (error) {
+    }
+    catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
-
 // POST /api/contact
 app.post('/api/contact', async (req, res) => {
     try {
@@ -210,34 +198,32 @@ app.post('/api/contact', async (req, res) => {
             }
         });
         res.status(201).json({ success: true, contact: newContact });
-    } catch (error) {
+    }
+    catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
-
 // GET /api/courses
 app.get('/api/courses', async (req, res) => {
     try {
         const courses = await prisma.courses.findMany({
-            where: {}
+            where: { deleted_at: null }
         });
         res.json(courses);
-    } catch (error) {
+    }
+    catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
-
 // POST /api/apply
 app.post('/api/apply', async (req, res) => {
     try {
         const { name, email, address, contact, school, gpa, course_id } = req.body;
-        
         if (!name || !email || !address || !contact || !school || !gpa || !course_id) {
             return res.status(400).json({ error: 'All fields are required' });
         }
-
         const newApply = await prisma.applies.create({
             data: {
                 name,
@@ -252,12 +238,12 @@ app.post('/api/apply', async (req, res) => {
             }
         });
         res.status(201).json({ success: true, application: newApply });
-    } catch (error) {
+    }
+    catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Internal server error' });
     }
 });
-
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });

@@ -13,7 +13,7 @@ const Popup = () => {
                     return;
                 }
 
-                const res = await axios.get('http://localhost:5000/api/popups');
+                const res = await axios.get('https://plus.xavier.edu.np/plus-api/api/popups');
                 if (res.data && res.data.length > 0) {
                     setPopup(res.data[0]);
                     setIsVisible(true);
@@ -34,7 +34,7 @@ const Popup = () => {
     if (!isVisible || !popup) return null;
 
     // Use absolute URL for the image if it's a relative path from the API
-    const imageSrc = popup.imageUrl ? `http://localhost:5000${popup.imageUrl}` : null;
+    const imageSrc = popup.imageUrl ? `https://plus.xavier.edu.np/plus-api${popup.imageUrl}` : null;
 
     return (
         <div style={{

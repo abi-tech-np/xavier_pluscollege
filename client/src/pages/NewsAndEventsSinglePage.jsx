@@ -40,7 +40,7 @@ const NewsAndEventsSinglePage = () => {
             return;
         }
 
-        axios.get(`http://localhost:5000/api/news-and-events/${slug}`)
+        axios.get(`https://plus.xavier.edu.np/plus-api/api/news-and-events/${slug}`)
             .then(res => {
                 const data = res.data;
                 data.bannerImage = data.imageUrl || 'banner-bg.jpg'; 

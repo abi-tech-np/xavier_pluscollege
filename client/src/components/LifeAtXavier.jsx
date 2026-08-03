@@ -7,7 +7,7 @@ const LifeAtXavier = ({ limit }) => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const url = limit ? `http://localhost:5000/api/life-at-xavier?limit=${limit}` : 'http://localhost:5000/api/life-at-xavier';
+        const url = limit ? `https://plus.xavier.edu.np/plus-api/api/life-at-xavier?limit=${limit}` : 'https://plus.xavier.edu.np/plus-api/api/life-at-xavier';
         axios.get(url)
             .then(res => {
                 setItems(res.data);

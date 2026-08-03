@@ -20,8 +20,8 @@ const ManageApplications = () => {
         try {
             setLoading(true);
             const [appsRes, coursesRes] = await Promise.all([
-                axios.get('http://localhost:5000/api/admin/applications', getAuthHeaders()),
-                axios.get('http://localhost:5000/api/admin/courses', getAuthHeaders())
+                axios.get('https://plus.xavier.edu.np/plus-api/api/admin/applications', getAuthHeaders()),
+                axios.get('https://plus.xavier.edu.np/plus-api/api/admin/courses', getAuthHeaders())
             ]);
             setApplications(appsRes.data);
             setCourses(coursesRes.data);
@@ -39,7 +39,7 @@ const ManageApplications = () => {
     const handleDelete = async (id) => {
         if (!window.confirm('Are you sure you want to delete this application?')) return;
         try {
-            await axios.delete(`http://localhost:5000/api/admin/applications/${id}`, getAuthHeaders());
+            await axios.delete(`https://plus.xavier.edu.np/plus-api/api/admin/applications/${id}`, getAuthHeaders());
             fetchData();
         } catch (error) {
             console.error('Error deleting application:', error);

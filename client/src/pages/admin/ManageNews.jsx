@@ -22,7 +22,7 @@ const ManageNews = () => {
     const fetchNews = async () => {
         try {
             setLoading(true);
-            const res = await axios.get('http://localhost:5000/api/admin/news', getAuthHeaders());
+            const res = await axios.get('https://plus.xavier.edu.np/plus-api/api/admin/news', getAuthHeaders());
             setNews(res.data);
         } catch (error) {
             console.error('Error fetching news:', error);
@@ -55,9 +55,9 @@ const ManageNews = () => {
         e.preventDefault();
         try {
             if (isEditing) {
-                await axios.put(`http://localhost:5000/api/admin/news/${currentId}`, formData, getAuthHeaders());
+                await axios.put(`https://plus.xavier.edu.np/plus-api/api/admin/news/${currentId}`, formData, getAuthHeaders());
             } else {
-                await axios.post('http://localhost:5000/api/admin/news', formData, getAuthHeaders());
+                await axios.post('https://plus.xavier.edu.np/plus-api/api/admin/news', formData, getAuthHeaders());
             }
             fetchNews();
             handleCancel();
@@ -82,7 +82,7 @@ const ManageNews = () => {
     const handleDelete = async (id) => {
         if (!window.confirm('Are you sure you want to delete this news item?')) return;
         try {
-            await axios.delete(`http://localhost:5000/api/admin/news/${id}`, getAuthHeaders());
+            await axios.delete(`https://plus.xavier.edu.np/plus-api/api/admin/news/${id}`, getAuthHeaders());
             fetchNews();
         } catch (error) {
             console.error('Error deleting news:', error);

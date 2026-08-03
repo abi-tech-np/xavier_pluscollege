@@ -12,7 +12,7 @@ const UpcomingEventsPage = () => {
             window.initApp();
         }
 
-        axios.get('http://localhost:5000/api/upcoming-events')
+        axios.get('https://plus.xavier.edu.np/plus-api/api/upcoming-events')
             .then(res => {
                 setUpcomingEvents(res.data);
                 setLoading(false);

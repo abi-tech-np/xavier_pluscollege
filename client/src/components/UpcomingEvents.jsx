@@ -7,7 +7,7 @@ const UpcomingEvents = ({ limit }) => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const url = limit ? `http://localhost:5000/api/upcoming-events?limit=${limit}` : 'http://localhost:5000/api/upcoming-events';
+        const url = limit ? `https://plus.xavier.edu.np/plus-api/api/upcoming-events?limit=${limit}` : 'https://plus.xavier.edu.np/plus-api/api/upcoming-events';
         axios.get(url)
             .then(res => {
                 setUpcomingEvents(res.data);
