@@ -128,18 +128,12 @@ router.delete('/news/:id', async (req: AuthRequest, res: Response) => {
 router.get('/applications', async (req: AuthRequest, res: Response) => {
     try {
         const items = await prisma.applies.findMany({
-            orderBy: { created_at: 'desc' },
-            include: { courses: true }
+            orderBy: { created_at: 'desc' }
         });
         res.json(items.map(item => ({
             ...item,
             id: item.id.toString(),
-            course_id: item.course_id.toString(),
-            contact: item.contact.toString(),
-            courses: {
-                ...item.courses,
-                id: item.courses.id.toString()
-            }
+            contact: item.contact.toString()
         })));
     } catch (error) {
         console.error(error);
@@ -290,17 +284,32 @@ router.get('/upcoming-events', async (req, res) => {
         res.json(serializeBigInt(items));
     } catch (e) { res.status(500).json({ error: 'Server error' }); }
 });
+
+const slugify = (text: string): string => {
+    return text
+        .toString()
+        .toLowerCase()
+        .trim()
+        .replace(/\s+/g, '-')
+        .replace(/[^\w\-]+/g, '')
+        .replace(/\-\-+/g, '-')
+        .replace(/^-+/, '')
+        .replace(/-+$/, '');
+};
+
 router.post('/upcoming-events', async (req, res) => {
     try {
         const { title, time, content, location, status } = req.body;
-        const newItem = await prisma.upcoming_events.create({ data: { title, time, content, location, status: status ?? true, created_at: new Date(), updated_at: new Date() } });
+        const slug = slugify(title);
+        const newItem = await prisma.upcoming_events.create({ data: { title, slug, time, content, location, status: status ?? true, created_at: new Date(), updated_at: new Date() } });
         res.json(serializeBigInt(newItem));
     } catch (e) { res.status(500).json({ error: 'Server error' }); }
 });
 router.put('/upcoming-events/:id', async (req, res) => {
     try {
         const { title, time, content, location, status } = req.body;
-        const item = await prisma.upcoming_events.update({ where: { id: BigInt(req.params.id as string) }, data: { title, time, content, location, status, updated_at: new Date() } });
+        const slug = slugify(title);
+        const item = await prisma.upcoming_events.update({ where: { id: BigInt(req.params.id as string) }, data: { title, slug, time, content, location, status, updated_at: new Date() } });
         res.json(serializeBigInt(item));
     } catch (e) { res.status(500).json({ error: 'Server error' }); }
 });

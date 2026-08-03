@@ -30,7 +30,7 @@ const Footer = () => {
                         </p>
                         <ul className="social__links">
                             <li><a target="_blank" rel="noreferrer" href="https://www.facebook.com/xavierinternationalcollege"><i className="fa-brands fa-facebook-f"></i></a></li>
-                            <li><a target="_blank" rel="noreferrer" href="https://www.youtube.com/@xavierinternationalcollege2575"><i className="fa-brands fa-youtube"></i></a></li>
+                            <li><a target="_blank" rel="noreferrer" href="https://www.youtube.com/@xavierinternationalcollege"><i className="fa-brands fa-youtube"></i></a></li>
                             <li><a target="_blank" rel="noreferrer" href="https://www.instagram.com/xavierinternational/"><i className="fa-brands fa-instagram"></i></a></li>
                         </ul>
                     </div>

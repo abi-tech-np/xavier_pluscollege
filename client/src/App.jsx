@@ -14,6 +14,7 @@ import ALevelScience from './pages/courses/ALevelScience';
 import ALevelNonScience from './pages/courses/ALevelNonScience';
 import NewsAndEvents from './pages/NewsAndEvents';
 import UpcomingEventsPage from './pages/UpcomingEventsPage';
+import UpcomingEventDetailPage from './pages/UpcomingEventDetailPage';
 import LifeAtXavierPage from './pages/LifeAtXavierPage';
 import ApplyNowPage from './pages/ApplyNowPage';
 import LifeAtXavierSinglePage from './pages/LifeAtXavierSinglePage';
@@ -79,6 +80,7 @@ const App = () => {
           <Route path="news-and-events" element={<NewsAndEvents />} />
           <Route path="news-and-events/:slug" element={<NewsAndEventsSinglePage />} />
           <Route path="upcoming-events" element={<UpcomingEventsPage />} />
+          <Route path="upcoming-events/:slug" element={<UpcomingEventDetailPage />} />
           <Route path="life-at-xavier" element={<LifeAtXavierPage />} />
           <Route path="life-at-xavier/:slug" element={<LifeAtXavierSinglePage />} />
           <Route path="skill/:slug" element={<SkillAndStudiesPage />} />
