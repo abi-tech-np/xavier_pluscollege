@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import { getApiUrl } from '../services/apiClient';
 
 const ContactForm = () => {
     const [formData, setFormData] = useState({
@@ -19,7 +20,7 @@ const ContactForm = () => {
         e.preventDefault();
         try {
             setStatus('submitting');
-            await axios.post('https://plus.xavier.edu.np/plus-api/api/contact', formData);
+            await axios.post(getApiUrl('/contact'), formData);
             setStatus('success');
             setFormData({ name: '', email: '', contact: '', message: '' });
         } catch (error) {

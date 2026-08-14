@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import { fetchApiData } from '../services/apiClient';
 import { Link } from 'react-router-dom';
 
 const UpcomingEvents = ({ limit }) => {
@@ -7,17 +7,27 @@ const UpcomingEvents = ({ limit }) => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const url = limit ? `https://plus.xavier.edu.np/plus-api/api/upcoming-events?limit=${limit}` : 'https://plus.xavier.edu.np/plus-api/api/upcoming-events';
-        axios.get(url)
-            .then(res => {
-                setUpcomingEvents(res.data);
-                setLoading(false);
+        let isMounted = true;
+        const path = limit ? `/upcoming-events?limit=${limit}` : '/upcoming-events';
+        
+        fetchApiData(path)
+            .then(data => {
+                if (isMounted) {
+                    setUpcomingEvents(data);
+                    setLoading(false);
+                }
             })
             .catch(err => {
-                console.error(err);
-                setLoading(false);
+                if (isMounted) {
+                    console.error(err);
+                    setLoading(false);
+                }
             });
-    }, []);
+
+        return () => {
+            isMounted = false;
+        };
+    }, [limit]);
 
     const hardcodedEvents = [
         {

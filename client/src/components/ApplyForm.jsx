@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
+import { getApiUrl } from '../services/apiClient';
 
 const COURSES = [
     { category: '+2', courses: ['Science', 'Management', 'Humanities', 'Law'] },
@@ -47,7 +48,7 @@ const ApplyForm = () => {
         if (validate()) {
             setIsSubmitting(true);
             try {
-                await axios.post('http://localhost:5000/api/apply', formData);
+                await axios.post(getApiUrl('/apply'), formData);
                 setIsPopupOpen(true);
                 document.querySelector("html").style.overflow = "hidden";
                 setFormData({

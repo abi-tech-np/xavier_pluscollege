@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 const Footer = () => {
     return (
         <footer>
-            <img src="/images/footer/bg-image.jpg" alt="" className="bg-art" />
+            <img src="/images/footer/bg-image.webp" alt="" className="bg-art" loading="lazy" />
             <div className="upper__footer">
                 <picture>
                     <source srcSet="/images/footer/footer-mobile.svg" media="(max-width: 991px)" />
@@ -18,11 +18,11 @@ const Footer = () => {
                 <div className="container">
                     <div className="lower__footer-container">
                         <ul className="footer__menu">
-                            <li><Link to="/about-us">about</Link></li>
-                            <li><Link to="/our-courses">academics</Link></li>
+                            <li><a href="/#about">about</a></li>
+                            <li><a href="/#academics">academics</a></li>
                             <li><a href="/#infrastructure">infrastructure</a></li>
-                            <li><Link to="/news-and-events">news and events</Link></li>
-                            <li><Link to="/life-at-xavier">life at Xavier</Link></li>
+                            <li><a href="/#news-and-events">news and events</a></li>
+                            <li><a href="/#life-at-xavier">life at Xavier</a></li>
                             <li><Link to="/news-and-events#upcoming-events">notice</Link></li>
                         </ul>
                         <p>

@@ -31,7 +31,7 @@ const Infrastructure = () => {
                                     </ul>
                                 </div>
                             </div>
-                            <img src="/images/homepage/infrastructure/one-new.png" alt="" className="bg-image" />
+                            <img src="/images/homepage/infrastructure/one-new.png" alt="" className="bg-image" loading="lazy" />
                         </div>
                         <div className="item">
                             <div className="content">
@@ -46,7 +46,7 @@ const Infrastructure = () => {
                                     </ul>
                                 </div>
                             </div>
-                            <img src="/images/homepage/infrastructure/two-new.png" alt="" className="bg-image" />
+                            <img src="/images/homepage/infrastructure/two-new.png" alt="" className="bg-image" loading="lazy" />
                         </div>
                         <div className="item">
                             <div className="content">
@@ -61,7 +61,7 @@ const Infrastructure = () => {
                                     </ul>
                                 </div>
                             </div>
-                            <img src="/images/homepage/infrastructure/cutting-edge.jpg" alt="" className="bg-image" />
+                            <img src="/images/homepage/infrastructure/cutting-edge.webp" alt="" className="bg-image" loading="lazy" />
                         </div>
                         <div className="item">
                             <div className="content">
@@ -75,7 +75,7 @@ const Infrastructure = () => {
                                     </ul>
                                 </div>
                             </div>
-                            <img src="/images/homepage/infrastructure/refresh-zone.jpg" alt="" className="bg-image" />
+                            <img src="/images/homepage/infrastructure/refresh-zone.webp" alt="" className="bg-image" loading="lazy" />
                         </div>
                         <div className="item">
                             <div className="content">
@@ -90,7 +90,7 @@ const Infrastructure = () => {
                                     </ul>
                                 </div>
                             </div>
-                            <img src="/images/homepage/infrastructure/practical-labs.jpg" alt="" className="bg-image" />
+                            <img src="/images/homepage/infrastructure/practical-labs.webp" alt="" className="bg-image" loading="lazy" />
                         </div>
                     </div>
                 </div>

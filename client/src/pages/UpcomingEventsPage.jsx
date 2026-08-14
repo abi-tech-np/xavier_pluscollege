@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import { fetchApiData } from '../services/apiClient';
 import { Link } from 'react-router-dom';
 import Banner from '../components/Banner';
 import FooterPassrate from '../components/FooterPassrate';
@@ -13,9 +13,9 @@ const UpcomingEventsPage = () => {
             window.initApp();
         }
 
-        axios.get('https://plus.xavier.edu.np/plus-api/api/upcoming-events')
-            .then(res => {
-                setUpcomingEvents(res.data);
+        fetchApiData('/upcoming-events')
+            .then(data => {
+                setUpcomingEvents(data);
                 setLoading(false);
             })
             .catch(err => {

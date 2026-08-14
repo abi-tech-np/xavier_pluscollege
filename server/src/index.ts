@@ -33,9 +33,44 @@ const slugify = (text: string): string => {
         .replace(/-+$/, '');
 };
 
-app.use(cors());
+// Robust CORS configuration handling Preflight OPTIONS requests
+const corsOptions = {
+    origin: process.env.ALLOWED_ORIGINS
+        ? process.env.ALLOWED_ORIGINS.split(',')
+        : ['http://localhost:5173', 'http://localhost:4173', 'https://plus.xavier.edu.np'],
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+    credentials: false,
+    optionsSuccessStatus: 204
+};
+
+app.use(cors(corsOptions));
+
+
 app.use(express.json());
-app.use('/storage', express.static(path.join(__dirname, '../storage')));
+app.use('/storage', express.static(path.join(__dirname, '../storage'), {
+    maxAge: '7d',
+    immutable: false
+}));
+
+// Serve Vite production build with appropriate cache headers
+const clientDistPath = path.join(__dirname, '../../client/dist');
+// Hashed assets (JS/CSS/images) get long-lived immutable cache
+app.use('/assets', express.static(path.join(clientDistPath, 'assets'), {
+    maxAge: '365d',
+    immutable: true
+}));
+// Other static files from public/ (images, videos, fonts) served with moderate cache
+app.use(express.static(clientDistPath, {
+    maxAge: '7d',
+    setHeaders: (res, filePath) => {
+        // HTML should not be cached aggressively
+        if (filePath.endsWith('.html')) {
+            res.setHeader('Cache-Control', 'no-cache');
+        }
+    }
+}));
+
 // GET /api/popups
 app.get('/api/popups', async (req, res) => {
     try {
@@ -43,7 +78,7 @@ app.get('/api/popups', async (req, res) => {
             where: { status: true },
             orderBy: { created_at: 'desc' }
         });
-        
+
         // Fetch media for these popups
         const media = await prisma.media.findMany({
             where: {
@@ -95,7 +130,7 @@ app.get('/api/life-at-xavier', async (req, res) => {
         });
         const ids = items.map(item => item.id);
         const media = await getMediaForModels('App\\Models\\LifeAtXavier', ids);
-        
+
         const data = items.map(item => {
             const itemMedia = media.find(m => m.model_id === item.id);
             return {
@@ -103,7 +138,7 @@ app.get('/api/life-at-xavier', async (req, res) => {
                 imageUrl: itemMedia ? `${req.protocol}://${req.get('host')}/storage/${itemMedia.id}/${itemMedia.file_name}` : null
             };
         });
-        res.json(data);
+        res.json(serializeBigInt(data));
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Internal server error' });
@@ -116,13 +151,13 @@ app.get('/api/life-at-xavier/:slug', async (req, res) => {
         const item = await prisma.life_at_xaviers.findFirst({
             where: { slug: req.params.slug, status: true }
         });
-        
+
         if (!item) {
             return res.status(404).json({ error: 'Not found' });
         }
 
         const media = await getMediaForModels('App\\Models\\LifeAtXavier', [item.id]);
-        
+
         // Find all gallery images for this event
         const galleryMedia = media.filter(m => m.model_id === item.id);
         const galleryUrls = galleryMedia.map(m => `${req.protocol}://${req.get('host')}/storage/${m.id}/${m.file_name}`);
@@ -151,7 +186,7 @@ app.get('/api/news-and-events', async (req, res) => {
         });
         const ids = items.map(item => item.id);
         const media = await getMediaForModels('App\\Models\\NewsAndEvent', ids);
-        
+
         const data = items.map(item => {
             const itemMedia = media.find(m => m.model_id === item.id && m.collection_name === 'newsandevents.thumbnail');
             return {
@@ -159,7 +194,7 @@ app.get('/api/news-and-events', async (req, res) => {
                 imageUrl: itemMedia ? `${req.protocol}://${req.get('host')}/storage/${itemMedia.id}/${itemMedia.file_name}` : null
             };
         });
-        res.json(data);
+        res.json(serializeBigInt(data));
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Internal server error' });
@@ -172,7 +207,7 @@ app.get('/api/news-and-events/:slug', async (req, res) => {
         const item = await prisma.news_and_events.findFirst({
             where: { slug: req.params.slug, status: true }
         });
-        
+
         if (item) {
             const media = await getMediaForModels('App\\Models\\NewsAndEvent', [item.id]);
             const itemMedia = media.find(m => m.model_id === item.id && m.collection_name === 'newsandevents.thumbnail');
@@ -287,7 +322,7 @@ app.get('/api/courses', async (req, res) => {
 app.post('/api/apply', async (req, res) => {
     try {
         const { name, email, address, contact, school, gpa, course } = req.body;
-        
+
         if (!name || !email || !address || !contact || !school || !gpa || !course) {
             return res.status(400).json({ error: 'All fields are required' });
         }

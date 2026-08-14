@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 
 const Courses = ({ hidePassrate = false }) => {
     return (
-        <div className="courses">
+        <div className="courses" id="academics">
             <img src="/images/homepage/course__bg-art.png" alt="" className="art" />
             <div className="container-lg">
                 <div className="courses__container">
@@ -37,7 +37,7 @@ const Courses = ({ hidePassrate = false }) => {
                                         </div>
                                         <Link to="/our-courses/science" className="btn"><span>Read More</span></Link>
                                     </div>
-                                    <img src="/images/homepage/courses/4.png" alt="" className="bg-image" />
+                                    <img src="/images/homepage/courses/4.png" alt="" className="bg-image" loading="lazy" />
                                 </div>
                                 <div className="swiper-slide item">
                                     <div className="title">
@@ -52,10 +52,10 @@ const Courses = ({ hidePassrate = false }) => {
                                         </div>
                                         <Link to="/our-courses/management" className="btn"><span>Read More</span></Link>
                                     </div>
-                                    <img src="/images/homepage/courses/5.png" alt="" className="bg-image" />
+                                    <img src="/images/homepage/courses/5.png" alt="" className="bg-image" loading="lazy" />
                                 </div>
                                 <div className="swiper-slide item">
-                                    <img src="/images/homepage/courses/plustwo-main.jpg" alt="" />
+                                    <img src="/images/homepage/courses/plustwo-main.webp" alt="" loading="lazy" />
                                 </div>
                                 <div className="swiper-slide item">
                                     <div className="title">
@@ -70,7 +70,7 @@ const Courses = ({ hidePassrate = false }) => {
                                         </div>
                                         <Link to="/our-courses/humanities" className="btn"><span>Read More</span></Link>
                                     </div>
-                                    <img src="/images/homepage/courses/humanities__new.png" alt="" className="bg-image" />
+                                    <img src="/images/homepage/courses/humanities__new.png" alt="" className="bg-image" loading="lazy" />
                                 </div>
                                 <div className="swiper-slide item">
                                     <div className="title">
@@ -85,7 +85,7 @@ const Courses = ({ hidePassrate = false }) => {
                                         </div>
                                         <Link to="/our-courses/law" className="btn"><span>Read More</span></Link>
                                     </div>
-                                    <img src="/images/homepage/courses/law__new.png" alt="" className="bg-image" />
+                                    <img src="/images/homepage/courses/law__new.png" alt="" className="bg-image" loading="lazy" />
                                 </div>
                             </div>
                         </div>
@@ -104,7 +104,7 @@ const Courses = ({ hidePassrate = false }) => {
                                         </div>
                                         <Link to="#" className="btn"><span>Read More</span></Link>
                                     </div>
-                                    <img src="/images/homepage/courses/one.png" alt="" className="bg-image" />
+                                    <img src="/images/homepage/courses/one.png" alt="" className="bg-image" loading="lazy" />
                                 </div>
                                 <div className="swiper-slide item">
                                     <div className="title">
@@ -119,10 +119,10 @@ const Courses = ({ hidePassrate = false }) => {
                                         </div>
                                         <Link to="/our-courses/alevel_science" className="btn"><span>Read More</span></Link>
                                     </div>
-                                    <img src="/images/homepage/courses/7.png" alt="" className="bg-image" />
+                                    <img src="/images/homepage/courses/7.png" alt="" className="bg-image" loading="lazy" />
                                 </div>
                                 <div className="swiper-slide item">
-                                    <img src="/images/homepage/courses/a-level.jpg" alt="" />
+                                    <img src="/images/homepage/courses/a-level.webp" alt="" loading="lazy" />
                                 </div>
                                 <div className="swiper-slide item">
                                     <div className="title">
@@ -137,7 +137,7 @@ const Courses = ({ hidePassrate = false }) => {
                                         </div>
                                         <Link to="/our-courses/alevel_non-science" className="btn"><span>Read More</span></Link>
                                     </div>
-                                    <img src="/images/homepage/courses/8.png" alt="" className="bg-image" />
+                                    <img src="/images/homepage/courses/8.png" alt="" className="bg-image" loading="lazy" />
                                 </div>
                                 <div className="swiper-slide item">
                                     <div className="title">
@@ -152,7 +152,7 @@ const Courses = ({ hidePassrate = false }) => {
                                         </div>
                                         <Link to="#" className="btn"><span>Read More</span></Link>
                                     </div>
-                                    <img src="/images/homepage/courses/four.png" alt="" className="bg-image" />
+                                    <img src="/images/homepage/courses/four.png" alt="" className="bg-image" loading="lazy" />
                                 </div>
                             </div>
                         </div>

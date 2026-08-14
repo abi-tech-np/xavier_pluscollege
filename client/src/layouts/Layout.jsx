@@ -10,13 +10,7 @@ const Layout = () => {
     const navType = useNavigationType();
 
     useEffect(() => {
-        // Run DOM manipulation scripts after render
-        try {
-            initApp();
-        } catch (e) {
-            console.error('initApp error:', e);
-        }
-
+        // Handle scroll position based on navigation type and hash
         if (location.hash) {
             setTimeout(() => {
                 const id = location.hash.replace('#', '');
@@ -26,14 +20,21 @@ const Layout = () => {
                     setTimeout(() => refreshApp(), 500); // refresh after smooth scroll finishes
                 }
             }, 100);
-        } else if (navType === 'PUSH') {
-            window.scrollTo(0, 0);
-            refreshApp(); // refresh after jump
-        } else {
-            // POP navigation (browser back/forward or reload)
-            // Browser restores scroll automatically, just refresh ScrollTrigger
-            setTimeout(() => refreshApp(), 100); 
+        } else if (navType !== 'POP') {
+            // PUSH or REPLACE navigation (link clicks or programmatic navigation)
+            window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+            document.documentElement.scrollTop = 0;
+            document.body.scrollTop = 0;
         }
+
+        // Run DOM manipulation scripts after scroll position is reset
+        try {
+            initApp();
+        } catch (e) {
+            console.error('initApp error:', e);
+        }
+
+        refreshApp();
 
         const handleLoad = () => {
             refreshApp();
@@ -46,7 +47,7 @@ const Layout = () => {
             window.removeEventListener('load', handleLoad);
             cleanupApp();
         };
-    }, [location.pathname, location.hash, navType]);
+    }, [location.pathname, location.hash, location.key, navType]);
 
     return (
         <>

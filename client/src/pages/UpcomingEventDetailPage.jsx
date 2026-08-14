@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import axios from 'axios';
+import { getApiUrl } from '../services/apiClient';
 import Banner from '../components/Banner';
 import FooterPassrate from '../components/FooterPassrate';
 
@@ -78,7 +78,7 @@ const UpcomingEventDetailPage = () => {
             return;
         }
 
-        axios.get(`https://plus.xavier.edu.np/plus-api/api/upcoming-events/${slug}`)
+        axios.get(getApiUrl(`/upcoming-events/${slug}`))
             .then(res => {
                 const data = res.data;
                 data.bannerImage = data.imageUrls && data.imageUrls.length > 0 ? data.imageUrls[0] : 'banner-bg.jpg';

@@ -1,3 +1,4 @@
+import { getApiUrl } from '../../services/apiClient';
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Search, ChevronDown, Edit2, X } from 'lucide-react';
@@ -23,8 +24,8 @@ const ManageUsers = () => {
     const fetchData = async () => {
         try {
             const [usersRes, rolesRes] = await Promise.all([
-                axios.get('https://plus.xavier.edu.np/plus-api/api/admin/users', getAuthHeaders()),
-                axios.get('https://plus.xavier.edu.np/plus-api/api/admin/roles', getAuthHeaders())
+                (getApiUrl(''), getAuthHeaders()),
+                (getApiUrl(''), getAuthHeaders())
             ]);
             setUsers(usersRes.data);
             setRoles(rolesRes.data);
@@ -45,7 +46,7 @@ const ManageUsers = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            await axios.post('https://plus.xavier.edu.np/plus-api/api/admin/users', formData, getAuthHeaders());
+            await (getApiUrl(''), formData, getAuthHeaders());
             setFormData({ name: '', email: '', password: '', role: '' });
             setShowModal(false);
             fetchData();
@@ -58,7 +59,7 @@ const ManageUsers = () => {
     const handleEditSubmit = async (e) => {
         e.preventDefault();
         try {
-            await axios.put(`https://plus.xavier.edu.np/plus-api/api/admin/users/${editUser.id}`, {
+            await axios.put(`/admin/users/${editUser.id}`, {
                 name: editUser.name,
                 email: editUser.email,
                 role: editUser.role
@@ -74,7 +75,7 @@ const ManageUsers = () => {
     const handleDelete = async (id) => {
         if (window.confirm('Are you sure you want to delete this user?')) {
             try {
-                await axios.delete(`https://plus.xavier.edu.np/plus-api/api/admin/users/${id}`, getAuthHeaders());
+                await axios.delete(`/admin/users/${id}`, getAuthHeaders());
                 setIsEditing(false);
                 fetchData();
             } catch (error) {

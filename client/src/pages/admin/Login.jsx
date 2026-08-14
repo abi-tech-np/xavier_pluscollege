@@ -1,3 +1,4 @@
+import { getApiUrl } from '../../services/apiClient';
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
@@ -17,7 +18,7 @@ const AdminLogin = () => {
         setLoading(true);
 
         try {
-            const res = await axios.post('https://plus.xavier.edu.np/plus-api/api/admin/login', {
+            const res = await (getApiUrl(''), {
                 email,
                 password
             });

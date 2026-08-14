@@ -1,3 +1,4 @@
+import { getApiUrl } from '../../services/apiClient';
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 
@@ -12,7 +13,7 @@ const ManageActivityLogs = () => {
     const fetchData = async () => {
         try {
             setLoading(true);
-            const res = await axios.get('https://plus.xavier.edu.np/plus-api/api/admin/activity-logs', getAuthHeaders());
+            const res = await (getApiUrl(''), getAuthHeaders());
             setLogs(res.data);
         } catch (error) {
             console.error('Error fetching logs:', error);

@@ -1,3 +1,4 @@
+import { getApiUrl } from '../../services/apiClient';
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Download } from 'lucide-react';
@@ -13,7 +14,7 @@ const ManageEventRegistrations = () => {
     const fetchData = async () => {
         try {
             setLoading(true);
-            const res = await axios.get('https://plus.xavier.edu.np/plus-api/api/admin/event-registrations', getAuthHeaders());
+            const res = await (getApiUrl(''), getAuthHeaders());
             setRegistrations(res.data);
         } catch (error) {
             console.error('Error fetching registrations:', error);
@@ -29,7 +30,7 @@ const ManageEventRegistrations = () => {
     const handleDelete = async (id) => {
         if (!window.confirm('Are you sure you want to delete this registration?')) return;
         try {
-            await axios.delete(`https://plus.xavier.edu.np/plus-api/api/admin/event-registrations/${id}`, getAuthHeaders());
+            await axios.delete(`/admin/event-registrations/${id}`, getAuthHeaders());
             fetchData();
         } catch (error) {
             console.error('Error deleting registration:', error);

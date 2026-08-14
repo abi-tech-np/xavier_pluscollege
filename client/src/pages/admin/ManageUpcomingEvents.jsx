@@ -1,3 +1,4 @@
+import { getApiUrl } from '../../services/apiClient';
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Trash2 } from 'lucide-react';
@@ -13,7 +14,7 @@ const ManageUpcomingEvents = () => {
 
     const fetchEvents = async () => {
         try {
-            const res = await axios.get('https://plus.xavier.edu.np/plus-api/api/admin/upcoming-events', getAuthHeaders());
+            const res = await (getApiUrl(''), getAuthHeaders());
             setEvents(res.data);
         } catch (error) {
             console.error('Failed to fetch', error);
@@ -31,7 +32,7 @@ const ManageUpcomingEvents = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            await axios.post('https://plus.xavier.edu.np/plus-api/api/admin/upcoming-events', formData, getAuthHeaders());
+            await (getApiUrl(''), formData, getAuthHeaders());
             setFormData({ title: '', time: '', content: '', location: '' });
             fetchEvents();
         } catch (error) {
@@ -42,7 +43,7 @@ const ManageUpcomingEvents = () => {
     const handleDelete = async (id) => {
         if (window.confirm('Are you sure?')) {
             try {
-                await axios.delete(`https://plus.xavier.edu.np/plus-api/api/admin/upcoming-events/${id}`, getAuthHeaders());
+                await axios.delete(`/admin/upcoming-events/${id}`, getAuthHeaders());
                 fetchEvents();
             } catch (error) {
                 console.error('Failed to delete', error);

@@ -1,32 +1,33 @@
 // Helper
-@import "./helper/fonts";
-@import "./helper/global";
-@import "./helper/container";
+@use "./helper/fonts" as *;
+@use "./helper/global" as *;
+@use "./helper/container" as *;
 
 // components
-@import "./components/header";
-@import "./components/popup";
-@import "./components/footer";
-@import "./components/courses";
-@import "./components/cta__pass-rate";
-@import './components/banner';
-@import "./components/contact-details";
-@import "./components/course-details";
-@import './components/awards';
-@import './components/infrastructure__component';
-@import './components/lifeAtXavier__component';
-@import './components/brochure';
-@import './components/upcoming-events_component';
-@import './components/footer-passrate';
-@import './components/testimonial';
+@use "./components/header" as *;
+@use "./components/popup" as *;
+@use "./components/footer" as *;
+@use "./components/courses" as *;
+@use "./components/cta__pass-rate" as *;
+@use './components/banner' as *;
+@use "./components/contact-details" as *;
+@use "./components/course-details" as *;
+@use './components/awards' as *;
+@use './components/infrastructure__component' as *;
+@use './components/lifeAtXavier__component' as *;
+@use './components/brochure' as *;
+@use './components/upcoming-events_component' as *;
+@use './components/footer-passrate' as *;
+@use './components/testimonial' as *;
 
 // pages
 
-@import "./pages/home";
-@import "./pages/aboutpage";
-@import "./pages/academicAwardCeremony";
-@import "./pages/graduationpage";
-@import "./pages/upcoming-events";
-@import "./pages/event-detail";
-@import "./pages/applypage";
-@import 'admin.scss';
+@use "./pages/home" as *;
+@use "./pages/aboutpage" as *;
+@use "./pages/academicAwardCeremony" as *;
+@use "./pages/graduationpage" as *;
+@use "./pages/upcoming-events" as *;
+@use "./pages/event-detail" as *;
+@use "./pages/applypage" as *;
+@use './admin' as *;
+

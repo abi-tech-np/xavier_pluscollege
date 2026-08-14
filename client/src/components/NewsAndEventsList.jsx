@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import { fetchApiData } from '../services/apiClient';
 import { Link } from 'react-router-dom';
 
 const NewsAndEventsList = ({ limit }) => {
@@ -7,17 +7,27 @@ const NewsAndEventsList = ({ limit }) => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const url = limit ? `https://plus.xavier.edu.np/plus-api/api/news-and-events?limit=${limit}` : 'https://plus.xavier.edu.np/plus-api/api/news-and-events';
-        axios.get(url)
-            .then(res => {
-                setNewsAndEvents(res.data);
-                setLoading(false);
+        let isMounted = true;
+        const path = limit ? `/news-and-events?limit=${limit}` : '/news-and-events';
+        
+        fetchApiData(path)
+            .then(data => {
+                if (isMounted) {
+                    setNewsAndEvents(data);
+                    setLoading(false);
+                }
             })
             .catch(err => {
-                console.error(err);
-                setLoading(false);
+                if (isMounted) {
+                    console.error(err);
+                    setLoading(false);
+                }
             });
-    }, []);
+
+        return () => {
+            isMounted = false;
+        };
+    }, [limit]);
 
     // Format date similar to original blade template 'd F Y'
     const formatDate = (dateString) => {
@@ -35,28 +45,28 @@ const NewsAndEventsList = ({ limit }) => {
             slug: 'blood-donation-program',
             created_at: '2024-02-07',
             title: 'Blood Donation Program',
-            imageUrl: '/images/homepage/news/blood_donation.jpg'
+            imageUrl: '/images/homepage/news/blood_donation.webp'
         },
         {
             id: 'hc-2',
             slug: 'eye-camp-visit',
             created_at: '2024-04-30',
             title: 'Eye Camp visit',
-            imageUrl: '/images/homepage/news/eye_camp.jpg'
+            imageUrl: '/images/homepage/news/eye_camp.webp'
         },
         {
             id: 'hc-3',
             slug: 'cricket-stadium-visit',
             created_at: '2024-05-05',
             title: 'Cricket Stadium Visit',
-            imageUrl: '/images/homepage/news/cricket.jpg'
+            imageUrl: '/images/homepage/news/cricket.webp'
         },
         {
             id: 'hc-4',
             slug: 'xavier-level-up-event',
             created_at: '2024-04-25',
             title: 'Xavier Level up Event',
-            imageUrl: '/images/homepage/news/level_up.jpg'
+            imageUrl: '/images/homepage/news/level_up.webp'
         }
     ];
 
@@ -75,7 +85,7 @@ const NewsAndEventsList = ({ limit }) => {
                     </div>
                     {newsEvent.imageUrl && (
                         <div className="img__holder">
-                            <img src={newsEvent.imageUrl} alt="" />
+                            <img src={newsEvent.imageUrl} alt={newsEvent.title || 'News & Events'} loading="lazy" decoding="async" />
                         </div>
                     )}
                 </div>

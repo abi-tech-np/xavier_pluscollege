@@ -19,7 +19,7 @@ const Awards = () => {
                     <div className="awards__list">
                         <div className="item">
                             <div className="img__holder">
-                                <img src="/images/homepage/awards/awards__new.png" alt="" />
+                                <img src="/images/homepage/awards/awards__new.webp" alt="" loading="lazy" />
                             </div>
                             <div className="content">
                                 <h4 className="title">

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import Courses from '../components/Courses';
@@ -8,8 +8,29 @@ import NewsAndEventsList from '../components/NewsAndEventsList';
 import Testimonial from '../components/Testimonial';
 import Awards from '../components/Awards';
 import Infrastructure from '../components/Infrastructure';
+import LazyVideo from '../components/LazyVideo';
+
+const HERO_BANNER_SOURCES = {
+    desktop: [
+        { src: "/images/homepage/banner__video-desktop.webm", type: "video/webm" },
+        { src: "/images/homepage/banner__video-optimized.mp4", type: "video/mp4" }
+    ],
+    mobile: [
+        { src: "/images/homepage/banner__video-mobile.webm", type: "video/webm" },
+        { src: "/images/homepage/banner__video-optimized.mp4", type: "video/mp4" }
+    ]
+};
 
 const Home = () => {
+    // Track all alumni video elements to enforce single-playback
+    const alumniVideosRef = useRef([]);
+    const handleVideoPlay = useCallback((playingVideo) => {
+        alumniVideosRef.current.forEach(v => {
+            if (v && v !== playingVideo && !v.paused) {
+                v.pause();
+            }
+        });
+    }, []);
     // We will fetch real data from Node.js backend later
     const [popup, setPopup] = useState(null);
 
@@ -19,7 +40,15 @@ const Home = () => {
             <section className="hero__banner">
                 <div className="container-lg">
                     <div className="mask">
-                        <video src="/images/homepage/banner__video-new.mp4" autoPlay muted playsInline loop></video>
+                        <LazyVideo 
+                            autoPlay 
+                            muted 
+                            playsInline 
+                            loop 
+                            preload="metadata"
+                            poster="/images/homepage/banner__video-poster.jpg"
+                            sources={HERO_BANNER_SOURCES}
+                        />
                     </div>
                 </div>
             </section>
@@ -120,7 +149,7 @@ const Home = () => {
                 </div>
             </section>
 
-            <section className="about__us">
+            <section className="about__us" id="about">
                 <img src="/images/homepage/aboutUs.png" alt="" className="bg-image" />
                 <div className="container">
                     <div className="about__us-container">
@@ -153,7 +182,7 @@ const Home = () => {
 
             <Courses />
 
-            <section className="lifeAtXavier">
+            <section className="lifeAtXavier" id="life-at-xavier">
                 <img src="/images/homepage/course__bg-art.png" alt="" className="art" />
                 <div className="container">
                     <div className="lifeAtXavier-container">
@@ -172,7 +201,7 @@ const Home = () => {
 
             <UpcomingEvents limit={4} />
 
-            <section className="newsAndEvents">
+            <section className="newsAndEvents" id="news-and-events">
                 <img src="/images/homepage/course__bg-art.png" alt="" className="art" />
                 <div className="container">
                     <div className="newsAndEvents-container">
@@ -198,22 +227,31 @@ const Home = () => {
                         <div className="alumni__list swiper">
                             <div className="swiper-wrapper">
                                 <div className="swiper-slide item">
-                                    <img className="testimonial-img" src="/video/thumbnail-one.png" alt="" />
-                                    <video className="video" loop playsInline muted controls controlsList="nodownload noplaybackrate" disablePictureInPicture>
-                                        <source src="/video/ang-dawa-lama-new.mp4" type="video/mp4" />
-                                    </video>
+                                    <LazyVideo
+                                        src="/video/ang-dawa-lama-optimized.mp4"
+                                        poster="/video/thumbnail-one.webp"
+                                        controls={true}
+                                        onPlay={handleVideoPlay}
+                                        ref={el => { if (el) alumniVideosRef.current[0] = el; }}
+                                    />
                                 </div>
                                 <div className="swiper-slide item">
-                                    <img className="testimonial-img" src="/video/thumbnail-two.png" alt="" />
-                                    <video className="video" loop playsInline muted controls controlsList="nodownload noplaybackrate" disablePictureInPicture>
-                                        <source src="/video/smriti-adhikari-new.mp4" type="video/mp4" />
-                                    </video>
+                                    <LazyVideo
+                                        src="/video/smriti-adhikari-optimized.mp4"
+                                        poster="/video/thumbnail-two.webp"
+                                        controls={true}
+                                        onPlay={handleVideoPlay}
+                                        ref={el => { if (el) alumniVideosRef.current[1] = el; }}
+                                    />
                                 </div>
                                 <div className="swiper-slide item">
-                                    <img className="testimonial-img" src="/video/thumbnail-three.png" alt="" />
-                                    <video className="video" loop playsInline muted controls controlsList="nodownload noplaybackrate" disablePictureInPicture>
-                                        <source src="/video/pratik-pandit-new-new.mp4" type="video/mp4" />
-                                    </video>
+                                    <LazyVideo
+                                        src="/video/pratik-pandit-optimized.mp4"
+                                        poster="/video/thumbnail-three.webp"
+                                        controls={true}
+                                        onPlay={handleVideoPlay}
+                                        ref={el => { if (el) alumniVideosRef.current[2] = el; }}
+                                    />
                                 </div>
                             </div>
                         </div>

@@ -1,3 +1,4 @@
+import { getApiUrl } from '../../services/apiClient';
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Trash2 } from 'lucide-react';
@@ -13,7 +14,7 @@ const ManageCourses = () => {
 
     const fetchCourses = async () => {
         try {
-            const res = await axios.get('https://plus.xavier.edu.np/plus-api/api/admin/courses', getAuthHeaders());
+            const res = await (getApiUrl(''), getAuthHeaders());
             setCourses(res.data);
         } catch (error) {
             console.error('Failed to fetch', error);
@@ -29,7 +30,7 @@ const ManageCourses = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            await axios.post('https://plus.xavier.edu.np/plus-api/api/admin/courses', { course: courseName }, getAuthHeaders());
+            await (getApiUrl(''), { course: courseName }, getAuthHeaders());
             setCourseName('');
             fetchCourses();
         } catch (error) {
@@ -40,7 +41,7 @@ const ManageCourses = () => {
     const handleDelete = async (id) => {
         if (window.confirm('Are you sure?')) {
             try {
-                await axios.delete(`https://plus.xavier.edu.np/plus-api/api/admin/courses/${id}`, getAuthHeaders());
+                await axios.delete(`/admin/courses/${id}`, getAuthHeaders());
                 fetchCourses();
             } catch (error) {
                 console.error('Failed to delete', error);

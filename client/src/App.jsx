@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, Suspense } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import axios from 'axios';
 import Layout from './layouts/Layout';
@@ -22,23 +22,23 @@ import LifeAtXavierSinglePage from './pages/LifeAtXavierSinglePage';
 import NewsAndEventsSinglePage from './pages/NewsAndEventsSinglePage';
 import SkillAndStudiesPage from './pages/SkillAndStudiesPage';
 
-// Admin Pages
-import AdminLayout from './layouts/AdminLayout';
-import AdminLogin from './pages/admin/Login';
-import AdminDashboard from './pages/admin/Dashboard';
-import ManageNews from './pages/admin/ManageNews';
-import ManageApplications from './pages/admin/ManageApplications';
-import ManageCourses from './pages/admin/ManageCourses';
-import ManageContacts from './pages/admin/ManageContacts';
-import ManageLifeAtXavier from './pages/admin/ManageLifeAtXavier';
-import ManagePopups from './pages/admin/ManagePopups';
-import ManageUpcomingEvents from './pages/admin/ManageUpcomingEvents';
-import ManageRoles from './pages/admin/ManageRoles';
-import ManageUsers from './pages/admin/ManageUsers';
-import ManageEventSettings from './pages/admin/ManageEventSettings';
-import ManageEventRegistrations from './pages/admin/ManageEventRegistrations';
-import ManageMetas from './pages/admin/ManageMetas';
-import ManageActivityLogs from './pages/admin/ManageActivityLogs';
+// Admin Pages — lazy loaded to keep them out of the public bundle
+const AdminLayout = React.lazy(() => import('./layouts/AdminLayout'));
+const AdminLogin = React.lazy(() => import('./pages/admin/Login'));
+const AdminDashboard = React.lazy(() => import('./pages/admin/Dashboard'));
+const ManageNews = React.lazy(() => import('./pages/admin/ManageNews'));
+const ManageApplications = React.lazy(() => import('./pages/admin/ManageApplications'));
+const ManageCourses = React.lazy(() => import('./pages/admin/ManageCourses'));
+const ManageContacts = React.lazy(() => import('./pages/admin/ManageContacts'));
+const ManageLifeAtXavier = React.lazy(() => import('./pages/admin/ManageLifeAtXavier'));
+const ManagePopups = React.lazy(() => import('./pages/admin/ManagePopups'));
+const ManageUpcomingEvents = React.lazy(() => import('./pages/admin/ManageUpcomingEvents'));
+const ManageRoles = React.lazy(() => import('./pages/admin/ManageRoles'));
+const ManageUsers = React.lazy(() => import('./pages/admin/ManageUsers'));
+const ManageEventSettings = React.lazy(() => import('./pages/admin/ManageEventSettings'));
+const ManageEventRegistrations = React.lazy(() => import('./pages/admin/ManageEventRegistrations'));
+const ManageMetas = React.lazy(() => import('./pages/admin/ManageMetas'));
+const ManageActivityLogs = React.lazy(() => import('./pages/admin/ManageActivityLogs'));
 
 const App = () => {
   useEffect(() => {
@@ -65,48 +65,50 @@ const App = () => {
 
   return (
     <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Layout />}>
-          <Route index element={<Home />} />
-          <Route path="contact-us" element={<ContactUs />} />
-          <Route path="about-us" element={<AboutUs />} />
-          <Route path="our-courses" element={<OurCourses />} />
-          <Route path="our-courses/science" element={<Science />} />
-          <Route path="our-courses/management" element={<Management />} />
-          <Route path="our-courses/humanities" element={<Humanities />} />
-          <Route path="our-courses/law" element={<Law />} />
-          <Route path="our-courses/alevel_science" element={<ALevelScience />} />
-          <Route path="our-courses/alevel_non-science" element={<ALevelNonScience />} />
-          <Route path="news-and-events" element={<NewsAndEvents />} />
-          <Route path="news-and-events/:slug" element={<NewsAndEventsSinglePage />} />
-          <Route path="upcoming-events" element={<UpcomingEventsPage />} />
-          <Route path="upcoming-events/:slug" element={<UpcomingEventDetailPage />} />
-          <Route path="life-at-xavier" element={<LifeAtXavierPage />} />
-          <Route path="life-at-xavier/:slug" element={<LifeAtXavierSinglePage />} />
-          <Route path="skill/:slug" element={<SkillAndStudiesPage />} />
-          <Route path="studies/:slug" element={<SkillAndStudiesPage />} />
-          <Route path="apply-now" element={<ApplyNowPage />} />
-        </Route>
+      <Suspense fallback={<div style={{ padding: '2rem', textAlign: 'center' }}>Loading...</div>}>
+        <Routes>
+          <Route path="/" element={<Layout />}>
+            <Route index element={<Home />} />
+            <Route path="contact-us" element={<ContactUs />} />
+            <Route path="about-us" element={<AboutUs />} />
+            <Route path="our-courses" element={<OurCourses />} />
+            <Route path="our-courses/science" element={<Science />} />
+            <Route path="our-courses/management" element={<Management />} />
+            <Route path="our-courses/humanities" element={<Humanities />} />
+            <Route path="our-courses/law" element={<Law />} />
+            <Route path="our-courses/alevel_science" element={<ALevelScience />} />
+            <Route path="our-courses/alevel_non-science" element={<ALevelNonScience />} />
+            <Route path="news-and-events" element={<NewsAndEvents />} />
+            <Route path="news-and-events/:slug" element={<NewsAndEventsSinglePage />} />
+            <Route path="upcoming-events" element={<UpcomingEventsPage />} />
+            <Route path="upcoming-events/:slug" element={<UpcomingEventDetailPage />} />
+            <Route path="life-at-xavier" element={<LifeAtXavierPage />} />
+            <Route path="life-at-xavier/:slug" element={<LifeAtXavierSinglePage />} />
+            <Route path="skill/:slug" element={<SkillAndStudiesPage />} />
+            <Route path="studies/:slug" element={<SkillAndStudiesPage />} />
+            <Route path="apply-now" element={<ApplyNowPage />} />
+          </Route>
 
-        {/* Admin Routes */}
-        <Route path="/admin/login" element={<AdminLogin />} />
-        <Route path="/admin" element={<AdminLayout />}>
-          <Route index element={<AdminDashboard />} />
-          <Route path="news" element={<ManageNews />} />
-          <Route path="applications" element={<ManageApplications />} />
-          <Route path="courses" element={<ManageCourses />} />
-          <Route path="contacts" element={<ManageContacts />} />
-          <Route path="life-at-xaviers" element={<ManageLifeAtXavier />} />
-          <Route path="popups" element={<ManagePopups />} />
-          <Route path="upcoming-events" element={<ManageUpcomingEvents />} />
-          <Route path="roles" element={<ManageRoles />} />
-          <Route path="users" element={<ManageUsers />} />
-          <Route path="event-settings" element={<ManageEventSettings />} />
-          <Route path="event-registrations" element={<ManageEventRegistrations />} />
-          <Route path="metas" element={<ManageMetas />} />
-          <Route path="activity-logs" element={<ManageActivityLogs />} />
-        </Route>
-      </Routes>
+          {/* Admin Routes — lazy loaded */}
+          <Route path="/admin/login" element={<AdminLogin />} />
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route index element={<AdminDashboard />} />
+            <Route path="news" element={<ManageNews />} />
+            <Route path="applications" element={<ManageApplications />} />
+            <Route path="courses" element={<ManageCourses />} />
+            <Route path="contacts" element={<ManageContacts />} />
+            <Route path="life-at-xaviers" element={<ManageLifeAtXavier />} />
+            <Route path="popups" element={<ManagePopups />} />
+            <Route path="upcoming-events" element={<ManageUpcomingEvents />} />
+            <Route path="roles" element={<ManageRoles />} />
+            <Route path="users" element={<ManageUsers />} />
+            <Route path="event-settings" element={<ManageEventSettings />} />
+            <Route path="event-registrations" element={<ManageEventRegistrations />} />
+            <Route path="metas" element={<ManageMetas />} />
+            <Route path="activity-logs" element={<ManageActivityLogs />} />
+          </Route>
+        </Routes>
+      </Suspense>
     </BrowserRouter>
   );
 };

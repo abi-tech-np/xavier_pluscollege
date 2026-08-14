@@ -1,3 +1,4 @@
+import { getApiUrl } from '../../services/apiClient';
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Search, ChevronDown, Plus, UploadCloud, Trash2 } from 'lucide-react';
@@ -23,7 +24,7 @@ const ManagePopups = () => {
 
     const fetchPopups = async () => {
         try {
-            const res = await axios.get('https://plus.xavier.edu.np/plus-api/api/admin/popups', getAuthHeaders());
+            const res = await (getApiUrl(''), getAuthHeaders());
             setPopups(res.data);
         } catch (error) {
             console.error('Failed to fetch popups', error);
@@ -61,7 +62,7 @@ const ManagePopups = () => {
                 data.append('image', formData.image);
             }
 
-            await axios.post('https://plus.xavier.edu.np/plus-api/api/admin/popups', data, {
+            await (getApiUrl(''), data, {
                 headers: { 
                     ...getAuthHeaders().headers,
                     'Content-Type': 'multipart/form-data' 
@@ -84,7 +85,7 @@ const ManagePopups = () => {
     const handleDelete = async (id) => {
         if (window.confirm('Are you sure you want to delete this popup?')) {
             try {
-                await axios.delete(`https://plus.xavier.edu.np/plus-api/api/admin/popups/${id}`, getAuthHeaders());
+                await axios.delete(`/admin/popups/${id}`, getAuthHeaders());
                 fetchPopups();
             } catch (error) {
                 console.error('Failed to delete popup', error);

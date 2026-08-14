@@ -1,3 +1,4 @@
+import { getApiUrl } from '../../services/apiClient';
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { Download } from 'lucide-react';
@@ -23,7 +24,7 @@ const ManageApplications = () => {
     const fetchData = async () => {
         try {
             setLoading(true);
-            const appsRes = await axios.get('https://plus.xavier.edu.np/plus-api/api/admin/applications', getAuthHeaders());
+            const appsRes = await (getApiUrl(''), getAuthHeaders());
             setApplications(appsRes.data);
         } catch (error) {
             console.error('Error fetching data:', error);
@@ -39,7 +40,7 @@ const ManageApplications = () => {
     const handleDelete = async (id) => {
         if (!window.confirm('Are you sure you want to delete this application?')) return;
         try {
-            await axios.delete(`https://plus.xavier.edu.np/plus-api/api/admin/applications/${id}`, getAuthHeaders());
+            await axios.delete(`/admin/applications/${id}`, getAuthHeaders());
             fetchData();
         } catch (error) {
             console.error('Error deleting application:', error);

@@ -1,3 +1,4 @@
+import { getApiUrl } from '../../services/apiClient';
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Trash2, ChevronDown, ChevronUp } from 'lucide-react';
@@ -54,8 +55,8 @@ const ManageRoles = () => {
     const fetchData = async () => {
         try {
             const [rolesRes, permsRes] = await Promise.all([
-                axios.get('https://plus.xavier.edu.np/plus-api/api/admin/roles', getAuthHeaders()),
-                axios.get('https://plus.xavier.edu.np/plus-api/api/admin/permissions', getAuthHeaders())
+                (getApiUrl(''), getAuthHeaders()),
+                (getApiUrl(''), getAuthHeaders())
             ]);
             setRoles(rolesRes.data);
             
@@ -119,7 +120,7 @@ const ManageRoles = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            await axios.post('https://plus.xavier.edu.np/plus-api/api/admin/roles', { 
+            await (getApiUrl(''), { 
                 name, 
                 guard_name: guardName,
                 permissions: selectedPermissions 
@@ -136,7 +137,7 @@ const ManageRoles = () => {
     const handleDelete = async (id) => {
         if (window.confirm('Are you sure you want to delete this role?')) {
             try {
-                await axios.delete(`https://plus.xavier.edu.np/plus-api/api/admin/roles/${id}`, getAuthHeaders());
+                await axios.delete(`/admin/roles/${id}`, getAuthHeaders());
                 fetchData();
             } catch (error) {
                 console.error('Failed to delete', error);

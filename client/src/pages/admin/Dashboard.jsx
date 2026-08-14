@@ -1,3 +1,4 @@
+import { getApiUrl } from '../../services/apiClient';
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 import { 
@@ -19,7 +20,7 @@ const AdminDashboard = () => {
         const fetchStats = async () => {
             try {
                 const token = localStorage.getItem('adminToken');
-                const res = await axios.get('https://plus.xavier.edu.np/plus-api/api/admin/stats', {
+                const res = await axios.get(getApiUrl('/admin/stats'), {
                     headers: { Authorization: `Bearer ${token}` }
                 });
                 setStats(res.data);

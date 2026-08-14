@@ -1,3 +1,4 @@
+import { getApiUrl } from '../../services/apiClient';
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Save } from 'lucide-react';
@@ -13,7 +14,7 @@ const ManageEventSettings = () => {
     const fetchSettings = async () => {
         try {
             setLoading(true);
-            const res = await axios.get('https://plus.xavier.edu.np/plus-api/api/admin/event-settings', getAuthHeaders());
+            const res = await (getApiUrl(''), getAuthHeaders());
             setSettings(res.data);
         } catch (error) {
             console.error('Error fetching event settings:', error);
@@ -37,7 +38,7 @@ const ManageEventSettings = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            await axios.put('https://plus.xavier.edu.np/plus-api/api/admin/event-settings', settings, getAuthHeaders());
+            await (getApiUrl(''), settings, getAuthHeaders());
             alert('Settings updated successfully!');
             fetchSettings();
         } catch (error) {

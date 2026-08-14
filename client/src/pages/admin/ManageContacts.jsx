@@ -1,3 +1,4 @@
+import { getApiUrl } from '../../services/apiClient';
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Trash2 } from 'lucide-react';
@@ -12,7 +13,7 @@ const ManageContacts = () => {
 
     const fetchContacts = async () => {
         try {
-            const res = await axios.get('https://plus.xavier.edu.np/plus-api/api/admin/contacts', getAuthHeaders());
+            const res = await (getApiUrl(''), getAuthHeaders());
             setContacts(res.data);
         } catch (error) {
             console.error('Failed to fetch', error);
@@ -28,7 +29,7 @@ const ManageContacts = () => {
     const handleDelete = async (id) => {
         if (window.confirm('Are you sure?')) {
             try {
-                await axios.delete(`https://plus.xavier.edu.np/plus-api/api/admin/contacts/${id}`, getAuthHeaders());
+                await axios.delete(`/admin/contacts/${id}`, getAuthHeaders());
                 fetchContacts();
             } catch (error) {
                 console.error('Failed to delete', error);

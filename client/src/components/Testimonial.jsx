@@ -37,8 +37,8 @@ const Testimonial = () => {
                                         </p>
                                     </div>
                                     <div className="img__holder">
-                                        <img src="/images/homepage/testimonial/garisha-silwal-new.jpg"
-                                            alt="" />
+                                        <img src="/images/homepage/testimonial/garisha-silwal-new.webp"
+                                            alt="" loading="lazy" />
                                     </div>
                                 </div>
                                 <div className="swiper-slide item">
@@ -59,7 +59,7 @@ const Testimonial = () => {
                                         </p>
                                     </div>
                                     <div className="img__holder">
-                                        <img src="/images/homepage/testimonial/akhil-jha-new.jpg" alt="" />
+                                        <img src="/images/homepage/testimonial/akhil-jha-new.webp" alt="" loading="lazy" />
                                     </div>
                                 </div>
                                 <div className="swiper-slide item">
@@ -80,8 +80,8 @@ const Testimonial = () => {
                                         </p>
                                     </div>
                                     <div className="img__holder">
-                                        <img src="/images/homepage/testimonial/samar-ranjit-new.jpg"
-                                            alt="" />
+                                        <img src="/images/homepage/testimonial/samar-ranjit-new.webp"
+                                            alt="" loading="lazy" />
                                     </div>
                                 </div>
                                 <div className="swiper-slide item">
@@ -102,8 +102,8 @@ const Testimonial = () => {
                                         </p>
                                     </div>
                                     <div className="img__holder">
-                                        <img src="/images/homepage/testimonial/barsha-bardewa-new.jpg"
-                                            alt="" />
+                                        <img src="/images/homepage/testimonial/barsha-bardewa-new.webp"
+                                            alt="" loading="lazy" />
                                     </div>
                                 </div>
                             </div>

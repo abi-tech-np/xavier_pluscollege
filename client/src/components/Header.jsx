@@ -12,7 +12,11 @@ const Header = () => {
 
     const closeMenu = () => {
         setIsMenuOpen(false);
-        document.querySelector("html").style.overflowY = "auto";
+        const html = document.querySelector("html");
+        if (html) {
+            html.style.overflow = "auto";
+            html.style.overflowY = "auto";
+        }
     };
 
     const toggleMenu = () => {
@@ -23,12 +27,12 @@ const Header = () => {
         }
     };
 
-    // Close menu on route change
+    // Close menu on route or hash change
     useEffect(() => {
         if (isMenuOpen) {
             closeMenu();
         }
-    }, [location.pathname]);
+    }, [location.pathname, location.hash]);
 
     // Handle escape key
     useEffect(() => {
@@ -82,52 +86,52 @@ const Header = () => {
                     <div className="container">
                         <div className="fullPage-menu__menu">
                             <div className="menu-item">
-                                <h6>ABOUT</h6>
+                                <h6><Link to="/about-us" onClick={closeMenu}>ABOUT</Link></h6>
                                 <ul>
-                                    <li><Link to="/about-us">About Xavier</Link></li>
-                                    <li><Link to="/about-us#statement">Mission, Vision & Values</Link></li>
-                                    <li><Link to="/about-us#message">Message From Chairman</Link></li>
-                                    <li><a href="/#awards">Xavier International Awards</a></li>
+                                    <li><Link to="/about-us" onClick={closeMenu}>About Xavier</Link></li>
+                                    <li><Link to="/about-us#statement" onClick={closeMenu}>Mission, Vision & Values</Link></li>
+                                    <li><Link to="/about-us#message" onClick={closeMenu}>Message From Chairman</Link></li>
+                                    <li><a href="/#awards" onClick={closeMenu}>Xavier International Awards</a></li>
                                 </ul>
                             </div>
                             <div className="menu-item">
-                                <h6>LIFESTYLE</h6>
+                                <h6><Link to="/life-at-xavier" onClick={closeMenu}>LIFESTYLE</Link></h6>
                                 <ul>
-                                    <li><Link to="/life-at-xavier/ximun">XIMUN</Link></li>
-                                    <li><Link to="/life-at-xavier/holi">Holi Utsav</Link></li>
-                                    <li><Link to="/life-at-xavier/rtx">Rising Talent of Xavier</Link></li>
-                                    <li><Link to="/life-at-xavier/u-19">U-19 Basketball Tournament</Link></li>
+                                    <li><Link to="/life-at-xavier/ximun" onClick={closeMenu}>XIMUN</Link></li>
+                                    <li><Link to="/life-at-xavier/holi" onClick={closeMenu}>Holi Utsav</Link></li>
+                                    <li><Link to="/life-at-xavier/rtx" onClick={closeMenu}>Rising Talent of Xavier</Link></li>
+                                    <li><Link to="/life-at-xavier/u-19" onClick={closeMenu}>U-19 Basketball Tournament</Link></li>
                                 </ul>
                             </div>
                             <div className="menu-item">
-                                <h6>OUR COURSES</h6>
+                                <h6><Link to="/our-courses" onClick={closeMenu}>OUR COURSES</Link></h6>
                                 <div className="menu-list">
                                     <ul>
                                         <li className="menu-courses"><a href="#">A Level</a></li>
-                                        <li><Link to="/our-courses/alevel_science">Science</Link></li>
-                                        <li><Link to="/our-courses/alevel_non-science">Non-Science</Link></li>
+                                        <li><Link to="/our-courses/alevel_science" onClick={closeMenu}>Science</Link></li>
+                                        <li><Link to="/our-courses/alevel_non-science" onClick={closeMenu}>Non-Science</Link></li>
                                     </ul>
                                     <ul>
                                         <li className="menu-courses"><a href="#">+ 2</a></li>
-                                        <li><Link to="/our-courses/law">Law</Link></li>
-                                        <li><Link to="/our-courses/science">Science</Link></li>
-                                        <li><Link to="/our-courses/humanities">Humanities</Link></li>
-                                        <li><Link to="/our-courses/management">Management</Link></li>
+                                        <li><Link to="/our-courses/law" onClick={closeMenu}>Law</Link></li>
+                                        <li><Link to="/our-courses/science" onClick={closeMenu}>Science</Link></li>
+                                        <li><Link to="/our-courses/humanities" onClick={closeMenu}>Humanities</Link></li>
+                                        <li><Link to="/our-courses/management" onClick={closeMenu}>Management</Link></li>
                                     </ul>
                                 </div>
                             </div>
                             <div className="menu-item">
-                                <h6><Link to="/news-and-events">News & Events</Link></h6>
+                                <h6><Link to="/news-and-events" onClick={closeMenu}>News & Events</Link></h6>
                                 <ul>
-                                    <li><Link to="/news-and-events">Blood Donation</Link></li>
-                                    <li><Link to="/news-and-events">Under-19 Basketball</Link></li>
-                                    <li><Link to="/news-and-events">Futsal Tournament</Link></li>
-                                    <li><Link to="/news-and-events">XIMUN</Link></li>
+                                    <li><Link to="/news-and-events" onClick={closeMenu}>Blood Donation</Link></li>
+                                    <li><Link to="/news-and-events" onClick={closeMenu}>Under-19 Basketball</Link></li>
+                                    <li><Link to="/news-and-events" onClick={closeMenu}>Futsal Tournament</Link></li>
+                                    <li><Link to="/news-and-events" onClick={closeMenu}>XIMUN</Link></li>
                                 </ul>
                             </div>
                             <div className="menu-item menu__btns">
-                                <Link to="/apply-now" className="menu__btn">Admission</Link>
-                                <Link to="/contact-us" className="menu__btn">Contact Us</Link>
+                                <Link to="/apply-now" className="menu__btn" onClick={closeMenu}>Admission</Link>
+                                <Link to="/contact-us" className="menu__btn" onClick={closeMenu}>Contact Us</Link>
                             </div>
                         </div>
                     </div>

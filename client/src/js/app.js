@@ -279,18 +279,7 @@ if (
     courses();
 }
 
-const alumniVideo = document.querySelectorAll(".alumni__list .item video");
-
-if (alumniVideo) {
-    alumniVideo.forEach((video) => {
-        video.addEventListener("mouseenter", function () {
-            video.play();
-        });
-        video.addEventListener("mouseout", function () {
-            video.pause();
-        });
-    });
-}
+// Alumni video play/pause is now handled by React LazyVideo component
 
 // document.addEventListener("DOMContentLoaded", function () {
 const compulsoryButton = document.querySelector('[data-name="compulsory"]');

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import axios from 'axios';
+import { getApiUrl } from '../services/apiClient';
 import Banner from '../components/Banner';
 import FooterCTA from '../components/FooterCTA';
 
@@ -92,7 +92,7 @@ const LifeAtXavierSinglePage = () => {
             setEventData(hardcodedData[slug]);
             setLoading(false);
         } else {
-            axios.get(`https://plus.xavier.edu.np/plus-api/api/life-at-xavier/${slug}`)
+            axios.get(getApiUrl(`/life-at-xavier/${slug}`))
                 .then(res => {
                     const dbData = res.data;
                     setEventData({

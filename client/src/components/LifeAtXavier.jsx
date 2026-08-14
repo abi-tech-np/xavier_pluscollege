@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import axios from 'axios';
+import { fetchApiData } from '../services/apiClient';
 import { Link } from 'react-router-dom';
 
 const LifeAtXavier = ({ limit }) => {
@@ -7,23 +7,34 @@ const LifeAtXavier = ({ limit }) => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const url = limit ? `https://plus.xavier.edu.np/plus-api/api/life-at-xavier?limit=${limit}` : 'https://plus.xavier.edu.np/plus-api/api/life-at-xavier';
-        axios.get(url)
-            .then(res => {
-                setItems(res.data);
-                setLoading(false);
+        let isMounted = true;
+        const path = limit ? `/life-at-xavier?limit=${limit}` : '/life-at-xavier';
+        
+        fetchApiData(path)
+            .then(data => {
+                if (isMounted) {
+                    setItems(data);
+                    setLoading(false);
+                }
             })
             .catch(err => {
-                console.error(err);
-                setLoading(false);
+                if (isMounted) {
+                    console.error(err);
+                    setLoading(false);
+                }
             });
-    }, []);
+
+        return () => {
+            isMounted = false;
+        };
+    }, [limit]);
+
 
     const hardcodedItems = [
         {
             id: 'hc-1',
             slug: 'rtx',
-            imageUrl: '/images/rtx/one.jpg',
+            imageUrl: '/images/rtx/one.webp',
             date: '2024-01-01',
             title: 'RTX',
             description: "RTX: Rising Talent of Xavier is a captivating talent show spotlighting the diverse skills of Xavier's students. From dazzling performances to awe-inspiring acts, RTX is a showcase of creativity and talent within the Xavier community."
@@ -31,7 +42,7 @@ const LifeAtXavier = ({ limit }) => {
         {
             id: 'hc-2',
             slug: 'holi',
-            imageUrl: '/images/holi/holi 2.jpg',
+            imageUrl: '/images/holi/holi 2.webp',
             date: '2024-01-01',
             title: 'Holi',
             description: "At Xavier, Holi is a vibrant celebration of colors and unity, where students come together to revel in joyous festivities, spreading cheers across the campus."
@@ -39,7 +50,7 @@ const LifeAtXavier = ({ limit }) => {
         {
             id: 'hc-3',
             slug: '+2graduation',
-            imageUrl: '/images/graduation/graduation__image.jpg',
+            imageUrl: '/images/graduation/graduation__image.webp',
             date: '2024-01-01',
             title: '+2 Graduation',
             description: "At Xavier's +2 graduation, students receive their degrees, marking the end of their academic journey and the beginning of new adventures with a grand celebration."
@@ -47,7 +58,7 @@ const LifeAtXavier = ({ limit }) => {
         {
             id: 'hc-4',
             slug: 'u-19',
-            imageUrl: '/images/u-19/basket-ball.jpg',
+            imageUrl: '/images/u-19/basket-ball.webp',
             date: '2024-01-01',
             title: 'U-19',
             description: "Xavier’s Under 19 Inter college Basketball Tournament is a thrilling showcase of young talent, where college teams compete in fast-paced matches. With electrifying plays and passionate fans, it's a celebration of athleticism and sportsmanship, uniting players and spectators in the love of the game."
@@ -55,7 +66,7 @@ const LifeAtXavier = ({ limit }) => {
         {
             id: 'hc-5',
             slug: 'ximun',
-            imageUrl: '/images/ximun/sixteen.jpg',
+            imageUrl: '/images/ximun/sixteen.webp',
             date: '2024-01-01',
             title: 'XIMUN',
             description: "Xavier International Model United Nations, is a prestigious event where students simulate diplomatic discussions and debates on global issues. It provides a platform for young minds to engage in issues from international perspectives."
@@ -71,7 +82,7 @@ const LifeAtXavier = ({ limit }) => {
             ) : allItems.map((item) => (
                 <div className="item" key={item.id}>
                     <Link to={`/life-at-xavier/${item.slug}`}></Link>
-                    <img src={item.imageUrl || '/images/placeholder.jpg'} alt={item.title} />
+                    <img src={item.imageUrl || '/images/placeholder.jpg'} alt={item.title} loading="lazy" decoding="async" />
                     <div className="content">
                         <span>{item.date ? new Date(item.date).getFullYear() : '2024'}</span>
                         <h4 className="title">{item.title}</h4>
