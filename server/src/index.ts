@@ -135,7 +135,7 @@ app.get('/api/life-at-xavier', async (req, res) => {
             const itemMedia = media.find(m => m.model_id === item.id);
             return {
                 ...item,
-                imageUrl: itemMedia ? `${req.protocol}://${req.get('host')}/storage/${itemMedia.id}/${itemMedia.file_name}` : null
+                imageUrl: itemMedia ? `${process.env.BASE_URL || `${req.protocol}://${req.get('host')}`}/storage/${itemMedia.id}/${itemMedia.file_name}` : null
             };
         });
         res.json(serializeBigInt(data));
@@ -160,13 +160,13 @@ app.get('/api/life-at-xavier/:slug', async (req, res) => {
 
         // Find all gallery images for this event
         const galleryMedia = media.filter(m => m.model_id === item.id);
-        const galleryUrls = galleryMedia.map(m => `${req.protocol}://${req.get('host')}/storage/${m.id}/${m.file_name}`);
+        const galleryUrls = galleryMedia.map(m => `${process.env.BASE_URL || `${req.protocol}://${req.get('host')}`}/storage/${m.id}/${m.file_name}`);
 
         const itemMedia = media.find(m => m.model_id === item.id);
 
         res.json({
             ...item,
-            imageUrl: itemMedia ? `${req.protocol}://${req.get('host')}/storage/${itemMedia.id}/${itemMedia.file_name}` : null,
+            imageUrl: itemMedia ? `${process.env.BASE_URL || `${req.protocol}://${req.get('host')}`}/storage/${itemMedia.id}/${itemMedia.file_name}` : null,
             galleryUrls
         });
     } catch (error) {
@@ -191,7 +191,7 @@ app.get('/api/news-and-events', async (req, res) => {
             const itemMedia = media.find(m => m.model_id === item.id && m.collection_name === 'newsandevents.thumbnail');
             return {
                 ...item,
-                imageUrl: itemMedia ? `${req.protocol}://${req.get('host')}/storage/${itemMedia.id}/${itemMedia.file_name}` : null
+                imageUrl: itemMedia ? `${process.env.BASE_URL || `${req.protocol}://${req.get('host')}`}/storage/${itemMedia.id}/${itemMedia.file_name}` : null
             };
         });
         res.json(serializeBigInt(data));
@@ -213,7 +213,7 @@ app.get('/api/news-and-events/:slug', async (req, res) => {
             const itemMedia = media.find(m => m.model_id === item.id && m.collection_name === 'newsandevents.thumbnail');
             res.json({
                 ...item,
-                imageUrl: itemMedia ? `${req.protocol}://${req.get('host')}/storage/${itemMedia.id}/${itemMedia.file_name}` : null
+                imageUrl: itemMedia ? `${process.env.BASE_URL || `${req.protocol}://${req.get('host')}`}/storage/${itemMedia.id}/${itemMedia.file_name}` : null
             });
         } else {
             res.status(404).json({ error: 'News or event not found' });
@@ -268,7 +268,7 @@ app.get('/api/upcoming-events/:slug', async (req, res) => {
 
         // Fetch media for this event
         const media = await getMediaForModels('App\\Models\\UpcomingEvent', [item.id]);
-        const imageUrls = media.map(m => `${req.protocol}://${req.get('host')}/storage/${m.id}/${m.file_name}`);
+        const imageUrls = media.map(m => `${process.env.BASE_URL || `${req.protocol}://${req.get('host')}`}/storage/${m.id}/${m.file_name}`);
 
         res.json(serializeBigInt({
             ...item,

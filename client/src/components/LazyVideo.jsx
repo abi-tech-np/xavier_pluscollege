@@ -39,8 +39,14 @@ const LazyVideo = memo(forwardRef(({ src, sources, children, poster, className, 
     useEffect(() => {
         if (isVisible && !isLoaded) {
             setIsLoaded(true);
+            if (videoRef.current) {
+                videoRef.current.load();
+                if (props.autoPlay) {
+                    videoRef.current.play().catch(e => console.warn('Autoplay failed', e));
+                }
+            }
         }
-    }, [isVisible, isLoaded]);
+    }, [isVisible, isLoaded, props.autoPlay]);
 
     const handlePlay = useCallback(() => {
         if (onPlay) onPlay(videoRef.current);

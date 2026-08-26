@@ -2,7 +2,7 @@ import axios from 'axios';
 
 export const API_URL = import.meta.env.MODE === 'development'
   ? 'http://localhost:5000/api'
-  : 'https://plus.xavier.edu.np/plus-api/api';
+  : '/plus-api/api';
 export const API_BASE_URL = API_URL;
 
 export const getApiUrl = (path = '') => {
