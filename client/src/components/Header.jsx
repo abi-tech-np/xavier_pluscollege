@@ -123,10 +123,10 @@ const Header = () => {
                             <div className="menu-item">
                                 <h6><Link to="/news-and-events" onClick={closeMenu}>News & Events</Link></h6>
                                 <ul>
-                                    <li><Link to="/news-and-events" onClick={closeMenu}>Blood Donation</Link></li>
-                                    <li><Link to="/news-and-events" onClick={closeMenu}>Under-19 Basketball</Link></li>
-                                    <li><Link to="/news-and-events" onClick={closeMenu}>Futsal Tournament</Link></li>
-                                    <li><Link to="/news-and-events" onClick={closeMenu}>XIMUN</Link></li>
+                                    <li><Link to="/news-and-events/blood-donation-program" onClick={closeMenu}>Blood Donation</Link></li>
+                                    <li><Link to="/news-and-events/eye-camp-visit" onClick={closeMenu}>Eye Camp Visit</Link></li>
+                                    <li><Link to="/news-and-events/cricket-stadium-visit" onClick={closeMenu}>Cricket Stadium Visit</Link></li>
+                                    <li><Link to="/news-and-events/xavier-level-up-event" onClick={closeMenu}>Xavier Level Up</Link></li>
                                 </ul>
                             </div>
                             <div className="menu-item menu__btns">
