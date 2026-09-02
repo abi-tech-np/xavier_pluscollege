@@ -55,8 +55,8 @@ const ManageRoles = () => {
     const fetchData = async () => {
         try {
             const [rolesRes, permsRes] = await Promise.all([
-                (getApiUrl(''), getAuthHeaders()),
-                (getApiUrl(''), getAuthHeaders())
+                axios.get(getApiUrl('/admin/roles'), getAuthHeaders()),
+                axios.get(getApiUrl('/admin/permissions'), getAuthHeaders())
             ]);
             setRoles(rolesRes.data);
             
@@ -120,7 +120,7 @@ const ManageRoles = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            await (getApiUrl(''), { 
+            await axios.post(getApiUrl('/admin/roles'), { 
                 name, 
                 guard_name: guardName,
                 permissions: selectedPermissions 
@@ -137,7 +137,7 @@ const ManageRoles = () => {
     const handleDelete = async (id) => {
         if (window.confirm('Are you sure you want to delete this role?')) {
             try {
-                await axios.delete(`/admin/roles/${id}`, getAuthHeaders());
+                await axios.delete(getApiUrl(`/admin/roles/${id}`), getAuthHeaders());
                 fetchData();
             } catch (error) {
                 console.error('Failed to delete', error);

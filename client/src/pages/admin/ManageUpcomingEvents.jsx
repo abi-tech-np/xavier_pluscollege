@@ -14,7 +14,7 @@ const ManageUpcomingEvents = () => {
 
     const fetchEvents = async () => {
         try {
-            const res = await (getApiUrl(''), getAuthHeaders());
+            const res = await axios.get(getApiUrl('/admin/upcoming-events'), getAuthHeaders());
             setEvents(res.data);
         } catch (error) {
             console.error('Failed to fetch', error);
@@ -32,7 +32,7 @@ const ManageUpcomingEvents = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            await (getApiUrl(''), formData, getAuthHeaders());
+            await axios.post(getApiUrl('/admin/upcoming-events'), formData, getAuthHeaders());
             setFormData({ title: '', time: '', content: '', location: '' });
             fetchEvents();
         } catch (error) {
@@ -43,7 +43,7 @@ const ManageUpcomingEvents = () => {
     const handleDelete = async (id) => {
         if (window.confirm('Are you sure?')) {
             try {
-                await axios.delete(`/admin/upcoming-events/${id}`, getAuthHeaders());
+                await axios.delete(getApiUrl(`/admin/upcoming-events/${id}`), getAuthHeaders());
                 fetchEvents();
             } catch (error) {
                 console.error('Failed to delete', error);

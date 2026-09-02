@@ -23,7 +23,7 @@ const ManageNews = () => {
     const fetchNews = async () => {
         try {
             setLoading(true);
-            const res = await (getApiUrl(''), getAuthHeaders());
+            const res = await axios.get(getApiUrl('/admin/news'), getAuthHeaders());
             setNews(res.data);
         } catch (error) {
             console.error('Error fetching news:', error);
@@ -56,9 +56,9 @@ const ManageNews = () => {
         e.preventDefault();
         try {
             if (isEditing) {
-                await axios.put(`/admin/news/${currentId}`, formData, getAuthHeaders());
+                await axios.put(getApiUrl(`/admin/news/${currentId}`), formData, getAuthHeaders());
             } else {
-                await (getApiUrl(''), formData, getAuthHeaders());
+                await axios.post(getApiUrl('/admin/news'), formData, getAuthHeaders());
             }
             fetchNews();
             handleCancel();
@@ -83,7 +83,7 @@ const ManageNews = () => {
     const handleDelete = async (id) => {
         if (!window.confirm('Are you sure you want to delete this news item?')) return;
         try {
-            await axios.delete(`/admin/news/${id}`, getAuthHeaders());
+            await axios.delete(getApiUrl(`/admin/news/${id}`), getAuthHeaders());
             fetchNews();
         } catch (error) {
             console.error('Error deleting news:', error);

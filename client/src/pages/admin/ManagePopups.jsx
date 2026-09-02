@@ -24,7 +24,7 @@ const ManagePopups = () => {
 
     const fetchPopups = async () => {
         try {
-            const res = await (getApiUrl(''), getAuthHeaders());
+            const res = await axios.get(getApiUrl('/admin/popups'), getAuthHeaders());
             setPopups(res.data);
         } catch (error) {
             console.error('Failed to fetch popups', error);
@@ -62,7 +62,7 @@ const ManagePopups = () => {
                 data.append('image', formData.image);
             }
 
-            await (getApiUrl(''), data, {
+            await axios.post(getApiUrl('/admin/popups'), data, {
                 headers: { 
                     ...getAuthHeaders().headers,
                     'Content-Type': 'multipart/form-data' 
@@ -85,7 +85,7 @@ const ManagePopups = () => {
     const handleDelete = async (id) => {
         if (window.confirm('Are you sure you want to delete this popup?')) {
             try {
-                await axios.delete(`/admin/popups/${id}`, getAuthHeaders());
+                await axios.delete(getApiUrl(`/admin/popups/${id}`), getAuthHeaders());
                 fetchPopups();
             } catch (error) {
                 console.error('Failed to delete popup', error);

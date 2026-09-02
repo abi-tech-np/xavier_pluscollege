@@ -13,7 +13,7 @@ const ManageContacts = () => {
 
     const fetchContacts = async () => {
         try {
-            const res = await (getApiUrl(''), getAuthHeaders());
+            const res = await axios.get(getApiUrl('/admin/contacts'), getAuthHeaders());
             setContacts(res.data);
         } catch (error) {
             console.error('Failed to fetch', error);
@@ -29,7 +29,7 @@ const ManageContacts = () => {
     const handleDelete = async (id) => {
         if (window.confirm('Are you sure?')) {
             try {
-                await axios.delete(`/admin/contacts/${id}`, getAuthHeaders());
+                await axios.delete(getApiUrl(`/admin/contacts/${id}`), getAuthHeaders());
                 fetchContacts();
             } catch (error) {
                 console.error('Failed to delete', error);

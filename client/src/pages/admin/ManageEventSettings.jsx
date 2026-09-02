@@ -14,7 +14,7 @@ const ManageEventSettings = () => {
     const fetchSettings = async () => {
         try {
             setLoading(true);
-            const res = await (getApiUrl(''), getAuthHeaders());
+            const res = await axios.get(getApiUrl('/admin/event-settings'), getAuthHeaders());
             setSettings(res.data);
         } catch (error) {
             console.error('Error fetching event settings:', error);
@@ -38,7 +38,7 @@ const ManageEventSettings = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            await (getApiUrl(''), settings, getAuthHeaders());
+            await axios.put(getApiUrl('/admin/event-settings'), settings, getAuthHeaders());
             alert('Settings updated successfully!');
             fetchSettings();
         } catch (error) {

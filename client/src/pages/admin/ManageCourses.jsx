@@ -14,7 +14,7 @@ const ManageCourses = () => {
 
     const fetchCourses = async () => {
         try {
-            const res = await (getApiUrl(''), getAuthHeaders());
+            const res = await axios.get(getApiUrl('/admin/courses'), getAuthHeaders());
             setCourses(res.data);
         } catch (error) {
             console.error('Failed to fetch', error);
@@ -30,7 +30,7 @@ const ManageCourses = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            await (getApiUrl(''), { course: courseName }, getAuthHeaders());
+            await axios.post(getApiUrl('/admin/courses'), { course: courseName }, getAuthHeaders());
             setCourseName('');
             fetchCourses();
         } catch (error) {
@@ -41,7 +41,7 @@ const ManageCourses = () => {
     const handleDelete = async (id) => {
         if (window.confirm('Are you sure?')) {
             try {
-                await axios.delete(`/admin/courses/${id}`, getAuthHeaders());
+                await axios.delete(getApiUrl(`/admin/courses/${id}`), getAuthHeaders());
                 fetchCourses();
             } catch (error) {
                 console.error('Failed to delete', error);

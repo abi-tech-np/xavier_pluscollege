@@ -24,7 +24,7 @@ const ManageApplications = () => {
     const fetchData = async () => {
         try {
             setLoading(true);
-            const appsRes = await (getApiUrl(''), getAuthHeaders());
+            const appsRes = await axios.get(getApiUrl('/admin/applications'), getAuthHeaders());
             setApplications(appsRes.data);
         } catch (error) {
             console.error('Error fetching data:', error);
@@ -40,7 +40,7 @@ const ManageApplications = () => {
     const handleDelete = async (id) => {
         if (!window.confirm('Are you sure you want to delete this application?')) return;
         try {
-            await axios.delete(`/admin/applications/${id}`, getAuthHeaders());
+            await axios.delete(getApiUrl(`/admin/applications/${id}`), getAuthHeaders());
             fetchData();
         } catch (error) {
             console.error('Error deleting application:', error);
