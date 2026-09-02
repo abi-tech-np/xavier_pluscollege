@@ -222,6 +222,19 @@ model life_at_xaviers {
   created_at            DateTime?               @db.Timestamp(0)
   updated_at            DateTime?               @db.Timestamp(0)
   life_at_xavier_events life_at_xavier_events[]
+  life_at_xavier_images life_at_xavier_images[]
+}
+
+model life_at_xavier_images {
+  id                BigInt          @id @default(autoincrement()) @db.UnsignedBigInt
+  life_at_xavier_id BigInt          @db.UnsignedBigInt
+  imageUrl          String          @db.VarChar(255)
+  sortOrder         Int             @default(0)
+  created_at        DateTime?       @db.Timestamp(0)
+  updated_at        DateTime?       @db.Timestamp(0)
+  life_at_xaviers   life_at_xaviers @relation(fields: [life_at_xavier_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "life_at_xavier_images_life_at_xavier_id_foreign")
+
+  @@index([life_at_xavier_id], map: "life_at_xavier_images_life_at_xavier_id_foreign")
 }
 
 model media {
@@ -294,11 +307,13 @@ model news_and_events {
   title      String    @db.VarChar(255)
   slug       String    @db.VarChar(255)
   content    String    @db.Text
+  imageUrl   String?   @db.VarChar(255)
   status     Boolean   @default(true)
   deleted_at DateTime? @db.Timestamp(0)
   created_at DateTime? @db.Timestamp(0)
   updated_at DateTime? @db.Timestamp(0)
 }
+
 
 model notifications {
   id              String    @id @db.Char(36)

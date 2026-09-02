@@ -96,9 +96,17 @@ const App = () => {
             <Route path="news" element={<ManageNews />} />
             <Route path="applications" element={<ManageApplications />} />
             <Route path="courses" element={<ManageCourses />} />
+            <Route path="courses/:id/edit" element={<ManageCourses />} />
+            <Route path="courses/edit/:id" element={<ManageCourses />} />
             <Route path="contacts" element={<ManageContacts />} />
             <Route path="life-at-xaviers" element={<ManageLifeAtXavier />} />
+            <Route path="life-at-xaviers/:id/edit" element={<ManageLifeAtXavier />} />
+            <Route path="life-at-xaviers/edit/:id" element={<ManageLifeAtXavier />} />
+            <Route path="life-at-xaviers/create" element={<ManageLifeAtXavier />} />
             <Route path="popups" element={<ManagePopups />} />
+            <Route path="popups/:id/edit" element={<ManagePopups />} />
+            <Route path="popups/edit/:id" element={<ManagePopups />} />
+            <Route path="popups/create" element={<ManagePopups />} />
             <Route path="upcoming-events" element={<ManageUpcomingEvents />} />
             <Route path="roles" element={<ManageRoles />} />
             <Route path="users" element={<ManageUsers />} />

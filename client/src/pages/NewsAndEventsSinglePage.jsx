@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import axios from 'axios';
 import { getApiUrl } from '../services/apiClient';
 import Banner from '../components/Banner';
 import FooterPassrate from '../components/FooterPassrate';
@@ -43,7 +44,12 @@ const NewsAndEventsSinglePage = () => {
         axios.get(getApiUrl(`/news-and-events/${slug}`))
             .then(res => {
                 const data = res.data;
-                data.bannerImage = data.imageUrl || 'banner-bg.jpg'; 
+                let resolvedBanner = data.imageUrl;
+                if (resolvedBanner && !resolvedBanner.startsWith('http://') && !resolvedBanner.startsWith('https://')) {
+                    const backendOrigin = import.meta.env.MODE === 'development' ? 'http://localhost:5000' : '';
+                    resolvedBanner = `${backendOrigin}${resolvedBanner.startsWith('/') ? resolvedBanner : `/${resolvedBanner}`}`;
+                }
+                data.bannerImage = resolvedBanner || 'banner-bg.jpg'; 
                 setEventData(data);
                 setLoading(false);
             })

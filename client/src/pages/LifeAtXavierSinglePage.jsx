@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
+import axios from 'axios';
 import { getApiUrl } from '../services/apiClient';
 import Banner from '../components/Banner';
 import FooterCTA from '../components/FooterCTA';
@@ -87,6 +88,17 @@ const LifeAtXavierSinglePage = () => {
         }
     }, [slug]);
 
+    const formatDate = (dateVal) => {
+        if (!dateVal) return '';
+        const date = new Date(dateVal);
+        if (isNaN(date.getTime())) return '';
+        return date.toLocaleDateString('en-GB', {
+            day: 'numeric',
+            month: 'short',
+            year: 'numeric'
+        });
+    };
+
     useEffect(() => {
         if (hardcodedData[slug]) {
             setEventData(hardcodedData[slug]);
@@ -95,11 +107,12 @@ const LifeAtXavierSinglePage = () => {
             axios.get(getApiUrl(`/life-at-xavier/${slug}`))
                 .then(res => {
                     const dbData = res.data;
+                    const dateDisplay = formatDate(dbData.created_at);
                     setEventData({
                         title: dbData.title,
-                        date: new Date(dbData.date).toLocaleDateString(),
-                        description: dbData.description,
-                        bannerImage: 'banner-bg.jpg', // generic banner for dynamic ones
+                        date: dateDisplay,
+                        description: dbData.description || null,
+                        bannerImage: dbData.imageUrl || 'banner-bg.jpg', // generic banner for dynamic ones
                         galleryUrls: dbData.galleryUrls || []
                     });
                     setLoading(false);
@@ -132,10 +145,10 @@ const LifeAtXavierSinglePage = () => {
                     <div className="academics__container">
                         <div className="section__heading-content">
                             <h2 className="section__heading">
-                                <span className="subTitle">{eventData.date}</span>
+                                {eventData.date && <span className="subTitle">{eventData.date}</span>}
                                 {eventData.title}
                             </h2>
-                            <p>{eventData.description}</p>
+                            {eventData.description && <p>{eventData.description}</p>}
                         </div>
                     </div>
                     <div className="gallery">
