@@ -14,7 +14,7 @@ const ManageEventRegistrations = () => {
     const fetchData = async () => {
         try {
             setLoading(true);
-            const res = await (getApiUrl(''), getAuthHeaders());
+            const res = await axios.get(getApiUrl('/admin/event-registrations'), getAuthHeaders());
             setRegistrations(res.data);
         } catch (error) {
             console.error('Error fetching registrations:', error);
@@ -30,7 +30,7 @@ const ManageEventRegistrations = () => {
     const handleDelete = async (id) => {
         if (!window.confirm('Are you sure you want to delete this registration?')) return;
         try {
-            await axios.delete(`/admin/event-registrations/${id}`, getAuthHeaders());
+            await axios.delete(getApiUrl(`/admin/event-registrations/${id}`), getAuthHeaders());
             fetchData();
         } catch (error) {
             console.error('Error deleting registration:', error);

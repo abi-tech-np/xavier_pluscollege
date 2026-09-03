@@ -72,24 +72,35 @@ const NewsAndEventsList = ({ limit }) => {
 
     const allNews = [...newsAndEvents, ...hardcodedNews];
 
+    const resolveImageUrl = (url) => {
+        if (!url) return null;
+        if (url.startsWith('http://') || url.startsWith('https://')) return url;
+        const backendOrigin = import.meta.env.MODE === 'development' ? 'http://localhost:5000' : '';
+        const cleanUrl = url.startsWith('/') ? url : `/${url}`;
+        return `${backendOrigin}${cleanUrl}`;
+    };
+
     return (
         <div className="newsAndEvents__list">
             {loading ? (
                 <p>Loading...</p>
-            ) : allNews.map((newsEvent, idx) => (
-                <div className="item" key={newsEvent.id || idx}>
-                    <Link to={`/news-and-events/${newsEvent.slug}`}></Link>
-                    <div className="content">
-                        <span>{formatDate(newsEvent.created_at)}</span>
-                        <h4>{newsEvent.title}</h4>
-                    </div>
-                    {newsEvent.imageUrl && (
-                        <div className="img__holder">
-                            <img src={newsEvent.imageUrl} alt={newsEvent.title || 'News & Events'} loading="lazy" decoding="async" />
+            ) : allNews.map((newsEvent, idx) => {
+                const itemImg = resolveImageUrl(newsEvent.imageUrl);
+                return (
+                    <div className="item" key={newsEvent.id || idx}>
+                        <Link to={`/news-and-events/${newsEvent.slug}`}></Link>
+                        <div className="content">
+                            <span>{formatDate(newsEvent.created_at)}</span>
+                            <h4>{newsEvent.title}</h4>
                         </div>
-                    )}
-                </div>
-            ))}
+                        {itemImg && (
+                            <div className="img__holder">
+                                <img src={itemImg} alt={newsEvent.title || 'News & Events'} loading="lazy" decoding="async" />
+                            </div>
+                        )}
+                    </div>
+                );
+            })}
         </div>
     );
 };

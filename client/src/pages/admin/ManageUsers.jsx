@@ -24,8 +24,8 @@ const ManageUsers = () => {
     const fetchData = async () => {
         try {
             const [usersRes, rolesRes] = await Promise.all([
-                (getApiUrl(''), getAuthHeaders()),
-                (getApiUrl(''), getAuthHeaders())
+                axios.get(getApiUrl('/admin/users'), getAuthHeaders()),
+                axios.get(getApiUrl('/admin/roles'), getAuthHeaders())
             ]);
             setUsers(usersRes.data);
             setRoles(rolesRes.data);
@@ -46,7 +46,7 @@ const ManageUsers = () => {
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            await (getApiUrl(''), formData, getAuthHeaders());
+            await axios.post(getApiUrl('/admin/users'), formData, getAuthHeaders());
             setFormData({ name: '', email: '', password: '', role: '' });
             setShowModal(false);
             fetchData();
@@ -59,7 +59,7 @@ const ManageUsers = () => {
     const handleEditSubmit = async (e) => {
         e.preventDefault();
         try {
-            await axios.put(`/admin/users/${editUser.id}`, {
+            await axios.put(getApiUrl(`/admin/users/${editUser.id}`), {
                 name: editUser.name,
                 email: editUser.email,
                 role: editUser.role
@@ -75,7 +75,7 @@ const ManageUsers = () => {
     const handleDelete = async (id) => {
         if (window.confirm('Are you sure you want to delete this user?')) {
             try {
-                await axios.delete(`/admin/users/${id}`, getAuthHeaders());
+                await axios.delete(getApiUrl(`/admin/users/${id}`), getAuthHeaders());
                 setIsEditing(false);
                 fetchData();
             } catch (error) {

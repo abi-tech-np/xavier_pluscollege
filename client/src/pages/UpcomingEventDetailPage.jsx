@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import axios from 'axios';
 import { getApiUrl } from '../services/apiClient';
 import Banner from '../components/Banner';
 import FooterPassrate from '../components/FooterPassrate';

@@ -84,9 +84,9 @@ const LifeAtXavier = ({ limit }) => {
                     <Link to={`/life-at-xavier/${item.slug}`}></Link>
                     <img src={item.imageUrl || '/images/placeholder.jpg'} alt={item.title} loading="lazy" decoding="async" />
                     <div className="content">
-                        <span>{item.date ? new Date(item.date).getFullYear() : '2024'}</span>
+                        <span>{item.date ? new Date(item.date).getFullYear() : (item.created_at ? new Date(item.created_at).getFullYear() : '2024')}</span>
                         <h4 className="title">{item.title}</h4>
-                        <p>{item.description}</p>
+                        {item.description && <p>{item.description}</p>}
                     </div>
                 </div>
             ))}
