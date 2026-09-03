@@ -50,7 +50,9 @@ router.get('/stats', async (req: AuthRequest, res: Response) => {
         const applicationsCount = await prisma.applies.count();
         const contactsCount = await prisma.contacts.count();
         const popupsCount = await prisma.popups.count();
-        const lifeAtXavierCount = await prisma.life_at_xaviers.count();
+        const lifeAtXavierCount = await prisma.life_at_xaviers.count({
+            where: { deleted_at: null }
+        });
 
         res.json({
             newsCount,
@@ -114,7 +116,7 @@ router.post('/news', upload.single('image'), async (req: AuthRequest, res: Respo
 
 router.put('/news/:id', upload.single('image'), async (req: AuthRequest, res: Response) => {
     try {
-        const { id } = req.params;
+        const id = BigInt(req.params.id as string);
         const { title, slug, content, status } = req.body;
         const isStatusTrue = status === 'true' || status === true;
 
@@ -127,14 +129,42 @@ router.put('/news/:id', upload.single('image'), async (req: AuthRequest, res: Re
         };
 
         if (req.file) {
+            // New image uploaded: remove previous image file if it exists in storage
+            const existing = await prisma.news_and_events.findUnique({ where: { id } });
+            if (existing?.imageUrl && existing.imageUrl.startsWith('/storage/')) {
+                const filename = path.basename(existing.imageUrl);
+                const oldFilePath = path.join(__dirname, '../../storage', filename);
+                if (fs.existsSync(oldFilePath)) {
+                    try {
+                        fs.unlinkSync(oldFilePath);
+                    } catch (e) {
+                        console.error('Error deleting old news image:', e);
+                    }
+                }
+            }
             updateData.imageUrl = `/storage/${req.file.filename}`;
         } else if (req.body.imageUrl !== undefined) {
             // If explicit imageUrl passed (e.g. keeping existing or clearing)
-            updateData.imageUrl = req.body.imageUrl || null;
+            const newImageUrl = req.body.imageUrl || null;
+            if (!newImageUrl || newImageUrl === '' || newImageUrl === 'null') {
+                const existing = await prisma.news_and_events.findUnique({ where: { id } });
+                if (existing?.imageUrl && existing.imageUrl.startsWith('/storage/')) {
+                    const filename = path.basename(existing.imageUrl);
+                    const oldFilePath = path.join(__dirname, '../../storage', filename);
+                    if (fs.existsSync(oldFilePath)) {
+                        try {
+                            fs.unlinkSync(oldFilePath);
+                        } catch (e) {
+                            console.error('Error deleting old news image:', e);
+                        }
+                    }
+                }
+            }
+            updateData.imageUrl = newImageUrl;
         }
 
         const updatedItem = await prisma.news_and_events.update({
-            where: { id: BigInt(id as string) },
+            where: { id },
             data: updateData
         });
         res.json({ ...updatedItem, id: updatedItem.id.toString() });
@@ -146,8 +176,20 @@ router.put('/news/:id', upload.single('image'), async (req: AuthRequest, res: Re
 
 router.delete('/news/:id', async (req: AuthRequest, res: Response) => {
     try {
-        const { id } = req.params;
-        await prisma.news_and_events.delete({ where: { id: BigInt(id as string) } });
+        const id = BigInt(req.params.id as string);
+        const existing = await prisma.news_and_events.findUnique({ where: { id } });
+        if (existing?.imageUrl && existing.imageUrl.startsWith('/storage/')) {
+            const filename = path.basename(existing.imageUrl);
+            const oldFilePath = path.join(__dirname, '../../storage', filename);
+            if (fs.existsSync(oldFilePath)) {
+                try {
+                    fs.unlinkSync(oldFilePath);
+                } catch (e) {
+                    console.error('Error deleting news image:', e);
+                }
+            }
+        }
+        await prisma.news_and_events.delete({ where: { id } });
         res.json({ success: true });
     } catch (error) {
         res.status(500).json({ error: 'Internal server error' });

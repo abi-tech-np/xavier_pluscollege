@@ -105,7 +105,6 @@ const App = () => {
             <Route path="life-at-xaviers/create" element={<ManageLifeAtXavier />} />
             <Route path="popups" element={<ManagePopups />} />
             <Route path="popups/:id/edit" element={<ManagePopups />} />
-            <Route path="popups/edit/:id" element={<ManagePopups />} />
             <Route path="popups/create" element={<ManagePopups />} />
             <Route path="upcoming-events" element={<ManageUpcomingEvents />} />
             <Route path="roles" element={<ManageRoles />} />
