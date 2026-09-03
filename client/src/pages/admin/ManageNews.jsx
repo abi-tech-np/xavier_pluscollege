@@ -191,8 +191,8 @@ const ManageNews = () => {
                     {isEditing ? 'Edit News Item' : 'Add New Item'}
                 </h3>
                 <form onSubmit={handleSubmit} className="admin-form">
-                    <div style={{ display: 'flex', gap: '1rem' }}>
-                        <div className="admin-form-group" style={{ flex: 1 }}>
+                    <div className="admin-form-row">
+                        <div className="admin-form-group" style={{ flex: 1, minWidth: 0 }}>
                             <label>Title <span style={{ color: 'var(--admin-danger)' }}>*</span></label>
                             <input 
                                 type="text" 
@@ -203,7 +203,7 @@ const ManageNews = () => {
                                 required 
                             />
                         </div>
-                        <div className="admin-form-group" style={{ flex: 1 }}>
+                        <div className="admin-form-group" style={{ flex: 1, minWidth: 0 }}>
                             <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                 <span>Slug <span style={{ color: 'var(--admin-danger)' }}>*</span></span>
                                 <span 
@@ -408,7 +408,7 @@ const ManageNews = () => {
                                     const thumbSrc = resolveImageUrl(item.imageUrl);
                                     return (
                                         <tr key={item.id}>
-                                            <td style={{ verticalAlign: 'middle' }}>
+                                            <td data-label="Image" style={{ verticalAlign: 'middle' }}>
                                                 {thumbSrc ? (
                                                     <div style={{
                                                         width: '56px',
@@ -440,25 +440,25 @@ const ManageNews = () => {
                                                     </div>
                                                 )}
                                             </td>
-                                            <td style={{ fontWeight: 500, color: 'var(--admin-heading)' }}>
+                                            <td data-label="Title" style={{ fontWeight: 500, color: 'var(--admin-heading)' }}>
                                                 {item.title}
                                             </td>
-                                            <td style={{ color: 'var(--admin-text-muted)' }}>
+                                            <td data-label="Slug" style={{ color: 'var(--admin-text-muted)' }}>
                                                 {item.slug}
                                             </td>
-                                            <td>
+                                            <td data-label="Status">
                                                 <span className={`admin-badge ${item.status ? 'badge-success' : 'badge-danger'}`}>
                                                     {item.status ? 'Published' : 'Draft'}
                                                 </span>
                                             </td>
-                                            <td>
+                                            <td data-label="Date Created">
                                                 {item.created_at ? new Date(item.created_at).toLocaleDateString('en-US', {
                                                     month: 'short',
                                                     day: 'numeric',
                                                     year: 'numeric'
                                                 }) : '-'}
                                             </td>
-                                            <td style={{ textAlign: 'right' }}>
+                                            <td className="admin-table-actions" data-label="Actions" style={{ textAlign: 'right' }}>
                                                 <div style={{ display: 'inline-flex', gap: '0.5rem' }}>
                                                     <button 
                                                         className="admin-btn admin-btn-primary" 

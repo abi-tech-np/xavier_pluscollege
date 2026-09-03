@@ -550,7 +550,7 @@ const ManagePopups = () => {
     }
 
     return (
-        <div style={{ padding: '0 1rem', position: 'relative' }}>
+        <div style={{ position: 'relative' }}>
             {/* Header Breadcrumbs & Title */}
             <div style={{ marginBottom: '1.5rem' }}>
                 <div style={{ fontSize: '0.85rem', color: '#a1a1aa', display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
@@ -558,8 +558,8 @@ const ManagePopups = () => {
                     <span>&gt;</span>
                     <span style={{ color: '#fbbf24' }}>List</span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <h1 style={{ fontSize: '2rem', fontWeight: 'bold', color: '#ffffff', margin: 0 }}>Popups</h1>
+                <div className="admin-header-actions" style={{ marginBottom: 0 }}>
+                    <h1 style={{ fontSize: '1.75rem', fontWeight: 'bold', color: '#ffffff', margin: 0 }}>Popups</h1>
                     <button 
                         onClick={handleOpenCreate}
                         style={{ 
@@ -640,8 +640,8 @@ const ManagePopups = () => {
                 </div>
 
                 {/* Table */}
-                <div style={{ overflowX: 'auto' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
+                <div className="admin-table-container">
+                    <table className="admin-table">
                         <thead>
                             <tr style={{ backgroundColor: '#18181b', borderBottom: '1px solid #27272a' }}>
                                 <th style={{ padding: '1rem 1.5rem', width: '40px' }}>
@@ -687,10 +687,10 @@ const ManagePopups = () => {
                                     const thumb = resolveImageUrl(popup.imageUrl);
                                     return (
                                         <tr key={popup.id} style={{ borderBottom: '1px solid #27272a' }}>
-                                            <td style={{ padding: '1rem 1.5rem' }}>
+                                            <td data-label="Select" style={{ padding: '1rem 1.5rem' }}>
                                                 <input type="checkbox" style={{ accentColor: '#fbbf24', cursor: 'pointer' }} />
                                             </td>
-                                            <td style={{ padding: '0.75rem 1.5rem', verticalAlign: 'middle' }}>
+                                            <td data-label="Image" style={{ padding: '0.75rem 1.5rem', verticalAlign: 'middle' }}>
                                                 {thumb ? (
                                                     <div style={{
                                                         width: '60px',
@@ -722,30 +722,31 @@ const ManagePopups = () => {
                                                     </div>
                                                 )}
                                             </td>
-                                            <td style={{ padding: '1rem 1.5rem', color: '#d4d4d8', fontWeight: '500' }}>
+                                            <td data-label="Title" style={{ padding: '1rem 1.5rem', color: '#d4d4d8', fontWeight: '500' }}>
                                                 {popup.title}
                                             </td>
-                                            <td style={{ padding: '1rem 1.5rem', color: '#a1a1aa', fontSize: '0.85rem' }}>
+                                            <td data-label="Link" style={{ padding: '1rem 1.5rem', color: '#a1a1aa', fontSize: '0.85rem' }}>
                                                 {popup.link ? (
                                                     <a href={popup.link} target="_blank" rel="noreferrer" style={{ color: '#fbbf24', textDecoration: 'none' }}>
                                                         {popup.link.length > 30 ? popup.link.slice(0, 30) + '...' : popup.link}
                                                     </a>
                                                 ) : '—'}
                                             </td>
-                                            <td style={{ padding: '1rem 1.5rem' }}>
+                                            <td data-label="Status" style={{ padding: '1rem 1.5rem' }}>
                                                 {popup.status ? (
                                                     <span style={{ color: '#10b981', backgroundColor: 'rgba(16, 185, 129, 0.1)', padding: '0.25rem 0.5rem', borderRadius: '1rem', fontSize: '0.75rem', fontWeight: '600' }}>Active</span>
                                                 ) : (
                                                     <span style={{ color: '#ef4444', backgroundColor: 'rgba(239, 68, 68, 0.1)', padding: '0.25rem 0.5rem', borderRadius: '1rem', fontSize: '0.75rem', fontWeight: '600' }}>Inactive</span>
                                                 )}
                                             </td>
-                                            <td style={{ padding: '1rem 1.5rem', color: '#d4d4d8', fontSize: '0.85rem' }}>
+                                            <td data-label="Created at" style={{ padding: '1rem 1.5rem', color: '#d4d4d8', fontSize: '0.85rem' }}>
                                                 {popup.created_at ? new Date(popup.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—'}
                                             </td>
-                                            <td style={{ padding: '1rem 1.5rem', textAlign: 'right' }}>
+                                            <td className="admin-table-actions" data-label="Actions" style={{ padding: '1rem 1.5rem', textAlign: 'right' }}>
                                                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '0.75rem' }}>
                                                     <button 
                                                         onClick={() => handleEdit(popup)}
+                                                        className="admin-btn admin-btn-primary"
                                                         style={{ 
                                                             display: 'flex', 
                                                             alignItems: 'center', 
@@ -763,6 +764,7 @@ const ManagePopups = () => {
                                                     </button>
                                                     <button 
                                                         onClick={() => handleDelete(popup.id)}
+                                                        className="admin-btn admin-btn-danger"
                                                         style={{ 
                                                             display: 'flex', 
                                                             alignItems: 'center', 

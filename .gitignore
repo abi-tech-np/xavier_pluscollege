@@ -16,6 +16,7 @@ yarn-error.log
 /.fleet
 /.idea
 /.vscode
+docs/implementation_plan.md
 docs/decisions.md
 docs/flow.md
 

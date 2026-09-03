@@ -204,7 +204,7 @@ const ManageUsers = () => {
     }
 
     return (
-        <div style={{ padding: '0 1rem', position: 'relative' }}>
+        <div style={{ position: 'relative' }}>
             {/* Header Breadcrumbs & Title */}
             <div style={{ marginBottom: '1.5rem' }}>
                 <div style={{ fontSize: '0.85rem', color: '#a1a1aa', display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
@@ -212,8 +212,8 @@ const ManageUsers = () => {
                     <span>&gt;</span>
                     <span style={{ color: '#fbbf24' }}>List</span>
                 </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <h1 style={{ fontSize: '2rem', fontWeight: 'bold', color: '#ffffff', margin: 0 }}>Users</h1>
+                <div className="admin-header-actions" style={{ marginBottom: 0 }}>
+                    <h1 style={{ fontSize: '1.75rem', fontWeight: 'bold', color: '#ffffff', margin: 0 }}>Users</h1>
                     <button 
                         onClick={() => setShowModal(true)}
                         style={{ 
@@ -323,8 +323,8 @@ const ManageUsers = () => {
                 </div>
 
                 {/* Table */}
-                <div style={{ overflowX: 'auto' }}>
-                    <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
+                <div className="admin-table-container">
+                    <table className="admin-table">
                         <thead>
                             <tr style={{ backgroundColor: '#18181b', borderBottom: '1px solid #27272a' }}>
                                 <th style={{ padding: '1rem 1.5rem', width: '40px' }}>
@@ -350,7 +350,7 @@ const ManageUsers = () => {
                                         Created at <ChevronDown size={14} color="#71717a" />
                                     </div>
                                 </th>
-                                <th style={{ padding: '1rem 1.5rem' }}></th>
+                                <th style={{ padding: '1rem 1.5rem', textAlign: 'right', color: '#fafafa', fontWeight: '600' }}>Actions</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -365,12 +365,12 @@ const ManageUsers = () => {
                             ) : (
                                 filteredUsers.slice(0, perPage).map(user => (
                                     <tr key={user.id} style={{ borderBottom: '1px solid #27272a' }}>
-                                        <td style={{ padding: '1rem 1.5rem' }}>
+                                        <td data-label="Select" style={{ padding: '1rem 1.5rem' }}>
                                             <input type="checkbox" style={{ accentColor: '#fbbf24', cursor: 'pointer' }} />
                                         </td>
-                                        <td style={{ padding: '1rem 1.5rem', color: '#d4d4d8' }}>{user.name}</td>
-                                        <td style={{ padding: '1rem 1.5rem', color: '#d4d4d8' }}>{user.email}</td>
-                                        <td style={{ padding: '1rem 1.5rem' }}>
+                                        <td data-label="Name" style={{ padding: '1rem 1.5rem', color: '#d4d4d8' }}>{user.name}</td>
+                                        <td data-label="Email" style={{ padding: '1rem 1.5rem', color: '#d4d4d8' }}>{user.email}</td>
+                                        <td data-label="Roles" style={{ padding: '1rem 1.5rem' }}>
                                             <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                                                 {user.roles && user.roles.length > 0 ? (
                                                     user.roles.map((role, idx) => (
@@ -391,26 +391,24 @@ const ManageUsers = () => {
                                                 )}
                                             </div>
                                         </td>
-                                        <td style={{ padding: '1rem 1.5rem', color: '#d4d4d8', fontSize: '0.85rem' }}>
+                                        <td data-label="Created at" style={{ padding: '1rem 1.5rem', color: '#d4d4d8', fontSize: '0.85rem' }}>
                                             {new Date(user.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                                         </td>
-                                        <td style={{ padding: '1rem 1.5rem', textAlign: 'right' }}>
-                                            <button 
-                                                onClick={() => openEdit(user)}
-                                                style={{ 
-                                                    display: 'flex', 
-                                                    alignItems: 'center', 
-                                                    gap: '0.3rem', 
-                                                    backgroundColor: 'transparent', 
-                                                    border: 'none', 
-                                                    color: '#fbbf24', 
-                                                    fontWeight: '600',
-                                                    cursor: 'pointer',
-                                                    fontSize: '0.85rem'
-                                                }}
-                                            >
-                                                <Edit2 size={14} /> Edit
-                                            </button>
+                                        <td className="admin-table-actions" data-label="Actions" style={{ padding: '1rem 1.5rem', textAlign: 'right' }}>
+                                            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
+                                                <button 
+                                                    onClick={() => openEdit(user)}
+                                                    className="admin-btn admin-btn-primary"
+                                                    style={{ 
+                                                        display: 'inline-flex', 
+                                                        alignItems: 'center', 
+                                                        gap: '0.3rem', 
+                                                        fontSize: '0.85rem'
+                                                    }}
+                                                >
+                                                    <Edit2 size={14} /> Edit
+                                                </button>
+                                            </div>
                                         </td>
                                     </tr>
                                 ))

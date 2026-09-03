@@ -253,7 +253,7 @@ const ManageUpcomingEvents = () => {
                     )}
                 </div>
 
-                <form onSubmit={handleSubmit} className="admin-form" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.25rem' }}>
+                <form onSubmit={handleSubmit} className="admin-form admin-three-col-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.25rem' }}>
                     {/* Event Title */}
                     <div className="admin-form-group" style={{ gridColumn: '1 / -1' }}>
                         <label style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
@@ -430,10 +430,10 @@ const ManageUpcomingEvents = () => {
 
                                     return (
                                         <tr key={item.id}>
-                                            <td style={{ color: '#fafafa', fontWeight: '600' }}>
+                                            <td data-label="Event Title" style={{ color: '#fafafa', fontWeight: '600' }}>
                                                 {item.title}
                                             </td>
-                                            <td>
+                                            <td data-label="Date Schedule">
                                                 <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', color: '#e4e4e7', fontSize: '0.875rem' }}>
                                                     <Calendar size={14} style={{ color: '#38bdf8' }} />
                                                     {item.start_date ? (
@@ -446,14 +446,14 @@ const ManageUpcomingEvents = () => {
                                                     )}
                                                 </div>
                                             </td>
-                                            <td>{item.time || '—'}</td>
-                                            <td>{item.location || '—'}</td>
-                                            <td>
+                                            <td data-label="Time">{item.time || '—'}</td>
+                                            <td data-label="Location">{item.location || '—'}</td>
+                                            <td data-label="Status">
                                                 <span className={`admin-badge ${item.status ? 'badge-success' : 'badge-danger'}`}>
                                                     {item.status ? 'Active' : 'Inactive'}
                                                 </span>
                                             </td>
-                                            <td style={{ textAlign: 'right' }}>
+                                            <td className="admin-table-actions" data-label="Actions" style={{ textAlign: 'right' }}>
                                                 <div style={{ display: 'inline-flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
                                                     <button
                                                         onClick={() => handleEdit(item)}
@@ -461,7 +461,7 @@ const ManageUpcomingEvents = () => {
                                                         style={{ padding: '0.35rem 0.65rem' }}
                                                         title="Edit Event"
                                                     >
-                                                        <Edit2 size={14} />
+                                                        <Edit2 size={14} /> Edit
                                                     </button>
                                                     <button
                                                         onClick={() => handleDelete(item.id)}
@@ -469,7 +469,7 @@ const ManageUpcomingEvents = () => {
                                                         style={{ padding: '0.35rem 0.65rem' }}
                                                         title="Delete Event"
                                                     >
-                                                        <Trash2 size={14} />
+                                                        <Trash2 size={14} /> Delete
                                                     </button>
                                                 </div>
                                             </td>

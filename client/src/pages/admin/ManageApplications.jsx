@@ -104,7 +104,7 @@ const ManageApplications = () => {
 
     return (
         <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+            <div className="admin-header-actions">
                 <h2 style={{ fontSize: '1.5rem', fontWeight: '700', color: '#fafafa', margin: 0 }}>Manage Appointments</h2>
                 <button onClick={handleDownloadCSV} className="admin-btn admin-btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <Download size={16} /> Download CSV
@@ -178,13 +178,13 @@ const ManageApplications = () => {
                             <tbody>
                                 {filteredApplications.map(item => (
                                     <tr key={item.id}>
-                                        <td style={{ fontWeight: 500, color: '#fafafa' }}>{item.name}</td>
-                                        <td>{item.email}</td>
-                                        <td>{item.contact}</td>
-                                        <td><span className="admin-badge badge-pending">{item.course || 'Unknown'}</span></td>
-                                        <td style={{ fontWeight: 600, color: '#fafafa' }}>{item.gpa}</td>
-                                        <td>{new Date(item.created_at).toLocaleDateString()}</td>
-                                        <td>
+                                        <td data-label="Applicant Name" style={{ fontWeight: 500, color: '#fafafa' }}>{item.name}</td>
+                                        <td data-label="Email">{item.email}</td>
+                                        <td data-label="Contact">{item.contact}</td>
+                                        <td data-label="Course"><span className="admin-badge badge-pending">{item.course || 'Unknown'}</span></td>
+                                        <td data-label="GPA" style={{ fontWeight: 600, color: '#fafafa' }}>{item.gpa}</td>
+                                        <td data-label="Date Applied">{new Date(item.created_at).toLocaleDateString()}</td>
+                                        <td className="admin-table-actions" data-label="Actions">
                                             <button 
                                                 className="admin-btn admin-btn-danger" 
                                                 onClick={() => handleDelete(item.id)}

@@ -50,16 +50,16 @@ const ManageActivityLogs = () => {
                             <tbody>
                                 {logs.map(log => (
                                     <tr key={log.id}>
-                                        <td style={{ color: '#a1a1aa' }}>
+                                        <td data-label="Date" style={{ color: '#a1a1aa' }}>
                                             {new Date(log.created_at).toLocaleString()}
                                         </td>
-                                        <td style={{ fontWeight: 600, color: '#fbbf24' }}>
+                                        <td data-label="Log Name" style={{ fontWeight: 600, color: '#fbbf24' }}>
                                             {log.log_name || 'System'}
                                         </td>
-                                        <td style={{ fontWeight: 500, color: '#fafafa' }}>
+                                        <td data-label="Description" style={{ fontWeight: 500, color: '#fafafa' }}>
                                             {log.description}
                                         </td>
-                                        <td>
+                                        <td data-label="Subject">
                                             {log.subject_type ? (
                                                 <span style={{ fontSize: '0.85rem' }}>
                                                     {log.subject_type.split('\\\\').pop()} #{log.subject_id}
@@ -68,7 +68,7 @@ const ManageActivityLogs = () => {
                                                 <span style={{ color: '#52525b' }}>N/A</span>
                                             )}
                                         </td>
-                                        <td>
+                                        <td data-label="Causer">
                                             {log.causer_id ? `User #${log.causer_id}` : 'System'}
                                         </td>
                                     </tr>

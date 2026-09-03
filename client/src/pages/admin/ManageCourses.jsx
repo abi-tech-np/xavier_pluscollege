@@ -243,8 +243,8 @@ const ManageCourses = () => {
                                                 backgroundColor: isRowActive ? 'rgba(251, 191, 36, 0.05)' : undefined
                                             }}
                                         >
-                                            <td style={{ color: '#a1a1aa' }}>{item.id}</td>
-                                            <td style={{ color: '#fafafa', fontWeight: '500' }}>
+                                            <td data-label="ID" style={{ color: '#a1a1aa' }}>{item.id}</td>
+                                            <td data-label="Course Name" style={{ color: '#fafafa', fontWeight: '500' }}>
                                                 {item.course}
                                                 {isRowActive && (
                                                     <span style={{ 
@@ -256,7 +256,7 @@ const ManageCourses = () => {
                                                     </span>
                                                 )}
                                             </td>
-                                            <td style={{ textAlign: 'right' }}>
+                                            <td className="admin-table-actions" data-label="Actions" style={{ textAlign: 'right' }}>
                                                 <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
                                                     <button 
                                                         onClick={() => handleEdit(item)} 
@@ -264,7 +264,7 @@ const ManageCourses = () => {
                                                         style={{ padding: '0.35rem 0.6rem' }}
                                                         title="Edit course"
                                                     >
-                                                        <Edit2 size={14} />
+                                                        <Edit2 size={14} /> Edit
                                                     </button>
                                                     <button 
                                                         onClick={() => handleDelete(item.id)} 
@@ -272,7 +272,7 @@ const ManageCourses = () => {
                                                         style={{ padding: '0.35rem 0.6rem' }}
                                                         title="Delete course"
                                                     >
-                                                        <Trash2 size={14} />
+                                                        <Trash2 size={14} /> Delete
                                                     </button>
                                                 </div>
                                             </td>

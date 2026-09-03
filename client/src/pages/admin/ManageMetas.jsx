@@ -111,7 +111,7 @@ const ManageMetas = () => {
             {showForm && (
                 <div className="admin-card" style={{ marginBottom: '2rem' }}>
                     <form onSubmit={handleSubmit} className="admin-form">
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                        <div className="admin-two-col-grid" style={{ gap: '1rem' }}>
                             <div className="admin-form-group">
                                 <label>Model Type (e.g. App\Models\Course)</label>
                                 <input type="text" name="metaable_type" value={formData.metaable_type} onChange={handleChange} required disabled={isEditing} />
@@ -170,28 +170,28 @@ const ManageMetas = () => {
                             <tbody>
                                 {metas.map(item => (
                                     <tr key={item.id}>
-                                        <td style={{ color: '#a1a1aa' }}>{item.metaable_type}</td>
-                                        <td style={{ fontWeight: 600 }}>{item.metaable_id}</td>
-                                        <td style={{ fontWeight: 500, color: '#fafafa' }}>{item.title || 'N/A'}</td>
-                                        <td>
+                                        <td data-label="Type" style={{ color: '#a1a1aa' }}>{item.metaable_type}</td>
+                                        <td data-label="Target ID" style={{ fontWeight: 600 }}>{item.metaable_id}</td>
+                                        <td data-label="Title" style={{ fontWeight: 500, color: '#fafafa' }}>{item.title || 'N/A'}</td>
+                                        <td data-label="Status">
                                             {item.status ? 
                                                 <span className="admin-badge badge-success">Active</span> : 
                                                 <span className="admin-badge badge-pending">Inactive</span>
                                             }
                                         </td>
-                                        <td>
+                                        <td className="admin-table-actions" data-label="Actions">
                                             <div style={{ display: 'flex', gap: '0.5rem' }}>
                                                 <button 
                                                     className="admin-btn admin-btn-primary" 
                                                     onClick={() => handleEdit(item)}
                                                 >
-                                                    <Edit2 size={14} />
+                                                    <Edit2 size={14} /> Edit
                                                 </button>
                                                 <button 
                                                     className="admin-btn admin-btn-danger" 
                                                     onClick={() => handleDelete(item.id)}
                                                 >
-                                                    <Trash2 size={14} />
+                                                    <Trash2 size={14} /> Delete
                                                 </button>
                                             </div>
                                         </td>

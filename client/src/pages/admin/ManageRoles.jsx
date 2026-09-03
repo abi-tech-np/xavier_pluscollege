@@ -151,7 +151,7 @@ const ManageRoles = () => {
             
             <form onSubmit={handleSubmit}>
                 <div className="admin-card" style={{ marginBottom: '2rem' }}>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: '1.5rem', alignItems: 'center' }}>
+                    <div className="admin-three-col-grid" style={{ alignItems: 'flex-end' }}>
                         <div className="admin-form-group" style={{ marginBottom: 0 }}>
                             <label style={{ color: '#fafafa', fontWeight: 500 }}>Name <span style={{color: '#ef4444'}}>*</span></label>
                             <input 
@@ -172,7 +172,7 @@ const ManageRoles = () => {
                                 style={{ backgroundColor: '#171717', border: '1px solid #262626', color: '#fafafa', padding: '0.75rem', borderRadius: '0.375rem', width: '100%', outline: 'none' }} 
                             />
                         </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '1.5rem' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                             <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', color: '#fafafa', fontWeight: 500 }}>
                                 <input 
                                     type="checkbox" 
@@ -268,16 +268,16 @@ const ManageRoles = () => {
                             <tbody>
                                 {roles.map(item => (
                                     <tr key={item.id}>
-                                        <td style={{ color: '#fafafa', fontWeight: '500' }}>{item.name}</td>
-                                        <td>{item.guard_name}</td>
-                                        <td>
+                                        <td data-label="Role Name" style={{ color: '#fafafa', fontWeight: '500' }}>{item.name}</td>
+                                        <td data-label="Guard">{item.guard_name}</td>
+                                        <td data-label="Permissions Count">
                                             <span className="admin-badge badge-success">
                                                 {item.role_has_permissions?.length || 0} permissions
                                             </span>
                                         </td>
-                                        <td>
+                                        <td className="admin-table-actions" data-label="Actions">
                                             <button onClick={() => handleDelete(item.id)} className="admin-btn admin-btn-danger" style={{ padding: '0.3rem 0.6rem' }}>
-                                                <Trash2 size={14} />
+                                                <Trash2 size={14} /> Delete
                                             </button>
                                         </td>
                                     </tr>
