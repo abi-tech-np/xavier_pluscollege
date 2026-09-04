@@ -455,10 +455,10 @@ const ManageLifeAtXavier = () => {
                 </div>
 
                 {/* Grid Layout */}
-                <form onSubmit={(e) => handleSubmit(e, false)} style={{ display: 'grid', gridTemplateColumns: '1fr 360px', gap: '1.5rem', alignItems: 'start' }}>
+                <form onSubmit={(e) => handleSubmit(e, false)} className="admin-life-form-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 360px', gap: '1.5rem', alignItems: 'start' }}>
                     
                     {/* Left Column */}
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', minWidth: 0 }}>
                         
                         {/* Main Details Card */}
                         <div style={{ backgroundColor: '#18181b', borderRadius: '0.75rem', border: '1px solid #27272a', padding: '1.5rem' }}>
@@ -962,7 +962,7 @@ const ManageLifeAtXavier = () => {
 
     // Render List View Table
     return (
-        <div style={{ padding: '0 1rem', fontFamily: "'Inter', sans-serif" }}>
+        <div style={{ fontFamily: "'Inter', sans-serif" }}>
             {/* Feedback Toast */}
             {feedback.message && (
                 <div style={{
@@ -986,9 +986,9 @@ const ManageLifeAtXavier = () => {
                 </div>
             )}
 
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+            <div className="admin-header-actions">
                 <div>
-                    <h1 style={{ fontSize: '2rem', fontWeight: 'bold', color: '#ffffff', margin: 0 }}>Life At Xaviers</h1>
+                    <h1 style={{ fontSize: '1.75rem', fontWeight: 'bold', color: '#ffffff', margin: 0 }}>Life At Xaviers</h1>
                     <p style={{ color: '#a1a1aa', fontSize: '0.875rem', margin: '0.25rem 0 0 0' }}>
                         Manage student activities, campus showcases, and event galleries.
                     </p>
@@ -1037,13 +1037,13 @@ const ManageLifeAtXavier = () => {
                                     const galleryCount = item.life_at_xavier_images?.length || 0;
                                     return (
                                         <tr key={item.id} style={{ borderBottom: '1px solid #27272a' }}>
-                                            <td style={{ padding: '1rem 1.5rem', color: '#d4d4d8', fontWeight: '500' }}>
+                                            <td data-label="Title" style={{ padding: '1rem 1.5rem', color: '#d4d4d8', fontWeight: '500' }}>
                                                 {item.title}
                                             </td>
-                                            <td style={{ padding: '1rem 1.5rem', color: '#a1a1aa', fontFamily: 'monospace', fontSize: '0.85rem' }}>
+                                            <td data-label="Slug" style={{ padding: '1rem 1.5rem', color: '#a1a1aa', fontFamily: 'monospace', fontSize: '0.85rem' }}>
                                                 /{item.slug}
                                             </td>
-                                            <td style={{ padding: '1rem 1.5rem', color: '#d4d4d8' }}>
+                                            <td data-label="Gallery" style={{ padding: '1rem 1.5rem', color: '#d4d4d8' }}>
                                                 <span style={{
                                                     display: 'inline-flex',
                                                     alignItems: 'center',
@@ -1058,7 +1058,7 @@ const ManageLifeAtXavier = () => {
                                                     <ImageIcon size={13} /> {galleryCount} {galleryCount === 1 ? 'image' : 'images'}
                                                 </span>
                                             </td>
-                                            <td style={{ padding: '1rem 1.5rem' }}>
+                                            <td data-label="Status" style={{ padding: '1rem 1.5rem' }}>
                                                 <span style={{ 
                                                     backgroundColor: item.status ? 'rgba(34, 197, 94, 0.1)' : 'rgba(239, 68, 68, 0.1)',
                                                     color: item.status ? '#22c55e' : '#ef4444',
@@ -1071,7 +1071,7 @@ const ManageLifeAtXavier = () => {
                                                     {item.status ? 'Active' : 'Draft'}
                                                 </span>
                                             </td>
-                                            <td style={{ padding: '1rem 1.5rem', textAlign: 'right' }}>
+                                            <td className="admin-table-actions" data-label="Actions" style={{ padding: '1rem 1.5rem', textAlign: 'right' }}>
                                                 <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
                                                     {/* Edit button */}
                                                     <button 
@@ -1127,7 +1127,7 @@ const ManageLifeAtXavier = () => {
                                                             e.currentTarget.style.color = '#ef4444';
                                                         }}
                                                     >
-                                                        <Trash2 size={14} />
+                                                        <Trash2 size={14} /> Delete
                                                     </button>
                                                 </div>
                                             </td>

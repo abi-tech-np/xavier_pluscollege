@@ -5,20 +5,24 @@
         padding-block: 70px;
     }
     .upcomingEvents-container {
+        width: min(100%, 1240px);
+        margin-inline: auto;
         display: grid;
         grid-template-columns: repeat(2, 1fr);
         gap: clamp(30px, 8.5vw, 160px);
 
         @media (max-width: 991px) {
             grid-template-columns: repeat(1, 1fr);
+            gap: 40px;
         }
 
         .section__heading-content {
             text-align: left;
-            width: auto;
+            width: min(100%, 600px);
             align-items: flex-start;
             justify-content: center;
             gap: 30px;
+            margin-left: unset;
 
             @media (max-width: 991px) {
                 align-items: center;
@@ -62,7 +66,7 @@
             border-top: 10px solid #1f4f9b;
             color: #02256f;
             justify-content: space-between;
-            align-items: center;
+            align-items: flex-start;
             font-family: var(--primary-font);
             transition: box-shadow 0.25s linear;
             position: relative;
@@ -80,14 +84,11 @@
 
             .date__container {
                 display: flex;
-                // padding: 16px;
-                gap: 30px;
-                width: 25%;
-                // justify-content: center;
-
-                // @media(max-width:525px) {
-                //     min-width: 125px;
-                // }
+                gap: 20px;
+                min-width: 100px;
+                flex-shrink: 0;
+                align-items: flex-start;
+                justify-content: flex-start;
             }
 
             .date {
@@ -99,6 +100,7 @@
                 justify-content: center;
                 flex-direction: column;
                 font-weight: 400;
+                flex-shrink: 0;
                 position: relative;
                 .inner__date{
                     display: flex;
@@ -142,18 +144,22 @@
 
 
             .main__content {
+                display: flex;
+                flex-direction: column;
+                gap: 6px;
+                flex: 1;
                 text-transform: capitalize;
-                width: 50%;
                 h4 {
                     font-weight: 400;
                     color: #121212;
-                    // margin-bottom: 7px;
                     font-size: clamp(12px, 2.5vw, 20px);
+                    line-height: 1.3;
                 }
 
                 span {
                     color: #1f94dc;
                     font-size: clamp(10px, 2.5vw, 18px);
+                    display: block;
                 }
             }
 
@@ -161,7 +167,8 @@
                 color: inherit;
                 font-family: var(--font-regular);
                 font-size: 20px;
-                width: 25%;
+                flex-shrink: 0;
+                align-self: center;
                 @media (max-width: 1200px) {
                     display: none;
                 }

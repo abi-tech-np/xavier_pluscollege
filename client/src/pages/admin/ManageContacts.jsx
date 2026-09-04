@@ -57,13 +57,13 @@ const ManageContacts = () => {
                             <tbody>
                                 {contacts.map(item => (
                                     <tr key={item.id}>
-                                        <td style={{ color: '#fafafa', fontWeight: '500' }}>{item.name}</td>
-                                        <td>{item.email}</td>
-                                        <td>{item.contact}</td>
-                                        <td>{item.message}</td>
-                                        <td>
+                                        <td data-label="Name" style={{ color: '#fafafa', fontWeight: '500' }}>{item.name}</td>
+                                        <td data-label="Email">{item.email}</td>
+                                        <td data-label="Contact No.">{item.contact}</td>
+                                        <td data-label="Message">{item.message}</td>
+                                        <td className="admin-table-actions" data-label="Actions">
                                             <button onClick={() => handleDelete(item.id)} className="admin-btn admin-btn-danger" style={{ padding: '0.3rem 0.6rem' }}>
-                                                <Trash2 size={14} />
+                                                <Trash2 size={14} /> Delete
                                             </button>
                                         </td>
                                     </tr>

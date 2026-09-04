@@ -56,7 +56,7 @@ const ManageEventSettings = () => {
             <div className="admin-card">
                 <form onSubmit={handleSubmit} className="admin-form">
                     
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+                    <div className="admin-two-col-grid" style={{ gap: '1.5rem' }}>
                         {/* Basic Info */}
                         <div>
                             <h3 style={{ color: '#fbbf24', marginBottom: '1rem', borderBottom: '1px solid #262626', paddingBottom: '0.5rem' }}>Basic Settings</h3>

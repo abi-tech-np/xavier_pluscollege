@@ -64,16 +64,16 @@ const AdminDashboard = () => {
 
     return (
         <div>
-            <h1 style={{ fontSize: '1.75rem', fontWeight: '700', color: '#fafafa', marginBottom: '2rem' }}>
+            <h1 style={{ fontSize: '1.75rem', fontWeight: '700', color: '#fafafa', marginBottom: '1.5rem' }}>
                 Welcome to Dashboard
             </h1>
 
             {/* Contents Hub */}
-            <div style={{ marginBottom: '3rem' }}>
-                <h2 style={{ fontSize: '1.125rem', fontWeight: '600', color: '#fafafa', marginBottom: '1.5rem' }}>
+            <div style={{ marginBottom: '2.5rem' }}>
+                <h2 style={{ fontSize: '1.125rem', fontWeight: '600', color: '#fafafa', marginBottom: '1.25rem' }}>
                     Contents Hub
                 </h2>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem' }}>
+                <div className="admin-stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.25rem' }}>
                     
                     <div style={cardStyle}>
                         <div style={headerStyle}>
@@ -108,10 +108,10 @@ const AdminDashboard = () => {
 
             {/* Enquiries */}
             <div>
-                <h2 style={{ fontSize: '1.125rem', fontWeight: '600', color: '#fafafa', marginBottom: '1.5rem' }}>
+                <h2 style={{ fontSize: '1.125rem', fontWeight: '600', color: '#fafafa', marginBottom: '1.25rem' }}>
                     Enquiries
                 </h2>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem' }}>
+                <div className="admin-stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.25rem' }}>
                     
                     <div style={cardStyle}>
                         <div style={headerStyle}>
