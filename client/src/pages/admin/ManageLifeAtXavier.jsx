@@ -362,7 +362,7 @@ const ManageLifeAtXavier = () => {
             const config = {
                 headers: { 
                     ...getAuthHeaders().headers, 
-                    'Content-Type': 'multipart/form-data' 
+                     
                 }
             };
 

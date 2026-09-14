@@ -113,7 +113,7 @@ const ManageNews = () => {
             const config = {
                 headers: {
                     ...getAuthHeaders().headers,
-                    'Content-Type': 'multipart/form-data'
+                    
                 }
             };
 
