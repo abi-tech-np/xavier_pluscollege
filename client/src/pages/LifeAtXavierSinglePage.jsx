@@ -100,28 +100,28 @@ const LifeAtXavierSinglePage = () => {
     };
 
     useEffect(() => {
-        if (hardcodedData[slug]) {
-            setEventData(hardcodedData[slug]);
-            setLoading(false);
-        } else {
-            axios.get(getApiUrl(`/life-at-xavier/${slug}`))
-                .then(res => {
-                    const dbData = res.data;
-                    const dateDisplay = formatDate(dbData.created_at);
-                    setEventData({
-                        title: dbData.title,
-                        date: dateDisplay,
-                        description: dbData.description || null,
-                        bannerImage: dbData.imageUrl || 'banner-bg.jpg', // generic banner for dynamic ones
-                        galleryUrls: dbData.galleryUrls || []
-                    });
+        axios.get(getApiUrl(`/life-at-xavier/${slug}`))
+            .then(res => {
+                const dbData = res.data;
+                const dateDisplay = formatDate(dbData.created_at);
+                setEventData({
+                    title: dbData.title,
+                    date: dateDisplay,
+                    description: dbData.description || null,
+                    bannerImage: dbData.imageUrl || 'banner-bg.jpg', // generic banner for dynamic ones
+                    galleryUrls: dbData.galleryUrls || []
+                });
+                setLoading(false);
+            })
+            .catch(err => {
+                if (hardcodedData[slug]) {
+                    setEventData(hardcodedData[slug]);
                     setLoading(false);
-                })
-                .catch(err => {
+                } else {
                     console.error("Error fetching event details", err);
                     setLoading(false);
-                });
-        }
+                }
+            });
     }, [slug]);
 
     if (loading) return <div>Loading...</div>;

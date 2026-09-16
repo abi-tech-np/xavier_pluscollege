@@ -73,7 +73,9 @@ const LifeAtXavier = ({ limit }) => {
         }
     ];
 
-    const allItems = [...items, ...hardcodedItems];
+    const apiSlugs = items.map(item => item.slug);
+    const filteredHardcodedItems = hardcodedItems.filter(item => !apiSlugs.includes(item.slug));
+    const allItems = [...items, ...filteredHardcodedItems];
 
     return (
         <div className="lifeAtXavier__list">
