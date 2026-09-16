@@ -1,9 +1,17 @@
 import axios from 'axios';
 
-export const API_URL = import.meta.env.MODE === 'development'
-  ? 'http://localhost:5000/api'
-  : '/plus-api/api';
+export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
 export const API_BASE_URL = API_URL;
+export const BACKEND_URL = API_URL.replace(/\/api\/?$/, '');
+
+export const getImageUrl = (path) => {
+  if (!path) return '';
+  if (path.startsWith('http://') || path.startsWith('https://') || path.startsWith('data:') || path.startsWith('blob:') || path.startsWith('/images/')) {
+    return path;
+  }
+  const cleanPath = path.startsWith('/') ? path : `/${path}`;
+  return `${BACKEND_URL}${cleanPath}`;
+};
 
 export const getApiUrl = (path = '') => {
   if (!path) return API_BASE_URL;
@@ -47,6 +55,14 @@ export const fetchApiData = async (url, options = {}) => {
   // 3. Initiate request and track promise
   const requestPromise = axios.get(fullUrl, axiosConfig)
     .then((res) => {
+      // Guard against HTML error pages (e.g. WAF, Nginx 502/504, SPA 404 fallback index.html)
+      const contentType = res.headers?.['content-type'] || '';
+      if (
+        typeof res.data === 'string' &&
+        (contentType.includes('text/html') || res.data.trim().startsWith('<!DOCTYPE') || res.data.trim().startsWith('<html'))
+      ) {
+        throw new Error(`API endpoint ${fullUrl} returned HTML instead of JSON.`);
+      }
       cacheStore.set(fullUrl, { data: res.data, timestamp: Date.now() });
       pendingRequests.delete(fullUrl);
       return res.data;

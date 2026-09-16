@@ -1,4 +1,4 @@
-import { getApiUrl, clearApiCache } from '../../services/apiClient';
+import { getApiUrl, clearApiCache, getImageUrl } from '../../services/apiClient';
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
@@ -43,14 +43,7 @@ const ManagePopups = () => {
         setTimeout(() => setFeedback(null), 3500);
     };
 
-    const resolveImageUrl = (url) => {
-        if (!url) return null;
-        if (url.startsWith('http://') || url.startsWith('https://')) return url;
-        const base = import.meta.env.VITE_API_URL 
-            ? import.meta.env.VITE_API_URL.replace(/\/api\/?$/, '') 
-            : 'http://localhost:5000';
-        return `${base}${url.startsWith('/') ? '' : '/'}${url}`;
-    };
+    const resolveImageUrl = (url) => getImageUrl(url);
 
     const fetchPopups = async () => {
         try {

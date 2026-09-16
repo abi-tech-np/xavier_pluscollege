@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import axios from 'axios';
-import { getApiUrl } from '../services/apiClient';
+import { getApiUrl, getImageUrl } from '../services/apiClient';
 import Banner from '../components/Banner';
 import FooterPassrate from '../components/FooterPassrate';
 
@@ -119,7 +119,7 @@ const UpcomingEventDetailPage = () => {
                 colorTitle=""
                 firstHighlightColor=""
                 secondHighlightColor=""
-                bannerImage={eventData.bannerImage}
+                bannerImage={getImageUrl(eventData.bannerImage)}
                 overlay={true}
                 pageName={pageName}
             />
@@ -155,7 +155,7 @@ const UpcomingEventDetailPage = () => {
                                 <div className="gallery-grid">
                                     {eventData.imageUrls.slice(1).map((imgUrl, idx) => (
                                         <div className="gallery-item" key={idx}>
-                                            <img src={imgUrl} alt={`Event gallery ${idx + 1}`} />
+                                            <img src={getImageUrl(imgUrl)} alt={`Event gallery ${idx + 1}`} />
                                         </div>
                                     ))}
                                 </div>

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { fetchApiData } from '../services/apiClient';
+import { fetchApiData, getImageUrl } from '../services/apiClient';
 import { Link } from 'react-router-dom';
 
 const NewsAndEventsList = ({ limit }) => {
@@ -13,13 +13,14 @@ const NewsAndEventsList = ({ limit }) => {
         fetchApiData(path)
             .then(data => {
                 if (isMounted) {
-                    setNewsAndEvents(data);
+                    setNewsAndEvents(Array.isArray(data) ? data : []);
                     setLoading(false);
                 }
             })
             .catch(err => {
                 if (isMounted) {
                     console.error(err);
+                    setNewsAndEvents([]);
                     setLoading(false);
                 }
             });
@@ -70,15 +71,10 @@ const NewsAndEventsList = ({ limit }) => {
         }
     ];
 
-    const allNews = [...newsAndEvents, ...hardcodedNews];
+    const safeNews = Array.isArray(newsAndEvents) ? newsAndEvents : [];
+    const allNews = [...safeNews, ...hardcodedNews];
 
-    const resolveImageUrl = (url) => {
-        if (!url) return null;
-        if (url.startsWith('http://') || url.startsWith('https://')) return url;
-        const backendOrigin = import.meta.env.MODE === 'development' ? 'http://localhost:5000' : '';
-        const cleanUrl = url.startsWith('/') ? url : `/${url}`;
-        return `${backendOrigin}${cleanUrl}`;
-    };
+    const resolveImageUrl = (url) => getImageUrl(url);
 
     return (
         <div className="newsAndEvents__list">

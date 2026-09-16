@@ -29,6 +29,18 @@ const AdminLayout = () => {
         }
     }, [navigate, location]);
 
+    // Listen for forced logout events from the global axios interceptor
+    // so we can navigate via React Router instead of a hard page reload
+    useEffect(() => {
+        const handleForceLogout = () => {
+            localStorage.removeItem('adminToken');
+            localStorage.removeItem('adminUser');
+            navigate('/admin/login');
+        };
+        window.addEventListener('auth:logout', handleForceLogout);
+        return () => window.removeEventListener('auth:logout', handleForceLogout);
+    }, [navigate]);
+
     // Close mobile sidebar whenever route/location changes
     useEffect(() => {
         setIsSidebarOpen(false);

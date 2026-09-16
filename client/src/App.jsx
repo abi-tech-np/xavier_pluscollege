@@ -47,11 +47,18 @@ const App = () => {
       (response) => response,
       (error) => {
         if (error.response && (error.response.status === 401 || error.response.status === 403)) {
-          // Token is invalid or expired
-          if (window.location.pathname.startsWith('/admin') && window.location.pathname !== '/admin/login') {
+          // Only treat as an auth error if the response came from our own API
+          // (JSON content-type), NOT from CloudFront/WAF (HTML content-type).
+          // CloudFront 403s (e.g. WAF blocking large uploads) should not trigger logout.
+          const contentType = error.response.headers?.['content-type'] || '';
+          const isApiResponse = contentType.includes('application/json');
+
+          if (isApiResponse && window.location.pathname.startsWith('/admin') && window.location.pathname !== '/admin/login') {
             localStorage.removeItem('adminToken');
             localStorage.removeItem('adminUser');
-            window.location.href = '/admin/login';
+            // Use custom event so AdminLayout can navigate via React Router
+            // instead of a hard window.location redirect that breaks SPA state
+            window.dispatchEvent(new CustomEvent('auth:logout'));
           }
         }
         return Promise.reject(error);

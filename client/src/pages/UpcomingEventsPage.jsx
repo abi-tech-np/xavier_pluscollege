@@ -15,11 +15,12 @@ const UpcomingEventsPage = () => {
 
         fetchApiData('/upcoming-events')
             .then(data => {
-                setUpcomingEvents(data);
+                setUpcomingEvents(Array.isArray(data) ? data : []);
                 setLoading(false);
             })
             .catch(err => {
                 console.error(err);
+                setUpcomingEvents([]);
                 setLoading(false);
             });
     }, []);
@@ -93,7 +94,8 @@ const UpcomingEventsPage = () => {
         }
     ];
 
-    const allEvents = [...upcomingEvents, ...hardcodedEvents];
+    const safeEvents = Array.isArray(upcomingEvents) ? upcomingEvents : [];
+    const allEvents = [...safeEvents, ...hardcodedEvents];
 
     return (
         <>

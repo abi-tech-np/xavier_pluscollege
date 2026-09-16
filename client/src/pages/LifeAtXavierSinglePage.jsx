@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import axios from 'axios';
-import { getApiUrl } from '../services/apiClient';
+import { getApiUrl, getImageUrl } from '../services/apiClient';
 import Banner from '../components/Banner';
 import FooterCTA from '../components/FooterCTA';
 
@@ -134,7 +134,7 @@ const LifeAtXavierSinglePage = () => {
                 colorTitle=""
                 firstHighlightColor=""
                 secondHighlightColor=""
-                bannerImage={eventData.bannerImage}
+                bannerImage={getImageUrl(eventData.bannerImage)}
                 overlay={false}
                 pageName={[]}
             />
@@ -154,7 +154,7 @@ const LifeAtXavierSinglePage = () => {
                     <div className="gallery">
                         {eventData.galleryUrls.map((url, index) => (
                             <div className={`gallery__item gallery__item--${index + 1}`} key={index}>
-                                <img src={url} alt={`Gallery image ${index + 1}`} className="gallery__img" />
+                                <img src={getImageUrl(url)} alt={`Gallery image ${index + 1}`} className="gallery__img" />
                             </div>
                         ))}
                     </div>

@@ -11,6 +11,25 @@ export default defineConfig({
       threshold: 1024, // Only compress files > 1KB
     }),
   ],
+  server: {
+    proxy: {
+      '/plus-api/api': {
+        target: 'http://localhost:5000',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/plus-api/, ''),
+      },
+    },
+  },
+  preview: {
+    port: 4173,
+    proxy: {
+      '/plus-api/api': {
+        target: 'http://localhost:5000',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/plus-api/, ''),
+      },
+    },
+  },
   build: {
     chunkSizeWarningLimit: 600,
     rollupOptions: {

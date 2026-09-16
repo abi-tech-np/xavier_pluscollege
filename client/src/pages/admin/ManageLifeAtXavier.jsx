@@ -14,7 +14,7 @@ import {
     ArrowLeft,
     Layers
 } from 'lucide-react';
-import { getApiUrl } from '../../services/apiClient';
+import { getApiUrl, getImageUrl } from '../../services/apiClient';
 
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
@@ -520,7 +520,7 @@ const ManageLifeAtXavier = () => {
                                         gap: '1rem'
                                     }}>
                                         <img 
-                                            src={thumbnailPreview || existingThumbnailUrl} 
+                                            src={thumbnailPreview || getImageUrl(existingThumbnailUrl)} 
                                             alt="Thumbnail preview" 
                                             style={{ width: '80px', height: '60px', objectFit: 'cover', borderRadius: '0.375rem', border: '1px solid #3f3f46' }}
                                         />
@@ -649,7 +649,7 @@ const ManageLifeAtXavier = () => {
                                                     }}
                                                 >
                                                     <img 
-                                                        src={img.imageUrl} 
+                                                        src={getImageUrl(img.imageUrl)} 
                                                         alt={`Gallery ${idx + 1}`} 
                                                         style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                                                     />
@@ -840,7 +840,7 @@ const ManageLifeAtXavier = () => {
                                     gap: '0.75rem'
                                 }}>
                                     <img 
-                                        src={ogImagePreview || existingOgImageUrl} 
+                                        src={ogImagePreview || getImageUrl(existingOgImageUrl)} 
                                         alt="OG preview" 
                                         style={{ width: '60px', height: '45px', objectFit: 'cover', borderRadius: '0.375rem' }}
                                     />

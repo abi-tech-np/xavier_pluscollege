@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { fetchApiData, API_URL } from '../services/apiClient';
+import { fetchApiData, getImageUrl } from '../services/apiClient';
 import { X } from 'lucide-react';
 
 const Popup = () => {
@@ -15,7 +15,7 @@ const Popup = () => {
                 }
 
                 const data = await fetchApiData('/popups');
-                if (isMounted && data && data.length > 0) {
+                if (isMounted && Array.isArray(data) && data.length > 0) {
                     setPopup(data[0]);
                     setIsVisible(true);
                 }
@@ -39,9 +39,7 @@ const Popup = () => {
     if (!isVisible || !popup) return null;
 
     // Use API base server URL for the image if it's a relative path from the API
-    const imageSrc = popup.imageUrl 
-        ? (popup.imageUrl.startsWith('http') ? popup.imageUrl : `${API_URL.replace(/\/api\/?$/, '')}${popup.imageUrl}`) 
-        : null;
+    const imageSrc = popup.imageUrl ? getImageUrl(popup.imageUrl) : null;
 
     return (
         <div style={{

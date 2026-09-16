@@ -86,6 +86,25 @@ router.get('/news', async (req: AuthRequest, res: Response) => {
     }
 });
 
+// Standalone image upload endpoint.
+// The frontend uses this to upload images in a separate request before
+// submitting the form with text-only fields. This two-step pattern keeps
+// the main form payload small enough to pass through AWS WAF body inspection
+// limits, which block large multipart payloads on the production CloudFront
+// distribution.
+router.post('/upload-image', upload.single('image'), async (req: AuthRequest, res: Response): Promise<any> => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ error: 'No image file provided' });
+        }
+        const imageUrl = `/storage/${req.file.filename}`;
+        res.json({ imageUrl });
+    } catch (error) {
+        console.error('Error uploading image:', error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
 router.post('/news', upload.single('image'), async (req: AuthRequest, res: Response) => {
     try {
         const { title, slug, content, status } = req.body;
@@ -93,7 +112,12 @@ router.post('/news', upload.single('image'), async (req: AuthRequest, res: Respo
 
         let imageUrl: string | null = null;
         if (req.file) {
+            // Direct multipart upload (works on localhost / non-WAF environments)
             imageUrl = `/storage/${req.file.filename}`;
+        } else if (req.body.imageUrl) {
+            // Two-step upload: image was uploaded separately via /upload-image,
+            // frontend sends the resulting imageUrl as a text field
+            imageUrl = req.body.imageUrl;
         }
 
         const newItem = await prisma.news_and_events.create({
@@ -144,22 +168,24 @@ router.put('/news/:id', upload.single('image'), async (req: AuthRequest, res: Re
             }
             updateData.imageUrl = `/storage/${req.file.filename}`;
         } else if (req.body.imageUrl !== undefined) {
-            // If explicit imageUrl passed (e.g. keeping existing or clearing)
+            // Explicit imageUrl passed: either a new URL from two-step upload,
+            // keeping existing, or clearing the image
             const newImageUrl = req.body.imageUrl || null;
-            if (!newImageUrl || newImageUrl === '' || newImageUrl === 'null') {
-                const existing = await prisma.news_and_events.findUnique({ where: { id } });
-                if (existing?.imageUrl && existing.imageUrl.startsWith('/storage/')) {
-                    const filename = path.basename(existing.imageUrl);
-                    const oldFilePath = path.join(__dirname, '../../storage', filename);
-                    if (fs.existsSync(oldFilePath)) {
-                        try {
-                            fs.unlinkSync(oldFilePath);
-                        } catch (e) {
-                            console.error('Error deleting old news image:', e);
-                        }
+
+            // Clean up old image file from disk if the imageUrl is changing
+            const existing = await prisma.news_and_events.findUnique({ where: { id } });
+            if (existing?.imageUrl && existing.imageUrl.startsWith('/storage/') && existing.imageUrl !== newImageUrl) {
+                const filename = path.basename(existing.imageUrl);
+                const oldFilePath = path.join(__dirname, '../../storage', filename);
+                if (fs.existsSync(oldFilePath)) {
+                    try {
+                        fs.unlinkSync(oldFilePath);
+                    } catch (e) {
+                        console.error('Error deleting old news image:', e);
                     }
                 }
             }
+
             updateData.imageUrl = newImageUrl;
         }
 

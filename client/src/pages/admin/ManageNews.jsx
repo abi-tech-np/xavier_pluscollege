@@ -1,4 +1,4 @@
-import { getApiUrl, clearApiCache } from '../../services/apiClient';
+import { getApiUrl, clearApiCache, getImageUrl } from '../../services/apiClient';
 import React, { useEffect, useState, useRef } from 'react';
 import axios from 'axios';
 import { UploadCloud, Image as ImageIcon, X, Trash2, Edit } from 'lucide-react';
@@ -97,30 +97,57 @@ const ManageNews = () => {
         e.preventDefault();
         try {
             setSubmitting(true);
-            const submitData = new FormData();
-            submitData.append('title', formData.title);
-            submitData.append('slug', formData.slug);
-            submitData.append('content', formData.content);
-            submitData.append('status', formData.status);
 
+            // Step 1: If there's a new image, upload it first via a dedicated
+            // endpoint. This keeps the image upload in a small, separate request
+            // that avoids triggering AWS WAF body inspection size limits on the
+            // main form submission.
+            let uploadedImageUrl = null;
             if (imageFile) {
-                submitData.append('image', imageFile);
+                const imgFormData = new FormData();
+                imgFormData.append('image', imageFile);
+                const imgRes = await axios.post(
+                    getApiUrl('/admin/upload-image'),
+                    imgFormData,
+                    { headers: { Authorization: `Bearer ${localStorage.getItem('adminToken')}` } }
+                );
+                uploadedImageUrl = imgRes.data.imageUrl;
+            }
+
+            // Step 2: Submit the news form with text-only fields (no binary data).
+            // This payload is small enough to always pass WAF inspection.
+            const newsPayload = {
+                title: formData.title,
+                slug: formData.slug,
+                content: formData.content,
+                status: formData.status,
+            };
+
+            if (uploadedImageUrl) {
+                // New image was uploaded in step 1
+                // Replace any local blob preview with the permanent server path
+                newsPayload.imageUrl = uploadedImageUrl;
             } else if (isEditing) {
-                // If editing and no new file was picked, preserve or clear existingImageUrl
-                submitData.append('imageUrl', existingImageUrl || '');
+                // Editing without a new image: preserve or clear existing real server URL
+                newsPayload.imageUrl = existingImageUrl || '';
+            }
+
+            // Fallback safety check: confirm the blob URL is never included in the final payload
+            if (newsPayload.imageUrl && newsPayload.imageUrl.startsWith('blob:')) {
+                newsPayload.imageUrl = '';
             }
 
             const config = {
                 headers: {
-                    ...getAuthHeaders().headers,
-                    
+                    Authorization: `Bearer ${localStorage.getItem('adminToken')}`,
+                    'Content-Type': 'application/json'
                 }
             };
 
             if (isEditing) {
-                await axios.put(getApiUrl(`/admin/news/${currentId}`), submitData, config);
+                await axios.put(getApiUrl(`/admin/news/${currentId}`), newsPayload, config);
             } else {
-                await axios.post(getApiUrl('/admin/news'), submitData, config);
+                await axios.post(getApiUrl('/admin/news'), newsPayload, config);
             }
 
             // Invalidate public API cache for news so fresh data is visible immediately
@@ -130,7 +157,17 @@ const ManageNews = () => {
             handleCancel();
         } catch (error) {
             console.error('Error saving news:', error);
-            alert('Failed to save news. Please check console for details.');
+            // Give a more specific message for WAF/CloudFront 403 blocks
+            if (error.response?.status === 403) {
+                const contentType = error.response.headers?.['content-type'] || '';
+                if (!contentType.includes('application/json')) {
+                    alert('Image upload was blocked by the server\'s security rules (WAF). Try using a smaller image or contact your administrator.');
+                } else {
+                    alert('Access denied. Your session may have expired — please log in again.');
+                }
+            } else {
+                alert('Failed to save news. Please check console for details.');
+            }
         } finally {
             setSubmitting(false);
         }
@@ -175,14 +212,7 @@ const ManageNews = () => {
     };
 
     // Resolve display URL for thumbnails
-    const resolveImageUrl = (url) => {
-        if (!url) return null;
-        if (url.startsWith('http://') || url.startsWith('https://')) return url;
-        // In local dev, API runs on port 5000, storage is served at http://localhost:5000/storage/...
-        const backendOrigin = import.meta.env.MODE === 'development' ? 'http://localhost:5000' : '';
-        const cleanUrl = url.startsWith('/') ? url : `/${url}`;
-        return `${backendOrigin}${cleanUrl}`;
-    };
+    const resolveImageUrl = (url) => getImageUrl(url);
 
     return (
         <div>

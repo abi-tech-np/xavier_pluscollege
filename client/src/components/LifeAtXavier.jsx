@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { fetchApiData } from '../services/apiClient';
+import { fetchApiData, getImageUrl } from '../services/apiClient';
 import { Link } from 'react-router-dom';
 
 const LifeAtXavier = ({ limit }) => {
@@ -13,13 +13,14 @@ const LifeAtXavier = ({ limit }) => {
         fetchApiData(path)
             .then(data => {
                 if (isMounted) {
-                    setItems(data);
+                    setItems(Array.isArray(data) ? data : []);
                     setLoading(false);
                 }
             })
             .catch(err => {
                 if (isMounted) {
                     console.error(err);
+                    setItems([]);
                     setLoading(false);
                 }
             });
@@ -73,9 +74,10 @@ const LifeAtXavier = ({ limit }) => {
         }
     ];
 
-    const apiSlugs = items.map(item => item.slug);
+    const safeItems = Array.isArray(items) ? items : [];
+    const apiSlugs = safeItems.map(item => item.slug);
     const filteredHardcodedItems = hardcodedItems.filter(item => !apiSlugs.includes(item.slug));
-    const allItems = [...items, ...filteredHardcodedItems];
+    const allItems = [...safeItems, ...filteredHardcodedItems];
 
     return (
         <div className="lifeAtXavier__list">
@@ -84,7 +86,7 @@ const LifeAtXavier = ({ limit }) => {
             ) : allItems.map((item) => (
                 <div className="item" key={item.id}>
                     <Link to={`/life-at-xavier/${item.slug}`}></Link>
-                    <img src={item.imageUrl || '/images/placeholder.jpg'} alt={item.title} loading="lazy" decoding="async" />
+                    <img src={getImageUrl(item.imageUrl) || '/images/placeholder.jpg'} alt={item.title} loading="lazy" decoding="async" />
                     <div className="content">
                         <span>{item.date ? new Date(item.date).getFullYear() : (item.created_at ? new Date(item.created_at).getFullYear() : '2024')}</span>
                         <h4 className="title">{item.title}</h4>

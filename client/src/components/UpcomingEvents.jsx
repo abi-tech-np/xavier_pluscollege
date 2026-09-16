@@ -13,13 +13,14 @@ const UpcomingEvents = ({ limit }) => {
         fetchApiData(path)
             .then(data => {
                 if (isMounted) {
-                    setUpcomingEvents(data);
+                    setUpcomingEvents(Array.isArray(data) ? data : []);
                     setLoading(false);
                 }
             })
             .catch(err => {
                 if (isMounted) {
                     console.error(err);
+                    setUpcomingEvents([]);
                     setLoading(false);
                 }
             });
@@ -108,7 +109,8 @@ const UpcomingEvents = ({ limit }) => {
         }
     };
 
-    const allEvents = [...upcomingEvents, ...hardcodedEvents];
+    const safeEvents = Array.isArray(upcomingEvents) ? upcomingEvents : [];
+    const allEvents = [...safeEvents, ...hardcodedEvents];
 
     return (
         <section className="upcomingEvents" id="upcoming-events">
