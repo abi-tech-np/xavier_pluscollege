@@ -5,8 +5,8 @@ const prisma = new PrismaClient();
 
 async function createAdmin() {
     try {
-        const email = 'developer@xavier.edu.np';
-        const password = await bcrypt.hash('password123', 10);
+        const email = 'admin@xavier.edu.np';
+        const password = await bcrypt.hash('password', 10);
         
         // Check if user exists
         let user = await prisma.users.findUnique({ where: { email } });
@@ -22,7 +22,7 @@ async function createAdmin() {
             // Create new
             user = await prisma.users.create({
                 data: {
-                    name: 'Test Developer',
+                    name: 'Admin User',
                     email,
                     password
                 }
