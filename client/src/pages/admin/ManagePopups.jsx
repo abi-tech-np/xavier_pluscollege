@@ -217,7 +217,6 @@ const ManagePopups = () => {
             const config = {
                 headers: { 
                     ...getAuthHeaders().headers,
-                     
                 }
             };
 
@@ -239,8 +238,27 @@ const ManagePopups = () => {
                 handleCancel();
             }
         } catch (error) {
-            console.error('Failed to save popup', error);
-            showFeedback('Failed to save popup. Please try again.', 'error');
+            const status = error.response?.status;
+            const headers = error.response?.headers;
+            const rawData = typeof error.response?.data === 'string' 
+                ? error.response?.data 
+                : JSON.stringify(error.response?.data || '');
+            const truncatedData = rawData ? rawData.substring(0, 500) : '';
+
+            console.error('Failed to save popup. Error details:', {
+                status,
+                headers,
+                responseSnippet: truncatedData,
+                fullError: error
+            });
+
+            if (status === 403) {
+                showFeedback('Upload blocked by server security. Try a smaller image or contact admin.', 'error');
+            } else if (error.response?.data?.error) {
+                showFeedback(`Failed to save popup: ${error.response.data.error}`, 'error');
+            } else {
+                showFeedback('Failed to save popup. Please try again.', 'error');
+            }
         } finally {
             setSubmitting(false);
         }
@@ -381,7 +399,7 @@ const ManagePopups = () => {
                                         <div style={{ fontSize: '0.85rem', fontWeight: 500, color: '#fafafa' }}>
                                             {imageFile ? imageFile.name : (existingImageUrl ? 'Current Saved Image' : 'Selected Image')}
                                         </div>
-                                        <div style={{ fontSize: '0.75rem', color: '#a1a1aa', marginTop: '0.2rem' }}>
+                                        <div style={{ fontSize: '0.75rem', color: '#a1a1aa', marginTop: '0.25rem' }}>
                                             {imageFile ? `${(imageFile.size / 1024).toFixed(1)} KB` : 'Uploaded'}
                                         </div>
                                         <div style={{ marginTop: '0.5rem', display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
