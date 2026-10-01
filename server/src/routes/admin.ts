@@ -363,10 +363,26 @@ router.post('/popups', upload.fields([{ name: 'image', maxCount: 1 }]), async (r
         });
 
         // Handle file uploads (Media table)
-        const files = req.files as { [fieldname: string]: Express.Multer.File[] };
+        const fs = require('fs');
+        const path = require('path');
+        const files = req.files as { [fieldname: string]: Express.Multer.File[] } | undefined;
+        let file = files?.image?.[0];
+
+        if (!file && req.body.imageUrl && req.body.imageUrl.startsWith('/storage/')) {
+            const filename = path.basename(req.body.imageUrl);
+            const sourcePath = path.join(__dirname, '../../storage', filename);
+            if (fs.existsSync(sourcePath)) {
+                file = {
+                    originalname: filename,
+                    filename: filename,
+                    mimetype: 'image/jpeg',
+                    size: fs.statSync(sourcePath).size,
+                    path: sourcePath
+                } as Express.Multer.File;
+            }
+        }
         
-        if (files?.image?.[0]) {
-            const file = files.image[0];
+        if (file) {
             const mediaRecord = await prisma.media.create({
                 data: {
                     model_type: 'App\\Models\\Popup',
@@ -418,11 +434,28 @@ router.put('/popups/:id', upload.fields([{ name: 'image', maxCount: 1 }]), async
             }
         });
 
-        const files = req.files as { [fieldname: string]: Express.Multer.File[] } | undefined;
-        const file = files?.image?.[0] || (req as any).file;
-
         const fs = require('fs');
         const path = require('path');
+
+        const files = req.files as { [fieldname: string]: Express.Multer.File[] } | undefined;
+        let file = files?.image?.[0] || (req as any).file;
+
+        // If no direct file but an imageUrl is provided, check if it's a newly uploaded temp file
+        if (!file && imageUrl && imageUrl.startsWith('/storage/')) {
+            const filename = path.basename(imageUrl);
+            const sourcePath = path.join(__dirname, '../../storage', filename);
+            // Only process it as a new file if it's sitting in the root /storage/ directory
+            // (meaning it came from /upload-image), rather than /storage/{id}/{filename}
+            if (fs.existsSync(sourcePath) && imageUrl.split('/').length === 3) {
+                file = {
+                    originalname: filename,
+                    filename: filename,
+                    mimetype: 'image/jpeg',
+                    size: fs.statSync(sourcePath).size,
+                    path: sourcePath
+                } as Express.Multer.File;
+            }
+        }
 
         if (file) {
             // New image uploaded: remove previous media records and directory

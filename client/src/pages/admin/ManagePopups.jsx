@@ -202,30 +202,47 @@ const ManagePopups = () => {
 
         try {
             setSubmitting(true);
-            const data = new FormData();
-            data.append('title', formData.title.trim());
-            data.append('link', formData.link || '');
-            data.append('status', formData.status);
-
+            
+            let uploadedImageUrl = null;
             if (imageFile) {
-                data.append('image', imageFile);
+                const imgFormData = new FormData();
+                imgFormData.append('image', imageFile);
+                const imgRes = await axios.post(
+                    getApiUrl('/admin/upload-image'),
+                    imgFormData,
+                    { headers: { Authorization: `Bearer ${localStorage.getItem('adminToken')}` } }
+                );
+                uploadedImageUrl = imgRes.data.imageUrl;
+            }
+
+            const payload = {
+                title: formData.title.trim(),
+                link: formData.link || '',
+                status: formData.status
+            };
+
+            if (uploadedImageUrl) {
+                payload.imageUrl = uploadedImageUrl;
             } else if (isEditing) {
-                // If editing and no new file, preserve or clear existingImageUrl
-                data.append('imageUrl', existingImageUrl || '');
+                payload.imageUrl = existingImageUrl || '';
+            }
+
+            if (payload.imageUrl && payload.imageUrl.startsWith('blob:')) {
+                payload.imageUrl = '';
             }
 
             const config = {
                 headers: { 
                     ...getAuthHeaders().headers,
-                     
+                    'Content-Type': 'application/json'
                 }
             };
 
             if (isEditing && currentId) {
-                await axios.put(getApiUrl(`/admin/popups/${currentId}`), data, config);
+                await axios.put(getApiUrl(`/admin/popups/${currentId}`), payload, config);
                 showFeedback('Popup updated successfully!');
             } else {
-                await axios.post(getApiUrl('/admin/popups'), data, config);
+                await axios.post(getApiUrl('/admin/popups'), payload, config);
                 showFeedback('Popup created successfully!');
             }
 
