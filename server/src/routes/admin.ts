@@ -15,11 +15,13 @@ const JWT_SECRET = process.env.JWT_SECRET || 'fallback-secret-key-for-developmen
 // Login
 router.post('/login', async (req: Request, res: Response): Promise<any> => {
     try {
-        const { email, password } = req.body;
+        let { email, password } = req.body;
         
         if (!email || !password) {
             return res.status(400).json({ error: 'Email and password are required' });
         }
+
+        email = email.trim();
 
         const user = await prisma.users.findUnique({ where: { email } });
         if (!user || !user.password) {

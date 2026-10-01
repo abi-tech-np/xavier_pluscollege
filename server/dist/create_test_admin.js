@@ -8,7 +8,7 @@ const bcryptjs_1 = __importDefault(require("bcryptjs"));
 const prisma = new prisma_1.PrismaClient();
 async function createAdmin() {
     try {
-        const email = 'developer@xavier.edu.np';
+        const email = 'admin@xavier.edu.np';
         const password = await bcryptjs_1.default.hash('password123', 10);
         // Check if user exists
         let user = await prisma.users.findUnique({ where: { email } });

@@ -19,7 +19,7 @@ const AdminLogin = () => {
 
         try {
             const res = await axios.post(getApiUrl('/admin/login'), {
-                email,
+                email: email.trim(),
                 password
             });
             
