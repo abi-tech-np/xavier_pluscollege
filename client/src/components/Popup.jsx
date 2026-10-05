@@ -3,8 +3,8 @@ import { fetchApiData, getImageUrl } from '../services/apiClient';
 import { X } from 'lucide-react';
 
 const Popup = () => {
-    const [popup, setPopup] = useState(null);
-    const [isVisible, setIsVisible] = useState(false);
+    const [popups, setPopups] = useState([]);
+    const [currentIndex, setCurrentIndex] = useState(0);
 
     useEffect(() => {
         let isMounted = true;
@@ -16,8 +16,10 @@ const Popup = () => {
 
                 const data = await fetchApiData('/popups');
                 if (isMounted && Array.isArray(data) && data.length > 0) {
-                    setPopup(data[0]);
-                    setIsVisible(true);
+                    const activePopups = data.filter(p => p.status !== false && p.status !== 0);
+                    if (activePopups.length > 0) {
+                        setPopups(activePopups);
+                    }
                 }
             } catch (error) {
                 console.error('Failed to fetch popups', error);
@@ -32,14 +34,19 @@ const Popup = () => {
     }, []);
 
     const handleClose = () => {
-        setIsVisible(false);
-        sessionStorage.setItem('popupClosed', 'true');
+        if (currentIndex < popups.length - 1) {
+            setCurrentIndex(prev => prev + 1);
+        } else {
+            setPopups([]);
+            sessionStorage.setItem('popupClosed', 'true');
+        }
     };
 
-    if (!isVisible || !popup) return null;
+    if (popups.length === 0 || currentIndex >= popups.length) return null;
 
-    // Use API base server URL for the image if it's a relative path from the API
+    const popup = popups[currentIndex];
     const imageSrc = popup.imageUrl ? getImageUrl(popup.imageUrl) : null;
+    const isPdf = imageSrc && imageSrc.toLowerCase().endsWith('.pdf');
 
     return (
         <div style={{
@@ -58,8 +65,9 @@ const Popup = () => {
                 backgroundColor: '#ffffff',
                 borderRadius: '12px',
                 width: '100%',
-                maxWidth: '600px',
-                minHeight: '200px',
+                maxWidth: isPdf ? '800px' : '600px',
+                minHeight: isPdf ? '600px' : '200px',
+                height: isPdf ? '85vh' : 'auto',
                 boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.5)',
                 display: 'flex',
                 flexDirection: 'column',
@@ -89,58 +97,73 @@ const Popup = () => {
                 </button>
 
                 {imageSrc && (
-                    <div style={{ width: '100%', backgroundColor: '#f3f4f6', minHeight: '150px' }}>
-                        <img 
-                            src={imageSrc} 
-                            alt={popup.title || 'Popup Notice'} 
-                            style={{ 
-                                width: '100%', 
-                                maxHeight: '500px',
-                                objectFit: 'contain',
-                                display: 'block' 
-                            }} 
-                            onError={(e) => {
-                                e.target.style.display = 'none'; // Hide if broken
-                            }}
-                        />
+                    <div style={{ width: '100%', backgroundColor: '#f3f4f6', flexGrow: isPdf ? 1 : 0, minHeight: isPdf ? '0' : '150px', display: 'flex', flexDirection: 'column' }}>
+                        {isPdf ? (
+                            <iframe 
+                                src={imageSrc} 
+                                title={popup.title || 'Popup PDF'}
+                                style={{
+                                    width: '100%',
+                                    height: '100%',
+                                    border: 'none',
+                                    flexGrow: 1
+                                }}
+                            />
+                        ) : (
+                            <img 
+                                src={imageSrc} 
+                                alt={popup.title || 'Popup Notice'} 
+                                style={{ 
+                                    width: '100%', 
+                                    maxHeight: '500px',
+                                    objectFit: 'contain',
+                                    display: 'block' 
+                                }} 
+                                onError={(e) => {
+                                    e.target.style.display = 'none';
+                                }}
+                            />
+                        )}
                     </div>
                 )}
                 
-                <div style={{ padding: '24px', textAlign: 'center', flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                    {popup.title && (
-                        <h2 style={{ 
-                            margin: '0 0 16px 0', 
-                            fontSize: '24px', 
-                            fontWeight: '700', 
-                            color: '#111827',
-                            lineHeight: '1.2'
-                        }}>
-                            {popup.title}
-                        </h2>
-                    )}
-                    
-                    {popup.link && (
-                        <div style={{ marginTop: '10px' }}>
-                            <a 
-                                href={popup.link} 
-                                target="_blank" 
-                                rel="noopener noreferrer"
-                                style={{
-                                    display: 'inline-block',
-                                    padding: '12px 24px',
-                                    backgroundColor: '#fbbf24',
-                                    color: '#000000',
-                                    textDecoration: 'none',
-                                    fontWeight: '600',
-                                    borderRadius: '6px',
-                                    transition: 'background-color 0.2s'
-                                }}
-                            >
-                                Learn More
-                            </a>
-                        </div>
-                    )}
-                </div>
+                {(popup.title || popup.link) && (
+                    <div style={{ padding: '24px', textAlign: 'center', display: 'flex', flexDirection: 'column', justifyContent: 'center', flexShrink: 0 }}>
+                        {popup.title && (
+                            <h2 style={{ 
+                                margin: '0 0 16px 0', 
+                                fontSize: '24px', 
+                                fontWeight: '700', 
+                                color: '#111827',
+                                lineHeight: '1.2'
+                            }}>
+                                {popup.title}
+                            </h2>
+                        )}
+                        
+                        {popup.link && (
+                            <div style={{ marginTop: '10px' }}>
+                                <a 
+                                    href={popup.link} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    style={{
+                                        display: 'inline-block',
+                                        padding: '12px 24px',
+                                        backgroundColor: '#fbbf24',
+                                        color: '#000000',
+                                        textDecoration: 'none',
+                                        fontWeight: '600',
+                                        borderRadius: '6px',
+                                        transition: 'background-color 0.2s'
+                                    }}
+                                >
+                                    Learn More
+                                </a>
+                            </div>
+                        )}
+                    </div>
+                )}
             </div>
         </div>
     );

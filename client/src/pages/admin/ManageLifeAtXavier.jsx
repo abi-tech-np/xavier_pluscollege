@@ -17,7 +17,7 @@ import {
 import { getApiUrl, getImageUrl } from '../../services/apiClient';
 
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
-const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
 
 const ManageLifeAtXavier = () => {
     const { id: routeId } = useParams();
@@ -203,7 +203,7 @@ const ManageLifeAtXavier = () => {
             return `"${file.name}" is not supported. Only JPEG, PNG, and WebP are allowed.`;
         }
         if (file.size > MAX_FILE_SIZE) {
-            return `"${file.name}" is ${(file.size / (1024 * 1024)).toFixed(1)}MB. Max allowed size is 5MB.`;
+            return `"${file.name}" is ${(file.size / (1024 * 1024)).toFixed(1)}MB. Max allowed size is 50MB.`;
         }
         return null;
     };
@@ -335,48 +335,69 @@ const ManageLifeAtXavier = () => {
 
         try {
             setSubmitting(true);
-            const submitData = new FormData();
-            submitData.append('title', formData.title);
-            submitData.append('slug', formData.slug);
-            submitData.append('status', formData.status === 'Publish' ? 'true' : 'false');
             
-            if (formData.meta_title) submitData.append('meta_title', formData.meta_title);
-            if (formData.meta_description) submitData.append('meta_description', formData.meta_description);
-            if (formData.meta_schema) submitData.append('meta_schema', formData.meta_schema);
+            // Helper to upload a single file to avoid WAF limits
+            const uploadFile = async (file) => {
+                const imgFormData = new FormData();
+                imgFormData.append('image', file);
+                const imgRes = await axios.post(
+                    getApiUrl('/admin/upload-image'),
+                    imgFormData,
+                    { headers: { Authorization: `Bearer ${localStorage.getItem('adminToken')}` } }
+                );
+                return imgRes.data.imageUrl;
+            };
 
+            let thumbnailUrl = null;
             if (thumbnailFile) {
-                submitData.append('thumbnail', thumbnailFile);
+                thumbnailUrl = await uploadFile(thumbnailFile);
             }
 
+            let ogImageUrl = null;
             if (ogImageFile) {
-                submitData.append('og_image', ogImageFile);
+                ogImageUrl = await uploadFile(ogImageFile);
             }
 
-            // Append multiple gallery images
+            let newGalleryImageUrls = [];
             if (newGalleryFiles.length > 0) {
-                newGalleryFiles.forEach(item => {
-                    submitData.append('galleryImages', item.file);
-                });
+                for (const item of newGalleryFiles) {
+                    const url = await uploadFile(item.file);
+                    newGalleryImageUrls.push(url);
+                }
             }
 
-            const config = {
-                headers: { 
-                    ...getAuthHeaders().headers, 
-                     
-                }
+            const payload = {
+                title: formData.title,
+                slug: formData.slug,
+                status: formData.status === 'Publish' ? 'true' : 'false',
+                meta_title: formData.meta_title || '',
+                meta_description: formData.meta_description || '',
+                meta_schema: formData.meta_schema || '',
+                thumbnailUrl,
+                ogImageUrl,
+                newGalleryImageUrls
             };
 
             if (isEditing && currentId) {
                 if (deletedGalleryImageIds.length > 0) {
-                    submitData.append('deletedGalleryImageIds', JSON.stringify(deletedGalleryImageIds));
+                    payload.deletedGalleryImageIds = deletedGalleryImageIds;
                 }
+            }
 
-                await axios.put(getApiUrl(`/admin/life-at-xaviers/${currentId}`), submitData, config);
+            const config = {
+                headers: { 
+                    ...getAuthHeaders().headers,
+                    'Content-Type': 'application/json'
+                }
+            };
+
+            if (isEditing && currentId) {
+                await axios.put(getApiUrl(`/admin/life-at-xaviers/${currentId}`), payload, config);
                 showNotification('Life At Xavier entry updated successfully!');
                 fetchItems();
                 navigate('/admin/life-at-xaviers');
             } else {
-                await axios.post(getApiUrl('/admin/life-at-xaviers'), submitData, config);
+                await axios.post(getApiUrl('/admin/life-at-xaviers'), payload, config);
                 showNotification('Life At Xavier entry created successfully!');
                 fetchItems();
 
@@ -389,8 +410,12 @@ const ManageLifeAtXavier = () => {
             }
         } catch (error) {
             console.error('Failed to save Life At Xavier:', error);
-            const serverMsg = error.response?.data?.error || 'Failed to save entry. Please try again.';
-            showNotification(serverMsg, 'error');
+            if (error.response?.status === 403) {
+                showNotification('Upload blocked by server security rules (WAF). Try smaller images.', 'error');
+            } else {
+                const serverMsg = error.response?.data?.error || 'Failed to save entry. Please try again.';
+                showNotification(serverMsg, 'error');
+            }
         } finally {
             setSubmitting(false);
         }

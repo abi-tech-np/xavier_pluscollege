@@ -736,7 +736,7 @@ router.post('/life-at-xaviers', imageUpload.fields([
     { name: 'galleryImages', maxCount: 50 }
 ]), async (req, res) => {
     try {
-        const { title, slug, status, meta_title, meta_description, meta_schema } = req.body;
+        const { title, slug, status, meta_title, meta_description, meta_schema, thumbnailUrl, ogImageUrl, newGalleryImageUrls } = req.body;
         const isStatusTrue = status === 'true' || status === true;
 
         // 1. Create main record
@@ -765,9 +765,44 @@ router.post('/life-at-xaviers', imageUpload.fields([
             });
         }
 
-        // 3. Handle thumbnail and og_image uploads (Media table)
         const files = req.files as { [fieldname: string]: Express.Multer.File[] } | undefined;
-        
+
+        const saveMediaFromUrl = async (fileUrl: string, collectionName: string) => {
+            const filename = path.basename(fileUrl);
+            const sourcePath = path.join(__dirname, '../../storage', filename);
+            if (!fs.existsSync(sourcePath)) return;
+
+            const stat = fs.statSync(sourcePath);
+            let mimeType = 'application/octet-stream';
+            if (filename.match(/\.jpe?g$/i)) mimeType = 'image/jpeg';
+            else if (filename.match(/\.png$/i)) mimeType = 'image/png';
+            else if (filename.match(/\.webp$/i)) mimeType = 'image/webp';
+
+            const mediaRecord = await prisma.media.create({
+                data: {
+                    model_type: 'App\\Models\\LifeAtXavier',
+                    model_id: newItem.id,
+                    uuid: crypto.randomUUID(),
+                    collection_name: collectionName,
+                    name: filename.split('.')[0],
+                    file_name: filename,
+                    mime_type: mimeType,
+                    disk: 'public',
+                    size: stat.size,
+                    manipulations: '{}',
+                    custom_properties: '{}',
+                    generated_conversions: '{}',
+                    responsive_images: '{}',
+                    created_at: new Date(),
+                    updated_at: new Date()
+                }
+            });
+
+            const targetDir = path.join(__dirname, '../../storage', mediaRecord.id.toString());
+            if (!fs.existsSync(targetDir)) fs.mkdirSync(targetDir, { recursive: true });
+            fs.renameSync(sourcePath, path.join(targetDir, filename));
+        };
+
         const saveMedia = async (file: Express.Multer.File, collectionName: string) => {
             const mediaRecord = await prisma.media.create({
                 data: {
@@ -789,7 +824,6 @@ router.post('/life-at-xaviers', imageUpload.fields([
                 }
             });
 
-            // Move file to matching Spatie Media Library folder structure (server/storage/{media.id}/{filename})
             const targetDir = path.join(__dirname, '../../storage', mediaRecord.id.toString());
             if (!fs.existsSync(targetDir)) {
                 fs.mkdirSync(targetDir, { recursive: true });
@@ -797,16 +831,32 @@ router.post('/life-at-xaviers', imageUpload.fields([
             fs.renameSync(file.path, path.join(targetDir, file.filename));
         };
 
-        if (files?.thumbnail?.[0]) {
+        if (thumbnailUrl) {
+            await saveMediaFromUrl(thumbnailUrl, 'thumbnail');
+        } else if (files?.thumbnail?.[0]) {
             await saveMedia(files.thumbnail[0], 'thumbnail');
         }
         
-        if (files?.og_image?.[0]) {
+        if (ogImageUrl) {
+            await saveMediaFromUrl(ogImageUrl, 'og_image');
+        } else if (files?.og_image?.[0]) {
             await saveMedia(files.og_image[0], 'og_image');
         }
 
         // 4. Handle multiple gallery images
-        if (files?.galleryImages && files.galleryImages.length > 0) {
+        if (newGalleryImageUrls && Array.isArray(newGalleryImageUrls)) {
+            for (let i = 0; i < newGalleryImageUrls.length; i++) {
+                await prisma.life_at_xavier_images.create({
+                    data: {
+                        life_at_xavier_id: newItem.id,
+                        imageUrl: newGalleryImageUrls[i],
+                        sortOrder: i,
+                        created_at: new Date(),
+                        updated_at: new Date()
+                    }
+                });
+            }
+        } else if (files?.galleryImages && files.galleryImages.length > 0) {
             for (let i = 0; i < files.galleryImages.length; i++) {
                 const galleryFile = files.galleryImages[i];
                 await prisma.life_at_xavier_images.create({
@@ -835,7 +885,7 @@ router.put('/life-at-xaviers/:id', imageUpload.fields([
 ]), async (req, res) => {
     try {
         const id = BigInt(req.params.id as string);
-        const { title, slug, status, meta_title, meta_description, meta_schema, deletedGalleryImageIds } = req.body;
+        const { title, slug, status, meta_title, meta_description, meta_schema, deletedGalleryImageIds, thumbnailUrl, ogImageUrl, newGalleryImageUrls } = req.body;
         const isStatusTrue = status === 'true' || status === true;
 
         // 1. Update main record
@@ -882,8 +932,61 @@ router.put('/life-at-xaviers/:id', imageUpload.fields([
             });
         }
 
-        // 3. Handle file replacements for thumbnail & og_image
         const files = req.files as { [fieldname: string]: Express.Multer.File[] } | undefined;
+
+        const saveOrReplaceMediaFromUrl = async (fileUrl: string, collectionName: string) => {
+            const filename = path.basename(fileUrl);
+            const sourcePath = path.join(__dirname, '../../storage', filename);
+            if (!fs.existsSync(sourcePath)) return;
+
+            const oldMedia = await prisma.media.findFirst({
+                where: {
+                    model_type: 'App\\Models\\LifeAtXavier',
+                    model_id: id,
+                    collection_name: collectionName
+                }
+            });
+
+            if (oldMedia) {
+                const oldDir = path.join(__dirname, '../../storage', oldMedia.id.toString());
+                if (fs.existsSync(oldDir)) {
+                    fs.rmSync(oldDir, { recursive: true, force: true });
+                }
+                await prisma.media.delete({ where: { id: oldMedia.id } });
+            }
+
+            const stat = fs.statSync(sourcePath);
+            let mimeType = 'application/octet-stream';
+            if (filename.match(/\.jpe?g$/i)) mimeType = 'image/jpeg';
+            else if (filename.match(/\.png$/i)) mimeType = 'image/png';
+            else if (filename.match(/\.webp$/i)) mimeType = 'image/webp';
+
+            const mediaRecord = await prisma.media.create({
+                data: {
+                    model_type: 'App\\Models\\LifeAtXavier',
+                    model_id: id,
+                    uuid: crypto.randomUUID(),
+                    collection_name: collectionName,
+                    name: filename.split('.')[0],
+                    file_name: filename,
+                    mime_type: mimeType,
+                    disk: 'public',
+                    size: stat.size,
+                    manipulations: '{}',
+                    custom_properties: '{}',
+                    generated_conversions: '{}',
+                    responsive_images: '{}',
+                    created_at: new Date(),
+                    updated_at: new Date()
+                }
+            });
+
+            const targetDir = path.join(__dirname, '../../storage', mediaRecord.id.toString());
+            if (!fs.existsSync(targetDir)) {
+                fs.mkdirSync(targetDir, { recursive: true });
+            }
+            fs.renameSync(sourcePath, path.join(targetDir, filename));
+        };
 
         const saveOrReplaceMedia = async (file: Express.Multer.File, collectionName: string) => {
             const oldMedia = await prisma.media.findFirst({
@@ -929,11 +1032,15 @@ router.put('/life-at-xaviers/:id', imageUpload.fields([
             fs.renameSync(file.path, path.join(targetDir, file.filename));
         };
 
-        if (files?.thumbnail?.[0]) {
+        if (thumbnailUrl) {
+            await saveOrReplaceMediaFromUrl(thumbnailUrl, 'thumbnail');
+        } else if (files?.thumbnail?.[0]) {
             await saveOrReplaceMedia(files.thumbnail[0], 'thumbnail');
         }
 
-        if (files?.og_image?.[0]) {
+        if (ogImageUrl) {
+            await saveOrReplaceMediaFromUrl(ogImageUrl, 'og_image');
+        } else if (files?.og_image?.[0]) {
             await saveOrReplaceMedia(files.og_image[0], 'og_image');
         }
 
@@ -941,17 +1048,17 @@ router.put('/life-at-xaviers/:id', imageUpload.fields([
         if (deletedGalleryImageIds) {
             let idsToRemove: bigint[] = [];
             if (Array.isArray(deletedGalleryImageIds)) {
-                idsToRemove = deletedGalleryImageIds.map(i => BigInt(i));
+                idsToRemove = deletedGalleryImageIds.map((i: any) => BigInt(i));
             } else if (typeof deletedGalleryImageIds === 'string') {
                 try {
                     const parsed = JSON.parse(deletedGalleryImageIds);
                     if (Array.isArray(parsed)) {
-                        idsToRemove = parsed.map(i => BigInt(i));
+                        idsToRemove = parsed.map((i: any) => BigInt(i));
                     } else {
                         idsToRemove = [BigInt(deletedGalleryImageIds)];
                     }
                 } catch {
-                    idsToRemove = deletedGalleryImageIds.split(',').map(s => s.trim()).filter(Boolean).map(s => BigInt(s));
+                    idsToRemove = deletedGalleryImageIds.split(',').map((s: string) => s.trim()).filter(Boolean).map((s: string) => BigInt(s));
                 }
             }
 
@@ -978,7 +1085,25 @@ router.put('/life-at-xaviers/:id', imageUpload.fields([
         }
 
         // 5. Handle adding new gallery images
-        if (files?.galleryImages && files.galleryImages.length > 0) {
+        if (newGalleryImageUrls && Array.isArray(newGalleryImageUrls)) {
+            const lastImage = await prisma.life_at_xavier_images.findFirst({
+                where: { life_at_xavier_id: id },
+                orderBy: { sortOrder: 'desc' }
+            });
+            let nextSortOrder = (lastImage?.sortOrder ?? -1) + 1;
+
+            for (const url of newGalleryImageUrls) {
+                await prisma.life_at_xavier_images.create({
+                    data: {
+                        life_at_xavier_id: id,
+                        imageUrl: url,
+                        sortOrder: nextSortOrder++,
+                        created_at: new Date(),
+                        updated_at: new Date()
+                    }
+                });
+            }
+        } else if (files?.galleryImages && files.galleryImages.length > 0) {
             const lastImage = await prisma.life_at_xavier_images.findFirst({
                 where: { life_at_xavier_id: id },
                 orderBy: { sortOrder: 'desc' }

@@ -286,6 +286,7 @@ const ManagePopups = () => {
 
     if (isFormOpen) {
         const activeImageUrl = previewUrl || resolveImageUrl(existingImageUrl);
+        const isPdf = (imageFile && imageFile.type === 'application/pdf') || (existingImageUrl && existingImageUrl.toLowerCase().endsWith('.pdf'));
 
         return (
             <div style={{ padding: '0 1rem', fontFamily: "'Inter', sans-serif", paddingBottom: '3rem' }}>
@@ -388,11 +389,15 @@ const ManagePopups = () => {
                                         border: '1px solid #3f3f46',
                                         flexShrink: 0
                                     }}>
-                                        <img 
-                                            src={activeImageUrl} 
-                                            alt="Preview" 
-                                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                                        />
+                                        {isPdf ? (
+                                            <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#3f3f46', color: '#fafafa', fontSize: '0.8rem', fontWeight: 600 }}>PDF</div>
+                                        ) : (
+                                            <img 
+                                                src={activeImageUrl} 
+                                                alt="Preview" 
+                                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                            />
+                                        )}
                                     </div>
                                     <div style={{ flex: 1 }}>
                                         <div style={{ fontSize: '0.85rem', fontWeight: 500, color: '#fafafa' }}>
@@ -447,7 +452,7 @@ const ManagePopups = () => {
                                     id="popup-image-input"
                                     ref={fileInputRef}
                                     type="file" 
-                                    accept="image/*" 
+                                    accept="image/*,.pdf" 
                                     onChange={handleFileChange} 
                                     required={!isEditing && !activeImageUrl}
                                     style={{
@@ -457,7 +462,7 @@ const ManagePopups = () => {
                                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem', pointerEvents: 'none' }}>
                                     <UploadCloud size={28} color="#fbbf24" />
                                     <span>Drag & Drop your image or <span style={{ fontWeight: '600', color: '#fafafa' }}>Browse</span></span>
-                                    <span style={{ fontSize: '0.75rem', color: '#71717a' }}>Supports JPG, PNG, WEBP</span>
+                                    <span style={{ fontSize: '0.75rem', color: '#71717a' }}>Supports JPG, PNG, WEBP, PDF</span>
                                 </div>
                             </div>
                         </div>
