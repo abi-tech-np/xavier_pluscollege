@@ -119,6 +119,33 @@ const AboutUs = () => {
                 </div>
             </section>
 
+            <section className="message message--ceo">
+                <div id="message-ceo"></div>
+                <div className="container">
+                    <div className="message__container">
+                        <div className="message-container">
+                            <div className="message-box">
+                                <h3>Message From <br />
+                                    CEO</h3>
+                                <p>The strength of any educational institution lies in its ability to inspire learning, encourage growth, and prepare students for the future. As CEO, I am proud to be part of Xavier International College, where we are committed to providing quality education through strong academic standards, experienced faculty, modern learning facilities, and meaningful learning experiences. We see learning as a journey of continuous progress, where every experience helps students gain knowledge, build practical skills, and grow in confidence. This commitment to continuous improvement is what Level Up means at Xavier. It encourages every student to challenge themselves, embrace new opportunities, and make meaningful progress throughout their academic journey. We remain committed to strengthening our academic programs and learning experience to meet the changing needs of students and society. I look forward to seeing every student grow with confidence, embrace new opportunities, and achieve their goals at Xavier International College.</p>
+                            </div>
+                            <div className="personal-details">
+                                <div className="text-container">
+                                    <h4 className="name">Gopal Bhandari</h4>
+                                    <p className="title">CEO</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div className="img__holder">
+                            <img
+                                src="/images/aboutpage/CEO.webp"
+                                alt="Gopal Bhandari, CEO"
+                            />
+                        </div>
+                    </div>
+                </div>
+            </section>
+
             <Awards />
             <FooterCTA />
         </>

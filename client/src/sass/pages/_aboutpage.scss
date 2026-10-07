@@ -187,4 +187,96 @@
             }
         }
     }
+
+    &.message--ceo {
+        overflow-x: clip;
+
+        #message-ceo {
+            position: absolute;
+            top: -10%;
+        }
+
+        .message__container {
+            grid-template-columns: 1.2fr 1fr;
+
+            @media (max-width: 1200px) {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            @media (max-width: 991px) {
+                grid-template-columns: repeat(1, 1fr);
+            }
+
+            .img__holder {
+                img {
+                    width: 100%;
+                    height: 100%;
+                    object-fit: cover;
+                    object-position: top center;
+
+                    @media (max-width: 1200px) {
+                        height: 100%;
+                        object-fit: cover;
+                        object-position: top center;
+                    }
+
+                    @media (max-width: 991px) {
+                        height: auto;
+                        aspect-ratio: 685 / 986;
+                        object-fit: cover;
+                        object-position: top center;
+                    }
+                }
+
+                @media (max-width: 991px) {
+                    order: 1;
+                    width: min(100%, 460px);
+                    margin-inline: auto;
+                }
+            }
+        }
+
+        .message-container {
+            margin-left: 100px;
+            margin-right: -100px;
+            padding-block: 50px;
+            position: relative;
+            z-index: 2;
+
+            @media (max-width: 991px) {
+                order: 2;
+                margin-left: 0;
+                margin-right: 0;
+                padding-block: 0;
+                width: 100%;
+            }
+
+            .message-box {
+                &:before, &:after {
+                    background-color: #ea195d;
+                }
+
+                &:before {
+                    left: 0;
+                    right: auto;
+                    transform: translateX(-100%);
+                }
+
+                &:after {
+                    right: -3%;
+                    left: auto;
+                }
+            }
+
+            .personal-details {
+                margin-left: auto;
+                margin-right: 0;
+
+                @media (max-width: 991px) {
+                    margin-left: 0;
+                }
+            }
+        }
+    }
 }
+
