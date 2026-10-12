@@ -719,6 +719,10 @@ const ManagePopups = () => {
                                                             src={thumb} 
                                                             alt={popup.title || 'Popup'} 
                                                             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                                            onError={(e) => {
+                                                                e.currentTarget.onerror = null;
+                                                                e.currentTarget.src = '/images/homepage/news/level_up.webp';
+                                                            }}
                                                         />
                                                     </div>
                                                 ) : (

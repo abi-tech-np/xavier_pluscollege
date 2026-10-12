@@ -157,8 +157,10 @@ const ManageNews = () => {
             handleCancel();
         } catch (error) {
             console.error('Error saving news:', error);
-            // Give a more specific message for WAF/CloudFront 403 blocks
-            if (error.response?.status === 403) {
+            const serverErrorMsg = error.response?.data?.error;
+            if (serverErrorMsg) {
+                alert(serverErrorMsg);
+            } else if (error.response?.status === 403) {
                 const contentType = error.response.headers?.['content-type'] || '';
                 if (!contentType.includes('application/json')) {
                     alert('Image upload was blocked by the server\'s security rules (WAF). Try using a smaller image or contact your administrator.');
@@ -300,6 +302,10 @@ const ManageNews = () => {
                                         src={previewUrl || resolveImageUrl(existingImageUrl)} 
                                         alt="Preview" 
                                         style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                        onError={(e) => {
+                                            e.currentTarget.onerror = null;
+                                            e.currentTarget.src = '/images/homepage/news/level_up.webp';
+                                        }}
                                     />
                                 </div>
                                 <div style={{ flex: 1 }}>
@@ -452,6 +458,10 @@ const ManageNews = () => {
                                                             src={thumbSrc} 
                                                             alt={item.title} 
                                                             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                                            onError={(e) => {
+                                                                e.currentTarget.onerror = null;
+                                                                e.currentTarget.src = '/images/homepage/news/level_up.webp';
+                                                            }}
                                                         />
                                                     </div>
                                                 ) : (

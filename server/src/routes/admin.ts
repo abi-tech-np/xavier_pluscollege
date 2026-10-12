@@ -4,6 +4,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { authenticateJWT, AuthRequest } from '../middlewares/auth';
 import { upload, imageUpload } from '../middlewares/upload';
+import multer from 'multer';
 import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
@@ -94,17 +95,29 @@ router.get('/news', async (req: AuthRequest, res: Response) => {
 // the main form payload small enough to pass through AWS WAF body inspection
 // limits, which block large multipart payloads on the production CloudFront
 // distribution.
-router.post('/upload-image', upload.single('image'), async (req: AuthRequest, res: Response): Promise<any> => {
-    try {
-        if (!req.file) {
-            return res.status(400).json({ error: 'No image file provided' });
+router.post('/upload-image', (req: AuthRequest, res: Response): void => {
+    imageUpload.single('image')(req, res, (err: any) => {
+        if (err) {
+            if (err instanceof multer.MulterError) {
+                if (err.code === 'LIMIT_FILE_SIZE') {
+                    res.status(400).json({ error: 'File size exceeds 50MB limit' });
+                    return;
+                }
+                res.status(400).json({ error: `Upload error: ${err.message}` });
+                return;
+            }
+            res.status(400).json({ error: err.message || 'Invalid image file' });
+            return;
         }
+
+        if (!req.file) {
+            res.status(400).json({ error: 'No image file provided' });
+            return;
+        }
+
         const imageUrl = `/storage/${req.file.filename}`;
         res.json({ imageUrl });
-    } catch (error) {
-        console.error('Error uploading image:', error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
+    });
 });
 
 router.post('/news', upload.single('image'), async (req: AuthRequest, res: Response) => {
