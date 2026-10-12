@@ -78,7 +78,10 @@ app.get('/api/popups', async (req, res) => {
     try {
         const activePopups = await prisma.popups.findMany({
             where: { status: true },
-            orderBy: { created_at: 'desc' }
+            orderBy: [
+                { display_order: 'asc' },
+                { created_at: 'desc' }
+            ]
         });
 
         // Fetch media for these popups
@@ -127,7 +130,10 @@ app.get('/api/life-at-xavier', async (req, res) => {
         const take = req.query.limit ? parseInt(req.query.limit as string, 10) : undefined;
         const items = await prisma.life_at_xaviers.findMany({
             where: { status: true, deleted_at: null },
-            orderBy: { created_at: 'desc' },
+            orderBy: [
+                { display_order: 'asc' },
+                { created_at: 'desc' }
+            ],
             include: {
                 life_at_xavier_images: {
                     orderBy: { sortOrder: 'asc' }
@@ -212,7 +218,10 @@ app.get('/api/news-and-events', async (req, res) => {
         const take = req.query.limit ? parseInt(req.query.limit as string, 10) : undefined;
         const items = await prisma.news_and_events.findMany({
             where: { status: true },
-            orderBy: { created_at: 'desc' },
+            orderBy: [
+                { display_order: 'asc' },
+                { created_at: 'desc' }
+            ],
             ...(take ? { take } : {})
         });
         const ids = items.map(item => item.id);
@@ -268,7 +277,10 @@ app.get('/api/upcoming-events', async (req, res) => {
         const take = req.query.limit ? parseInt(req.query.limit as string, 10) : undefined;
         const items = await prisma.upcoming_events.findMany({
             where: { status: true },
-            orderBy: { start_date: 'asc' },
+            orderBy: [
+                { display_order: 'asc' },
+                { created_at: 'desc' }
+            ],
             ...(take ? { take } : {})
         });
         // Include slug in response (generate from title if DB slug is null)
@@ -348,7 +360,11 @@ app.post('/api/contact', async (req, res) => {
 app.get('/api/courses', async (req, res) => {
     try {
         const courses = await prisma.courses.findMany({
-            where: {}
+            where: {},
+            orderBy: [
+                { display_order: 'asc' },
+                { created_at: 'desc' }
+            ]
         });
         res.json(serializeBigInt(courses));
     } catch (error) {
@@ -386,6 +402,25 @@ app.post('/api/apply', async (req, res) => {
     }
 });
 
-app.listen(PORT, () => {
+/**
+ * Self-healing schema sync: ensures display_order column exists on target tables
+ * even if database migrations are not executed during production deployment.
+ */
+async function ensureDisplayOrderColumns() {
+    const tables = ['courses', 'life_at_xaviers', 'news_and_events', 'popups', 'upcoming_events'];
+    for (const table of tables) {
+        try {
+            await prisma.$executeRawUnsafe(
+                `ALTER TABLE \`${table}\` ADD COLUMN \`display_order\` INT NOT NULL DEFAULT 0`
+            );
+            console.log(`[Schema Sync] Added display_order column to ${table}`);
+        } catch {
+            // Column already exists (ER_DUP_FIELDNAME) — safe to ignore
+        }
+    }
+}
+
+app.listen(PORT, async () => {
     console.log(`Server is running on http://localhost:${PORT}`);
+    await ensureDisplayOrderColumns();
 });

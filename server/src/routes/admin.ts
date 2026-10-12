@@ -45,6 +45,94 @@ router.post('/login', async (req: Request, res: Response): Promise<any> => {
 // Protect all routes below
 router.use(authenticateJWT);
 
+// Bulk Reorder endpoint handler
+const handleReorder = async (req: AuthRequest, res: Response): Promise<any> => {
+    try {
+        const { entity, items } = req.body;
+
+        if (!entity || typeof entity !== 'string') {
+            return res.status(400).json({ error: 'Field "entity" is required.' });
+        }
+
+        if (!Array.isArray(items) || items.length === 0) {
+            return res.status(400).json({ error: 'Field "items" must be a non-empty array.' });
+        }
+
+        const entityKey = entity.toLowerCase().trim();
+        const entityMap: Record<string, any> = {
+            'news': prisma.news_and_events,
+            'news_and_events': prisma.news_and_events,
+            'news-and-events': prisma.news_and_events,
+            'upcoming-events': prisma.upcoming_events,
+            'upcoming_events': prisma.upcoming_events,
+            'events': prisma.upcoming_events,
+            'life-at-xaviers': prisma.life_at_xaviers,
+            'life_at_xaviers': prisma.life_at_xaviers,
+            'life-at-xavier': prisma.life_at_xaviers,
+            'popups': prisma.popups,
+            'courses': prisma.courses
+        };
+
+        const targetModel = entityMap[entityKey];
+        if (!targetModel) {
+            return res.status(400).json({ 
+                error: `Invalid entity "${entity}". Supported entities: news, upcoming-events, life-at-xaviers, popups, courses.` 
+            });
+        }
+
+        const updates: { id: bigint, display_order: number }[] = [];
+        for (let i = 0; i < items.length; i++) {
+            const item = items[i];
+            let rawId: any;
+            let displayOrder: number;
+
+            if (typeof item === 'object' && item !== null) {
+                rawId = item.id;
+                displayOrder = item.display_order !== undefined ? Number(item.display_order) : i;
+            } else {
+                rawId = item;
+                displayOrder = i;
+            }
+
+            if (rawId === undefined || rawId === null || rawId === '') {
+                return res.status(400).json({ error: `Item at index ${i} is missing an "id".` });
+            }
+
+            try {
+                const idBigInt = BigInt(rawId.toString());
+                if (isNaN(displayOrder)) {
+                    return res.status(400).json({ error: `Item at index ${i} has invalid display_order.` });
+                }
+                updates.push({ id: idBigInt, display_order: displayOrder });
+            } catch (err) {
+                return res.status(400).json({ error: `Invalid ID format for item at index ${i}.` });
+            }
+        }
+
+        // Run batch updates atomically in a Prisma transaction
+        await prisma.$transaction(
+            updates.map(({ id, display_order }) =>
+                targetModel.update({
+                    where: { id },
+                    data: { display_order, updated_at: new Date() }
+                })
+            )
+        );
+
+        return res.json({
+            success: true,
+            message: `Successfully updated order for ${updates.length} items.`,
+            count: updates.length
+        });
+    } catch (error: any) {
+        console.error('Error in bulk reorder endpoint:', error);
+        return res.status(500).json({ error: 'Failed to update item order.', details: error.message });
+    }
+};
+
+router.put('/reorder', handleReorder);
+router.post('/reorder', handleReorder);
+
 // Dashboard Stats
 router.get('/stats', async (req: AuthRequest, res: Response) => {
     try {
@@ -75,7 +163,10 @@ router.get('/stats', async (req: AuthRequest, res: Response) => {
 router.get('/news', async (req: AuthRequest, res: Response) => {
     try {
         const items = await prisma.news_and_events.findMany({
-            orderBy: { created_at: 'desc' }
+            orderBy: [
+                { display_order: 'asc' },
+                { created_at: 'desc' }
+            ]
         });
         res.json(
             items.map(item => ({
@@ -135,6 +226,11 @@ router.post('/news', upload.single('image'), async (req: AuthRequest, res: Respo
             imageUrl = req.body.imageUrl;
         }
 
+        const maxOrder = await prisma.news_and_events.aggregate({ _max: { display_order: true } });
+        const display_order = req.body.display_order !== undefined
+            ? parseInt(req.body.display_order, 10)
+            : (maxOrder._max.display_order ?? -1) + 1;
+
         const newItem = await prisma.news_and_events.create({
             data: {
                 title,
@@ -142,6 +238,7 @@ router.post('/news', upload.single('image'), async (req: AuthRequest, res: Respo
                 content,
                 imageUrl,
                 status: isStatusTrue,
+                display_order,
                 created_at: new Date(),
                 updated_at: new Date()
             }
@@ -166,6 +263,9 @@ router.put('/news/:id', upload.single('image'), async (req: AuthRequest, res: Re
             status: isStatusTrue,
             updated_at: new Date()
         };
+        if (req.body.display_order !== undefined) {
+            updateData.display_order = parseInt(req.body.display_order, 10);
+        }
 
         if (req.file) {
             // New image uploaded: remove previous image file if it exists in storage
@@ -274,7 +374,13 @@ const serializeBigInt = (obj: any) => {
 // --- Courses ---
 router.get('/courses', async (req, res) => {
     try {
-        const items = await prisma.courses.findMany({ where: { deleted_at: null } });
+        const items = await prisma.courses.findMany({ 
+            where: { deleted_at: null },
+            orderBy: [
+                { display_order: 'asc' },
+                { created_at: 'desc' }
+            ]
+        });
         res.json(serializeBigInt(items));
     } catch (e) { res.status(500).json({ error: 'Server error' }); }
 });
@@ -290,14 +396,33 @@ router.get('/courses/:id', async (req, res) => {
 router.post('/courses', async (req, res) => {
     try {
         const { course } = req.body;
-        const newItem = await prisma.courses.create({ data: { course, created_at: new Date(), updated_at: new Date() } });
+        const maxOrder = await prisma.courses.aggregate({ _max: { display_order: true } });
+        const display_order = req.body.display_order !== undefined
+            ? parseInt(req.body.display_order, 10)
+            : (maxOrder._max.display_order ?? -1) + 1;
+
+        const newItem = await prisma.courses.create({ 
+            data: { 
+                course, 
+                display_order,
+                created_at: new Date(), 
+                updated_at: new Date() 
+            } 
+        });
         res.json(serializeBigInt(newItem));
     } catch (e) { res.status(500).json({ error: 'Server error' }); }
 });
 router.put('/courses/:id', async (req, res) => {
     try {
         const { course } = req.body;
-        const item = await prisma.courses.update({ where: { id: BigInt(req.params.id as string) }, data: { course, updated_at: new Date() } });
+        const updateData: any = { course, updated_at: new Date() };
+        if (req.body.display_order !== undefined) {
+            updateData.display_order = parseInt(req.body.display_order, 10);
+        }
+        const item = await prisma.courses.update({ 
+            where: { id: BigInt(req.params.id as string) }, 
+            data: updateData 
+        });
         res.json(serializeBigInt(item));
     } catch (e) { res.status(500).json({ error: 'Server error' }); }
 });
@@ -325,7 +450,12 @@ router.delete('/contacts/:id', async (req, res) => {
 // --- Popups ---
 router.get('/popups', async (req, res) => {
     try {
-        const items = await prisma.popups.findMany({ orderBy: { created_at: 'desc' } });
+        const items = await prisma.popups.findMany({ 
+            orderBy: [
+                { display_order: 'asc' },
+                { created_at: 'desc' }
+            ] 
+        });
         const media = await prisma.media.findMany({
             where: {
                 model_type: 'App\\Models\\Popup',
@@ -367,11 +497,17 @@ router.post('/popups', upload.fields([{ name: 'image', maxCount: 1 }]), async (r
         const { title, link, status } = req.body;
         const isStatusTrue = status === 'true' || status === true;
         
+        const maxOrder = await prisma.popups.aggregate({ _max: { display_order: true } });
+        const display_order = req.body.display_order !== undefined
+            ? parseInt(req.body.display_order, 10)
+            : (maxOrder._max.display_order ?? -1) + 1;
+
         const newItem = await prisma.popups.create({ 
             data: { 
                 title, 
                 link, 
                 status: isStatusTrue, 
+                display_order,
                 created_at: new Date(), 
                 updated_at: new Date() 
             } 
@@ -439,14 +575,19 @@ router.put('/popups/:id', upload.fields([{ name: 'image', maxCount: 1 }]), async
         const { title, link, status, imageUrl } = req.body;
         const isStatusTrue = status === 'true' || status === true;
 
+        const updateData: any = {
+            title,
+            link,
+            status: isStatusTrue,
+            updated_at: new Date()
+        };
+        if (req.body.display_order !== undefined) {
+            updateData.display_order = parseInt(req.body.display_order, 10);
+        }
+
         const item = await prisma.popups.update({
             where: { id },
-            data: {
-                title,
-                link,
-                status: isStatusTrue,
-                updated_at: new Date()
-            }
+            data: updateData
         });
 
         const fs = require('fs');
@@ -590,7 +731,10 @@ router.delete('/popups/:id', async (req, res) => {
 router.get('/upcoming-events', async (req, res) => {
     try {
         const items = await prisma.upcoming_events.findMany({
-            orderBy: { id: 'desc' }
+            orderBy: [
+                { display_order: 'asc' },
+                { created_at: 'desc' }
+            ]
         });
         res.json(serializeBigInt(items));
     } catch (e) { res.status(500).json({ error: 'Server error' }); }
@@ -612,6 +756,11 @@ router.post('/upcoming-events', async (req, res) => {
     try {
         const { title, time, content, location, status, start_date, end_date } = req.body;
         const slug = slugify(title);
+        const maxOrder = await prisma.upcoming_events.aggregate({ _max: { display_order: true } });
+        const display_order = req.body.display_order !== undefined
+            ? parseInt(req.body.display_order, 10)
+            : (maxOrder._max.display_order ?? -1) + 1;
+
         const newItem = await prisma.upcoming_events.create({ 
             data: { 
                 title, 
@@ -620,6 +769,7 @@ router.post('/upcoming-events', async (req, res) => {
                 content: content || null, 
                 location: location || null, 
                 status: status !== undefined ? Boolean(status) : true, 
+                display_order,
                 start_date: start_date ? new Date(start_date) : null,
                 end_date: end_date ? new Date(end_date) : null,
                 created_at: new Date(), 
@@ -649,6 +799,7 @@ router.put('/upcoming-events/:id', async (req, res) => {
         if (status !== undefined) updateData.status = Boolean(status);
         if (start_date !== undefined) updateData.start_date = start_date ? new Date(start_date) : null;
         if (end_date !== undefined) updateData.end_date = end_date ? new Date(end_date) : null;
+        if (req.body.display_order !== undefined) updateData.display_order = parseInt(req.body.display_order, 10);
 
         const item = await prisma.upcoming_events.update({ 
             where: { id: BigInt(req.params.id as string) }, 
@@ -672,7 +823,10 @@ router.get('/life-at-xaviers', async (req, res) => {
     try {
         const items = await prisma.life_at_xaviers.findMany({ 
             where: { deleted_at: null },
-            orderBy: { created_at: 'desc' },
+            orderBy: [
+                { display_order: 'asc' },
+                { created_at: 'desc' }
+            ],
             include: {
                 life_at_xavier_images: {
                     orderBy: { sortOrder: 'asc' }
@@ -752,12 +906,18 @@ router.post('/life-at-xaviers', imageUpload.fields([
         const { title, slug, status, meta_title, meta_description, meta_schema, thumbnailUrl, ogImageUrl, newGalleryImageUrls } = req.body;
         const isStatusTrue = status === 'true' || status === true;
 
+        const maxOrder = await prisma.life_at_xaviers.aggregate({ _max: { display_order: true } });
+        const display_order = req.body.display_order !== undefined
+            ? parseInt(req.body.display_order, 10)
+            : (maxOrder._max.display_order ?? -1) + 1;
+
         // 1. Create main record
         const newItem = await prisma.life_at_xaviers.create({ 
             data: { 
                 title, 
                 slug, 
                 status: isStatusTrue, 
+                display_order,
                 created_at: new Date(), 
                 updated_at: new Date() 
             } 
@@ -901,15 +1061,20 @@ router.put('/life-at-xaviers/:id', imageUpload.fields([
         const { title, slug, status, meta_title, meta_description, meta_schema, deletedGalleryImageIds, thumbnailUrl, ogImageUrl, newGalleryImageUrls } = req.body;
         const isStatusTrue = status === 'true' || status === true;
 
+        const updateData: any = {
+            title,
+            slug,
+            status: isStatusTrue,
+            updated_at: new Date()
+        };
+        if (req.body.display_order !== undefined) {
+            updateData.display_order = parseInt(req.body.display_order, 10);
+        }
+
         // 1. Update main record
         const updatedItem = await prisma.life_at_xaviers.update({
             where: { id },
-            data: {
-                title,
-                slug,
-                status: isStatusTrue,
-                updated_at: new Date()
-            }
+            data: updateData
         });
 
         // 2. Update/Create metas

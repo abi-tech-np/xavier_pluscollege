@@ -65,11 +65,12 @@ model contacts {
 
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model courses {
-  id         BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
-  course     String    @db.VarChar(255)
-  created_at DateTime? @db.Timestamp(0)
-  updated_at DateTime? @db.Timestamp(0)
-  deleted_at DateTime? @db.Timestamp(0)
+  id            BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  course        String    @db.VarChar(255)
+  display_order Int       @default(0)
+  created_at    DateTime? @db.Timestamp(0)
+  updated_at    DateTime? @db.Timestamp(0)
+  deleted_at    DateTime? @db.Timestamp(0)
 }
 
 model event_registrations {
@@ -218,6 +219,7 @@ model life_at_xaviers {
   title                 String                  @db.VarChar(255)
   slug                  String                  @db.VarChar(255)
   status                Boolean                 @default(true)
+  display_order         Int                     @default(0)
   deleted_at            DateTime?               @db.Timestamp(0)
   created_at            DateTime?               @db.Timestamp(0)
   updated_at            DateTime?               @db.Timestamp(0)
@@ -303,15 +305,16 @@ model model_has_roles {
 }
 
 model news_and_events {
-  id         BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
-  title      String    @db.VarChar(255)
-  slug       String    @db.VarChar(255)
-  content    String    @db.Text
-  imageUrl   String?   @db.VarChar(255)
-  status     Boolean   @default(true)
-  deleted_at DateTime? @db.Timestamp(0)
-  created_at DateTime? @db.Timestamp(0)
-  updated_at DateTime? @db.Timestamp(0)
+  id            BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  title         String    @db.VarChar(255)
+  slug          String    @db.VarChar(255)
+  content       String    @db.Text
+  imageUrl      String?   @db.VarChar(255)
+  status        Boolean   @default(true)
+  display_order Int       @default(0)
+  deleted_at    DateTime? @db.Timestamp(0)
+  created_at    DateTime? @db.Timestamp(0)
+  updated_at    DateTime? @db.Timestamp(0)
 }
 
 
@@ -347,12 +350,13 @@ model permissions {
 }
 
 model popups {
-  id         BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
-  title      String?   @db.VarChar(255)
-  link       String?   @db.VarChar(255)
-  status     Boolean   @default(true)
-  created_at DateTime? @db.Timestamp(0)
-  updated_at DateTime? @db.Timestamp(0)
+  id            BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  title         String?   @db.VarChar(255)
+  link          String?   @db.VarChar(255)
+  status        Boolean   @default(true)
+  display_order Int       @default(0)
+  created_at    DateTime? @db.Timestamp(0)
+  updated_at    DateTime? @db.Timestamp(0)
 }
 
 model role_has_permissions {
@@ -390,17 +394,18 @@ model sessions {
 }
 
 model upcoming_events {
-  id         BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
-  title      String    @db.VarChar(255)
-  slug       String?   @db.VarChar(255)
-  time       String?   @db.VarChar(255)
-  content    String?   @db.Text
-  location   String?   @db.VarChar(255)
-  start_date DateTime? @db.Date
-  end_date   DateTime? @db.Date
-  status     Boolean   @default(true)
-  created_at DateTime? @db.Timestamp(0)
-  updated_at DateTime? @db.Timestamp(0)
+  id            BigInt    @id @default(autoincrement()) @db.UnsignedBigInt
+  title         String    @db.VarChar(255)
+  slug          String?   @db.VarChar(255)
+  time          String?   @db.VarChar(255)
+  content       String?   @db.Text
+  location      String?   @db.VarChar(255)
+  start_date    DateTime? @db.Date
+  end_date      DateTime? @db.Date
+  status        Boolean   @default(true)
+  display_order Int       @default(0)
+  created_at    DateTime? @db.Timestamp(0)
+  updated_at    DateTime? @db.Timestamp(0)
 }
 
 model users {

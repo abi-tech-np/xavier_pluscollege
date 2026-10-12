@@ -15,6 +15,8 @@ import {
     Layers
 } from 'lucide-react';
 import { getApiUrl, getImageUrl } from '../../services/apiClient';
+import { useReorder } from '../../hooks/useReorder';
+import OrderControlCell from '../../components/admin/OrderControlCell';
 
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
@@ -85,6 +87,24 @@ const ManageLifeAtXavier = () => {
             setLoading(false);
         }
     };
+
+    const {
+        draggedIndex,
+        dragOverIndex,
+        isReordering,
+        handleDragStart,
+        handleDragOver,
+        handleDrop,
+        handleDragEnd,
+        moveItem,
+        updateItemOrder
+    } = useReorder({
+        entity: 'life-at-xaviers',
+        items,
+        setItems,
+        onNotify: (text, type) => showNotification(text, type),
+        getAuthHeaders
+    });
 
     const resetForm = () => {
         setFormData({
@@ -1050,6 +1070,7 @@ const ManageLifeAtXavier = () => {
                         <table className="admin-table" style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
                             <thead>
                                 <tr style={{ backgroundColor: '#18181b', borderBottom: '1px solid #27272a' }}>
+                                    <th style={{ padding: '1rem 1.5rem', color: '#fafafa', width: '110px' }}>Order</th>
                                     <th style={{ padding: '1rem 1.5rem', color: '#fafafa' }}>Title</th>
                                     <th style={{ padding: '1rem 1.5rem', color: '#fafafa' }}>Slug</th>
                                     <th style={{ padding: '1rem 1.5rem', color: '#fafafa' }}>Gallery</th>
@@ -1058,10 +1079,29 @@ const ManageLifeAtXavier = () => {
                                 </tr>
                             </thead>
                             <tbody>
-                                {items.map(item => {
+                                {items.map((item, index) => {
                                     const galleryCount = item.life_at_xavier_images?.length || 0;
+                                    const isDragging = draggedIndex === index;
+                                    const isDragOver = dragOverIndex === index;
                                     return (
-                                        <tr key={item.id} style={{ borderBottom: '1px solid #27272a' }}>
+                                        <tr 
+                                            key={item.id} 
+                                            draggable={!isEditing}
+                                            onDragStart={(e) => handleDragStart(e, index)}
+                                            onDragOver={(e) => handleDragOver(e, index)}
+                                            onDrop={(e) => handleDrop(e, index)}
+                                            onDragEnd={handleDragEnd}
+                                            className={`row-draggable ${isDragging ? 'row-dragging' : ''} ${isDragOver ? 'row-drag-over' : ''}`}
+                                            style={{ borderBottom: '1px solid #27272a' }}
+                                        >
+                                            <OrderControlCell
+                                                index={index}
+                                                total={items.length}
+                                                disabled={isReordering}
+                                                onMoveUp={() => moveItem(index, 'up')}
+                                                onMoveDown={() => moveItem(index, 'down')}
+                                                onUpdateOrder={(num) => updateItemOrder(index, num)}
+                                            />
                                             <td data-label="Title" style={{ padding: '1rem 1.5rem', color: '#d4d4d8', fontWeight: '500' }}>
                                                 {item.title}
                                             </td>
@@ -1161,7 +1201,7 @@ const ManageLifeAtXavier = () => {
                                 })}
                                 {items.length === 0 && (
                                     <tr>
-                                        <td colSpan="5" style={{ textAlign: 'center', padding: '3rem', color: '#a1a1aa' }}>
+                                        <td colSpan="6" style={{ textAlign: 'center', padding: '3rem', color: '#a1a1aa' }}>
                                             No Life At Xavier entries found. Click "New entry" to create one.
                                         </td>
                                     </tr>

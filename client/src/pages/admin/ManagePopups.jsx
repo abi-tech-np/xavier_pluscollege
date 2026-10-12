@@ -3,6 +3,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { Search, ChevronDown, Plus, UploadCloud, Trash2, Edit2, Image as ImageIcon, Check, AlertCircle, X } from 'lucide-react';
+import { useReorder } from '../../hooks/useReorder';
+import OrderControlCell from '../../components/admin/OrderControlCell';
 
 const ManagePopups = () => {
     const [popups, setPopups] = useState([]);
@@ -57,6 +59,24 @@ const ManagePopups = () => {
             setLoading(false);
         }
     };
+
+    const {
+        draggedIndex,
+        dragOverIndex,
+        isReordering,
+        handleDragStart,
+        handleDragOver,
+        handleDrop,
+        handleDragEnd,
+        moveItem,
+        updateItemOrder
+    } = useReorder({
+        entity: 'popups',
+        items: popups,
+        setItems: setPopups,
+        onNotify: (text, type) => showFeedback(text, type),
+        getAuthHeaders
+    });
 
     useEffect(() => {
         fetchPopups();
@@ -659,6 +679,9 @@ const ManagePopups = () => {
                     <table className="admin-table">
                         <thead>
                             <tr style={{ backgroundColor: '#18181b', borderBottom: '1px solid #27272a' }}>
+                                <th style={{ padding: '1rem 1.5rem', width: '110px', color: '#fafafa', fontWeight: '600' }}>
+                                    Order
+                                </th>
                                 <th style={{ padding: '1rem 1.5rem', width: '40px' }}>
                                     <input type="checkbox" style={{ accentColor: '#fbbf24', cursor: 'pointer', backgroundColor: '#27272a', border: '1px solid #3f3f46' }} />
                                 </th>
@@ -691,17 +714,36 @@ const ManagePopups = () => {
                         <tbody>
                             {loading ? (
                                 <tr>
-                                    <td colSpan="7" style={{ padding: '2rem', textAlign: 'center', color: '#a1a1aa' }}>Loading popups...</td>
+                                    <td colSpan="8" style={{ padding: '2rem', textAlign: 'center', color: '#a1a1aa' }}>Loading popups...</td>
                                 </tr>
                             ) : filteredPopups.length === 0 ? (
                                 <tr>
-                                    <td colSpan="7" style={{ padding: '2rem', textAlign: 'center', color: '#a1a1aa' }}>No popups found.</td>
+                                    <td colSpan="8" style={{ padding: '2rem', textAlign: 'center', color: '#a1a1aa' }}>No popups found.</td>
                                 </tr>
                             ) : (
-                                filteredPopups.slice(0, perPage).map(popup => {
+                                filteredPopups.slice(0, perPage).map((popup, index) => {
                                     const thumb = resolveImageUrl(popup.imageUrl);
+                                    const isDragging = draggedIndex === index;
+                                    const isDragOver = dragOverIndex === index;
                                     return (
-                                        <tr key={popup.id} style={{ borderBottom: '1px solid #27272a' }}>
+                                        <tr 
+                                            key={popup.id} 
+                                            draggable={!isEditing && !searchQuery}
+                                            onDragStart={(e) => handleDragStart(e, index)}
+                                            onDragOver={(e) => handleDragOver(e, index)}
+                                            onDrop={(e) => handleDrop(e, index)}
+                                            onDragEnd={handleDragEnd}
+                                            className={`row-draggable ${isDragging ? 'row-dragging' : ''} ${isDragOver ? 'row-drag-over' : ''}`}
+                                            style={{ borderBottom: '1px solid #27272a' }}
+                                        >
+                                            <OrderControlCell
+                                                index={index}
+                                                total={filteredPopups.length}
+                                                disabled={isReordering || Boolean(searchQuery)}
+                                                onMoveUp={() => moveItem(index, 'up')}
+                                                onMoveDown={() => moveItem(index, 'down')}
+                                                onUpdateOrder={(num) => updateItemOrder(index, num)}
+                                            />
                                             <td data-label="Select" style={{ padding: '1rem 1.5rem' }}>
                                                 <input type="checkbox" style={{ accentColor: '#fbbf24', cursor: 'pointer' }} />
                                             </td>

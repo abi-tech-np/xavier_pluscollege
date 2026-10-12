@@ -2,6 +2,8 @@ import { getApiUrl, clearApiCache } from '../../services/apiClient';
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { Trash2, Edit2, Calendar, Clock, MapPin, Plus, Check, X, AlertCircle } from 'lucide-react';
+import { useReorder } from '../../hooks/useReorder';
+import OrderControlCell from '../../components/admin/OrderControlCell';
 
 const ManageUpcomingEvents = () => {
     const [events, setEvents] = useState([]);
@@ -69,6 +71,24 @@ const ManageUpcomingEvents = () => {
             setLoading(false);
         }
     };
+
+    const {
+        draggedIndex,
+        dragOverIndex,
+        isReordering,
+        handleDragStart,
+        handleDragOver,
+        handleDrop,
+        handleDragEnd,
+        moveItem,
+        updateItemOrder
+    } = useReorder({
+        entity: 'upcoming-events',
+        items: events,
+        setItems: setEvents,
+        onNotify: (text, type) => showMessage(text, type),
+        getAuthHeaders
+    });
 
     useEffect(() => {
         fetchEvents();
@@ -400,9 +420,14 @@ const ManageUpcomingEvents = () => {
             {/* Existing Events Table */}
             <div className="admin-card">
                 <div style={{ marginBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <h3 style={{ fontSize: '1.15rem', fontWeight: '600', color: '#f4f4f5', margin: 0 }}>
-                        All Upcoming Events ({events.length})
-                    </h3>
+                    <div>
+                        <h3 style={{ fontSize: '1.15rem', fontWeight: '600', color: '#f4f4f5', margin: 0 }}>
+                            All Upcoming Events ({events.length})
+                        </h3>
+                        <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.8rem', color: '#a1a1aa' }}>
+                            Drag items or use the arrows/priority number to customize the public display order.
+                        </p>
+                    </div>
                 </div>
 
                 {loading ? (
@@ -414,6 +439,7 @@ const ManageUpcomingEvents = () => {
                         <table className="admin-table">
                             <thead>
                                 <tr>
+                                    <th style={{ width: '110px' }}>Order</th>
                                     <th>Event Title</th>
                                     <th>Date Schedule</th>
                                     <th>Time</th>
@@ -423,13 +449,31 @@ const ManageUpcomingEvents = () => {
                                 </tr>
                             </thead>
                             <tbody>
-                                {events.map(item => {
+                                {events.map((item, index) => {
                                     const startFormatted = formatDisplayDate(item.start_date);
                                     const endFormatted = formatDisplayDate(item.end_date);
                                     const isSameDate = startFormatted === endFormatted || !item.end_date;
+                                    const isDragging = draggedIndex === index;
+                                    const isDragOver = dragOverIndex === index;
 
                                     return (
-                                        <tr key={item.id}>
+                                        <tr 
+                                            key={item.id}
+                                            draggable={!isEditing}
+                                            onDragStart={(e) => handleDragStart(e, index)}
+                                            onDragOver={(e) => handleDragOver(e, index)}
+                                            onDrop={(e) => handleDrop(e, index)}
+                                            onDragEnd={handleDragEnd}
+                                            className={`row-draggable ${isDragging ? 'row-dragging' : ''} ${isDragOver ? 'row-drag-over' : ''}`}
+                                        >
+                                            <OrderControlCell
+                                                index={index}
+                                                total={events.length}
+                                                disabled={isReordering}
+                                                onMoveUp={() => moveItem(index, 'up')}
+                                                onMoveDown={() => moveItem(index, 'down')}
+                                                onUpdateOrder={(orderNum) => updateItemOrder(index, orderNum)}
+                                            />
                                             <td data-label="Event Title" style={{ color: '#fafafa', fontWeight: '600' }}>
                                                 {item.title}
                                             </td>
@@ -478,7 +522,7 @@ const ManageUpcomingEvents = () => {
                                 })}
                                 {events.length === 0 && (
                                     <tr>
-                                        <td colSpan="6" style={{ textAlign: 'center', padding: '3rem', color: '#a1a1aa' }}>
+                                        <td colSpan="7" style={{ textAlign: 'center', padding: '3rem', color: '#a1a1aa' }}>
                                             No events found. Use the form above to add your first event.
                                         </td>
                                     </tr>
