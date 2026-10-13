@@ -144,7 +144,11 @@ app.get('/api/life-at-xavier', async (req, res) => {
             ],
             include: {
                 life_at_xavier_images: {
-                    orderBy: { sortOrder: 'asc' }
+                    orderBy: [
+                        { image_order: 'asc' },
+                        { sortOrder: 'asc' },
+                        { id: 'asc' }
+                    ]
                 },
                 life_at_xavier_social_posts: {
                     orderBy: { sort_order: 'asc' }
@@ -201,7 +205,11 @@ app.get('/api/life-at-xavier/:slug', async (req, res) => {
             where: { slug: req.params.slug, status: true, deleted_at: null },
             include: {
                 life_at_xavier_images: {
-                    orderBy: { sortOrder: 'asc' }
+                    orderBy: [
+                        { image_order: 'asc' },
+                        { sortOrder: 'asc' },
+                        { id: 'asc' }
+                    ]
                 },
                 life_at_xavier_social_posts: {
                     orderBy: { sort_order: 'asc' }
@@ -220,16 +228,31 @@ app.get('/api/life-at-xavier/:slug', async (req, res) => {
         const itemMedia = media.find(m => m.model_id === item.id && (m.collection_name === 'thumbnail' || !m.collection_name));
 
         // Format gallery images
-        const galleryImages = (item.life_at_xavier_images || []).map(img => {
-            if (img.imageUrl.startsWith('http')) return img.imageUrl;
-            return `${baseUrl}${img.imageUrl.startsWith('/') ? '' : '/'}${img.imageUrl}`;
+        const formattedGalleryItems = (item.life_at_xavier_images || []).map(img => {
+            const url = img.imageUrl.startsWith('http') ? img.imageUrl : `${baseUrl}${img.imageUrl.startsWith('/') ? '' : '/'}${img.imageUrl}`;
+            return {
+                id: img.id.toString(),
+                url,
+                imageUrl: url,
+                image_order: img.image_order ?? img.sortOrder ?? 0,
+                sortOrder: img.sortOrder ?? 0
+            };
         });
 
         // Also include any legacy media gallery items if existing
         const legacyMedia = media.filter(m => m.collection_name !== 'thumbnail' && m.collection_name !== 'og_image');
         for (const m of legacyMedia) {
-            galleryImages.push(`${baseUrl}/storage/${m.id}/${m.file_name}`);
+            const url = `${baseUrl}/storage/${m.id}/${m.file_name}`;
+            formattedGalleryItems.push({
+                id: m.id.toString(),
+                url,
+                imageUrl: url,
+                image_order: formattedGalleryItems.length,
+                sortOrder: formattedGalleryItems.length
+            });
         }
+
+        const galleryUrls = formattedGalleryItems.map(item => item.url);
 
         const socialPosts = (item.life_at_xavier_social_posts || []).map(p => {
             let thumb = p.thumbnail_url;
@@ -250,8 +273,9 @@ app.get('/api/life-at-xavier/:slug', async (req, res) => {
         res.json(serializeBigInt({
             ...item,
             imageUrl: itemMedia ? `${baseUrl}/storage/${itemMedia.id}/${itemMedia.file_name}` : null,
-            imageUrls: galleryImages,
-            galleryUrls: galleryImages,
+            imageUrls: galleryUrls,
+            galleryUrls: galleryUrls,
+            galleryImages: formattedGalleryItems,
             socialPosts
         }));
     } catch (error) {
@@ -473,6 +497,7 @@ async function ensureDatabaseSchema() {
                 \`life_at_xavier_id\` BIGINT UNSIGNED NOT NULL,
                 \`imageUrl\` VARCHAR(255) NOT NULL,
                 \`sortOrder\` INTEGER NOT NULL DEFAULT 0,
+                \`image_order\` INTEGER NOT NULL DEFAULT 0,
                 \`created_at\` TIMESTAMP(0) NULL,
                 \`updated_at\` TIMESTAMP(0) NULL,
                 INDEX \`life_at_xavier_images_life_at_xavier_id_foreign\`(\`life_at_xavier_id\`),
@@ -484,6 +509,16 @@ async function ensureDatabaseSchema() {
         `);
         console.log('[Schema Sync] Verified life_at_xavier_images table');
     } catch { /* Table or FK already exists — safe to ignore */ }
+
+    try {
+        await prisma.$executeRawUnsafe(
+            `ALTER TABLE \`life_at_xavier_images\` ADD COLUMN \`image_order\` INT NOT NULL DEFAULT 0`
+        );
+        console.log('[Schema Sync] Added image_order column to life_at_xavier_images');
+        await prisma.$executeRawUnsafe(
+            `UPDATE \`life_at_xavier_images\` SET \`image_order\` = \`sortOrder\` WHERE \`image_order\` = 0 AND \`sortOrder\` != 0`
+        );
+    } catch { /* Column already exists — safe to ignore */ }
 
     // 3. Column: display_order across all 5 content tables
     const displayOrderTables = ['courses', 'life_at_xaviers', 'news_and_events', 'popups', 'upcoming_events'];

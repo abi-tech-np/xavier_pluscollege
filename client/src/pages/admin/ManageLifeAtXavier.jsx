@@ -17,6 +17,8 @@ import {
     ExternalLink,
     RefreshCw,
     ChevronDown,
+    ChevronLeft,
+    ChevronRight,
     Sparkles
 } from 'lucide-react';
 import { getApiUrl, getImageUrl } from '../../services/apiClient';
@@ -71,6 +73,8 @@ const ManageLifeAtXavier = () => {
     const [deletedGalleryImageIds, setDeletedGalleryImageIds] = useState([]);
     const [newGalleryFiles, setNewGalleryFiles] = useState([]); // [{ file, previewUrl, id }]
     const [isDraggingGallery, setIsDraggingGallery] = useState(false);
+    const [draggedExistingIdx, setDraggedExistingIdx] = useState(null);
+    const [draggedNewIdx, setDraggedNewIdx] = useState(null);
 
     const thumbnailInputRef = useRef(null);
     const ogImageInputRef = useRef(null);
@@ -486,6 +490,62 @@ const ManageLifeAtXavier = () => {
         setDeletedGalleryImageIds(prev => [...prev, idToRemove]);
     };
 
+    const moveExistingGalleryImage = (fromIdx, direction) => {
+        const toIdx = direction === 'left' ? fromIdx - 1 : fromIdx + 1;
+        if (toIdx < 0 || toIdx >= existingGalleryImages.length) return;
+        setExistingGalleryImages(prev => {
+            const next = [...prev];
+            const [moved] = next.splice(fromIdx, 1);
+            next.splice(toIdx, 0, moved);
+            return next;
+        });
+    };
+
+    const moveNewGalleryFile = (fromIdx, direction) => {
+        const toIdx = direction === 'left' ? fromIdx - 1 : fromIdx + 1;
+        if (toIdx < 0 || toIdx >= newGalleryFiles.length) return;
+        setNewGalleryFiles(prev => {
+            const next = [...prev];
+            const [moved] = next.splice(fromIdx, 1);
+            next.splice(toIdx, 0, moved);
+            return next;
+        });
+    };
+
+    const handleExistingDragStart = (e, index) => {
+        setDraggedExistingIdx(index);
+        e.dataTransfer.effectAllowed = 'move';
+    };
+
+    const handleExistingDrop = (e, dropIdx) => {
+        e.preventDefault();
+        if (draggedExistingIdx === null || draggedExistingIdx === dropIdx) return;
+        setExistingGalleryImages(prev => {
+            const next = [...prev];
+            const [moved] = next.splice(draggedExistingIdx, 1);
+            next.splice(dropIdx, 0, moved);
+            return next;
+        });
+        setDraggedExistingIdx(null);
+    };
+
+    const handleNewFileDragStart = (e, index) => {
+        setDraggedNewIdx(index);
+        e.dataTransfer.effectAllowed = 'move';
+    };
+
+    const handleNewFileDrop = (e, dropIdx) => {
+        e.preventDefault();
+        if (draggedNewIdx === null || draggedNewIdx === dropIdx) return;
+        setNewGalleryFiles(prev => {
+            const next = [...prev];
+            const [moved] = next.splice(draggedNewIdx, 1);
+            next.splice(dropIdx, 0, moved);
+            return next;
+        });
+        setDraggedNewIdx(null);
+    };
+
     const handleStartCreate = () => {
         resetForm();
         navigate('/admin/life-at-xaviers/create');
@@ -547,11 +607,22 @@ const ManageLifeAtXavier = () => {
 
             let newGalleryImageUrls = [];
             if (newGalleryFiles.length > 0) {
-                for (const item of newGalleryFiles) {
+                for (let i = 0; i < newGalleryFiles.length; i++) {
+                    const item = newGalleryFiles[i];
                     const url = await uploadFile(item.file);
-                    newGalleryImageUrls.push(url);
+                    newGalleryImageUrls.push({
+                        url,
+                        image_order: existingGalleryImages.length + i,
+                        sortOrder: existingGalleryImages.length + i
+                    });
                 }
             }
+
+            const existingGalleryOrder = existingGalleryImages.map((img, idx) => ({
+                id: img.id,
+                image_order: idx,
+                sortOrder: idx
+            }));
 
             const payload = {
                 title: formData.title,
@@ -564,6 +635,8 @@ const ManageLifeAtXavier = () => {
                 thumbnailUrl,
                 ogImageUrl,
                 newGalleryImageUrls,
+                existingGalleryOrder,
+                galleryOrder: existingGalleryOrder,
                 socialPosts: socialPosts.filter(p => p.postUrl.trim()).map((p, idx) => ({
                     platform: p.platform,
                     postUrl: p.postUrl.trim(),
@@ -874,27 +947,56 @@ const ManageLifeAtXavier = () => {
                                 {/* Previews for Existing Gallery Images (In Edit Mode) */}
                                 {existingGalleryImages.length > 0 && (
                                     <div style={{ marginTop: '1.25rem' }}>
-                                        <span style={{ fontSize: '0.8rem', color: '#a1a1aa', fontWeight: '500', display: 'block', marginBottom: '0.5rem' }}>
-                                            Existing Gallery Images:
-                                        </span>
-                                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(110px, 1fr))', gap: '0.75rem' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                                            <span style={{ fontSize: '0.8rem', color: '#a1a1aa', fontWeight: '500' }}>
+                                                Existing Gallery Images (Drag or use arrows to rearrange order):
+                                            </span>
+                                            <span style={{ fontSize: '0.7rem', color: '#71717a' }}>
+                                                Order will be saved on submit
+                                            </span>
+                                        </div>
+                                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: '0.75rem' }}>
                                             {existingGalleryImages.map((img, idx) => (
                                                 <div 
                                                     key={img.id || idx} 
+                                                    draggable
+                                                    onDragStart={(e) => handleExistingDragStart(e, idx)}
+                                                    onDragOver={(e) => e.preventDefault()}
+                                                    onDrop={(e) => handleExistingDrop(e, idx)}
                                                     style={{
                                                         position: 'relative',
                                                         borderRadius: '0.375rem',
                                                         overflow: 'hidden',
-                                                        border: '1px solid #3f3f46',
+                                                        border: draggedExistingIdx === idx ? '2px dashed #fbbf24' : '1px solid #3f3f46',
                                                         backgroundColor: '#18181b',
-                                                        aspectRatio: '4/3'
+                                                        aspectRatio: '4/3',
+                                                        cursor: 'grab',
+                                                        transition: 'all 0.2s ease'
                                                     }}
                                                 >
                                                     <img 
                                                         src={getImageUrl(img.imageUrl)} 
                                                         alt={`Gallery ${idx + 1}`} 
-                                                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                                        style={{ width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none' }}
                                                     />
+                                                    {/* Order Badge */}
+                                                    <span style={{
+                                                        position: 'absolute',
+                                                        top: '4px',
+                                                        left: '4px',
+                                                        backgroundColor: 'rgba(2, 37, 111, 0.9)',
+                                                        color: '#ffffff',
+                                                        fontSize: '0.7rem',
+                                                        fontWeight: '700',
+                                                        padding: '2px 6px',
+                                                        borderRadius: '4px',
+                                                        backdropFilter: 'blur(4px)',
+                                                        zIndex: 2
+                                                    }}>
+                                                        #{idx + 1}
+                                                    </span>
+
+                                                    {/* Delete button */}
                                                     <button
                                                         type="button"
                                                         onClick={() => handleRemoveExistingGalleryImage(img.id)}
@@ -913,11 +1015,65 @@ const ManageLifeAtXavier = () => {
                                                             alignItems: 'center',
                                                             justifyContent: 'center',
                                                             cursor: 'pointer',
-                                                            boxShadow: '0 2px 4px rgba(0,0,0,0.5)'
+                                                            boxShadow: '0 2px 4px rgba(0,0,0,0.5)',
+                                                            zIndex: 2
                                                         }}
                                                     >
                                                         <X size={13} />
                                                     </button>
+
+                                                    {/* Bottom reorder bar */}
+                                                    <div style={{
+                                                        position: 'absolute',
+                                                        bottom: 0,
+                                                        left: 0,
+                                                        right: 0,
+                                                        display: 'flex',
+                                                        justifyContent: 'space-between',
+                                                        alignItems: 'center',
+                                                        padding: '3px 6px',
+                                                        backgroundColor: 'rgba(0, 0, 0, 0.75)',
+                                                        backdropFilter: 'blur(4px)',
+                                                        zIndex: 2
+                                                    }}>
+                                                        <button
+                                                            type="button"
+                                                            onClick={(e) => { e.stopPropagation(); moveExistingGalleryImage(idx, 'left'); }}
+                                                            disabled={idx === 0}
+                                                            title="Move earlier"
+                                                            style={{
+                                                                background: idx === 0 ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.2)',
+                                                                color: idx === 0 ? '#52525b' : '#ffffff',
+                                                                border: 'none',
+                                                                borderRadius: '3px',
+                                                                padding: '2px 4px',
+                                                                cursor: idx === 0 ? 'default' : 'pointer',
+                                                                display: 'flex',
+                                                                alignItems: 'center'
+                                                            }}
+                                                        >
+                                                            <ChevronLeft size={13} />
+                                                        </button>
+                                                        <span style={{ fontSize: '0.65rem', color: '#a1a1aa' }}>Order</span>
+                                                        <button
+                                                            type="button"
+                                                            onClick={(e) => { e.stopPropagation(); moveExistingGalleryImage(idx, 'right'); }}
+                                                            disabled={idx === existingGalleryImages.length - 1}
+                                                            title="Move later"
+                                                            style={{
+                                                                background: idx === existingGalleryImages.length - 1 ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.2)',
+                                                                color: idx === existingGalleryImages.length - 1 ? '#52525b' : '#ffffff',
+                                                                border: 'none',
+                                                                borderRadius: '3px',
+                                                                padding: '2px 4px',
+                                                                cursor: idx === existingGalleryImages.length - 1 ? 'default' : 'pointer',
+                                                                display: 'flex',
+                                                                alignItems: 'center'
+                                                            }}
+                                                        >
+                                                            <ChevronRight size={13} />
+                                                        </button>
+                                                    </div>
                                                 </div>
                                             ))}
                                         </div>
@@ -927,27 +1083,56 @@ const ManageLifeAtXavier = () => {
                                 {/* Previews for Newly Selected Gallery Images */}
                                 {newGalleryFiles.length > 0 && (
                                     <div style={{ marginTop: '1.25rem' }}>
-                                        <span style={{ fontSize: '0.8rem', color: '#fbbf24', fontWeight: '500', display: 'block', marginBottom: '0.5rem' }}>
-                                            New Images Ready to Upload ({newGalleryFiles.length}):
-                                        </span>
-                                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(110px, 1fr))', gap: '0.75rem' }}>
-                                            {newGalleryFiles.map((item) => (
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                                            <span style={{ fontSize: '0.8rem', color: '#fbbf24', fontWeight: '500' }}>
+                                                New Images Ready to Upload ({newGalleryFiles.length}) - Rearrange order:
+                                            </span>
+                                            <span style={{ fontSize: '0.7rem', color: '#71717a' }}>
+                                                Order will be preserved on upload
+                                            </span>
+                                        </div>
+                                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: '0.75rem' }}>
+                                            {newGalleryFiles.map((item, idx) => (
                                                 <div 
                                                     key={item.id} 
+                                                    draggable
+                                                    onDragStart={(e) => handleNewFileDragStart(e, idx)}
+                                                    onDragOver={(e) => e.preventDefault()}
+                                                    onDrop={(e) => handleNewFileDrop(e, idx)}
                                                     style={{
                                                         position: 'relative',
                                                         borderRadius: '0.375rem',
                                                         overflow: 'hidden',
-                                                        border: '1px solid #fbbf24',
+                                                        border: draggedNewIdx === idx ? '2px dashed #38bdf8' : '1px solid #fbbf24',
                                                         backgroundColor: '#18181b',
-                                                        aspectRatio: '4/3'
+                                                        aspectRatio: '4/3',
+                                                        cursor: 'grab',
+                                                        transition: 'all 0.2s ease'
                                                     }}
                                                 >
                                                     <img 
                                                         src={item.previewUrl} 
                                                         alt="New gallery preview" 
-                                                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                                        style={{ width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none' }}
                                                     />
+                                                    {/* Order Badge */}
+                                                    <span style={{
+                                                        position: 'absolute',
+                                                        top: '4px',
+                                                        left: '4px',
+                                                        backgroundColor: 'rgba(251, 191, 36, 0.9)',
+                                                        color: '#000000',
+                                                        fontSize: '0.7rem',
+                                                        fontWeight: '700',
+                                                        padding: '2px 6px',
+                                                        borderRadius: '4px',
+                                                        backdropFilter: 'blur(4px)',
+                                                        zIndex: 2
+                                                    }}>
+                                                        #{existingGalleryImages.length + idx + 1}
+                                                    </span>
+
+                                                    {/* Remove Button */}
                                                     <button
                                                         type="button"
                                                         onClick={() => handleRemoveNewGalleryImage(item.id)}
@@ -965,26 +1150,64 @@ const ManageLifeAtXavier = () => {
                                                             display: 'flex',
                                                             alignItems: 'center',
                                                             justifyContent: 'center',
-                                                            cursor: 'pointer'
+                                                            cursor: 'pointer',
+                                                            zIndex: 2
                                                         }}
                                                     >
                                                         <X size={13} />
                                                     </button>
+
+                                                    {/* Bottom reorder bar */}
                                                     <div style={{
                                                         position: 'absolute',
                                                         bottom: 0,
                                                         left: 0,
                                                         right: 0,
-                                                        backgroundColor: 'rgba(0,0,0,0.7)',
-                                                        fontSize: '0.65rem',
-                                                        color: '#e4e4e7',
-                                                        padding: '2px 4px',
-                                                        textAlign: 'center',
-                                                        overflow: 'hidden',
-                                                        textOverflow: 'ellipsis',
-                                                        whiteSpace: 'nowrap'
+                                                        display: 'flex',
+                                                        justifyContent: 'space-between',
+                                                        alignItems: 'center',
+                                                        padding: '3px 6px',
+                                                        backgroundColor: 'rgba(0, 0, 0, 0.75)',
+                                                        backdropFilter: 'blur(4px)',
+                                                        zIndex: 2
                                                     }}>
-                                                        {(item.file.size / (1024 * 1024)).toFixed(1)}MB
+                                                        <button
+                                                            type="button"
+                                                            onClick={(e) => { e.stopPropagation(); moveNewGalleryFile(idx, 'left'); }}
+                                                            disabled={idx === 0}
+                                                            title="Move earlier"
+                                                            style={{
+                                                                background: idx === 0 ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.2)',
+                                                                color: idx === 0 ? '#52525b' : '#ffffff',
+                                                                border: 'none',
+                                                                borderRadius: '3px',
+                                                                padding: '2px 4px',
+                                                                cursor: idx === 0 ? 'default' : 'pointer',
+                                                                display: 'flex',
+                                                                alignItems: 'center'
+                                                            }}
+                                                        >
+                                                            <ChevronLeft size={13} />
+                                                        </button>
+                                                        <span style={{ fontSize: '0.65rem', color: '#fbbf24' }}>New #{idx + 1}</span>
+                                                        <button
+                                                            type="button"
+                                                            onClick={(e) => { e.stopPropagation(); moveNewGalleryFile(idx, 'right'); }}
+                                                            disabled={idx === newGalleryFiles.length - 1}
+                                                            title="Move later"
+                                                            style={{
+                                                                background: idx === newGalleryFiles.length - 1 ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.2)',
+                                                                color: idx === newGalleryFiles.length - 1 ? '#52525b' : '#ffffff',
+                                                                border: 'none',
+                                                                borderRadius: '3px',
+                                                                padding: '2px 4px',
+                                                                cursor: idx === newGalleryFiles.length - 1 ? 'default' : 'pointer',
+                                                                display: 'flex',
+                                                                alignItems: 'center'
+                                                            }}
+                                                        >
+                                                            <ChevronRight size={13} />
+                                                        </button>
                                                     </div>
                                                 </div>
                                             ))}

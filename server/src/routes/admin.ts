@@ -845,7 +845,11 @@ router.get('/life-at-xaviers', async (req, res) => {
             ],
             include: {
                 life_at_xavier_images: {
-                    orderBy: { sortOrder: 'asc' }
+                    orderBy: [
+                        { image_order: 'asc' },
+                        { sortOrder: 'asc' },
+                        { id: 'asc' }
+                    ]
                 },
                 life_at_xavier_social_posts: {
                     orderBy: { sort_order: 'asc' }
@@ -866,7 +870,11 @@ router.get('/life-at-xaviers/:id', async (req, res) => {
             where: { id, deleted_at: null },
             include: {
                 life_at_xavier_images: {
-                    orderBy: { sortOrder: 'asc' }
+                    orderBy: [
+                        { image_order: 'asc' },
+                        { sortOrder: 'asc' },
+                        { id: 'asc' }
+                    ]
                 },
                 life_at_xavier_social_posts: {
                     orderBy: { sort_order: 'asc' }
@@ -912,6 +920,7 @@ router.get('/life-at-xaviers/:id', async (req, res) => {
             galleryImages: (item.life_at_xavier_images || []).map(img => ({
                 id: img.id.toString(),
                 imageUrl: img.imageUrl,
+                image_order: (img as any).image_order ?? img.sortOrder ?? 0,
                 sortOrder: img.sortOrder
             })),
             socialPosts: (item.life_at_xavier_social_posts || []).map(p => ({
@@ -1054,11 +1063,17 @@ router.post('/life-at-xaviers', imageUpload.fields([
         // 4. Handle multiple gallery images
         if (newGalleryImageUrls && Array.isArray(newGalleryImageUrls)) {
             for (let i = 0; i < newGalleryImageUrls.length; i++) {
-                await prisma.life_at_xavier_images.create({
+                const itemEntry = newGalleryImageUrls[i];
+                const url = typeof itemEntry === 'object' && itemEntry !== null ? (itemEntry.url || itemEntry.imageUrl) : itemEntry;
+                const orderNum = typeof itemEntry === 'object' && itemEntry !== null && (itemEntry.image_order !== undefined || itemEntry.sortOrder !== undefined)
+                    ? (itemEntry.image_order ?? itemEntry.sortOrder)
+                    : i;
+                await (prisma.life_at_xavier_images as any).create({
                     data: {
                         life_at_xavier_id: newItem.id,
-                        imageUrl: newGalleryImageUrls[i],
-                        sortOrder: i,
+                        imageUrl: url,
+                        sortOrder: orderNum,
+                        image_order: orderNum,
                         created_at: new Date(),
                         updated_at: new Date()
                     }
@@ -1067,11 +1082,12 @@ router.post('/life-at-xaviers', imageUpload.fields([
         } else if (files?.galleryImages && files.galleryImages.length > 0) {
             for (let i = 0; i < files.galleryImages.length; i++) {
                 const galleryFile = files.galleryImages[i];
-                await prisma.life_at_xavier_images.create({
+                await (prisma.life_at_xavier_images as any).create({
                     data: {
                         life_at_xavier_id: newItem.id,
                         imageUrl: `/storage/${galleryFile.filename}`,
                         sortOrder: i,
+                        image_order: i,
                         created_at: new Date(),
                         updated_at: new Date()
                     }
@@ -1343,42 +1359,81 @@ router.put('/life-at-xaviers/:id', imageUpload.fields([
             }
         }
 
-        // 5. Handle adding new gallery images
-        if (newGalleryImageUrls && Array.isArray(newGalleryImageUrls)) {
-            const lastImage = await prisma.life_at_xavier_images.findFirst({
-                where: { life_at_xavier_id: id },
-                orderBy: { sortOrder: 'desc' }
-            });
-            let nextSortOrder = (lastImage?.sortOrder ?? -1) + 1;
+        // 5. Handle reordering of existing gallery images
+        const galleryOrder = req.body.galleryOrder || req.body.existingGalleryOrder || req.body.orderedGalleryImages;
+        if (galleryOrder) {
+            let parsedOrder: any[] = [];
+            if (Array.isArray(galleryOrder)) {
+                parsedOrder = galleryOrder;
+            } else if (typeof galleryOrder === 'string') {
+                try { parsedOrder = JSON.parse(galleryOrder); } catch {}
+            }
 
-            for (const url of newGalleryImageUrls) {
-                await prisma.life_at_xavier_images.create({
+            for (let i = 0; i < parsedOrder.length; i++) {
+                const itemEntry = parsedOrder[i];
+                const imgId = typeof itemEntry === 'object' && itemEntry !== null ? itemEntry.id : itemEntry;
+                const orderNum = typeof itemEntry === 'object' && itemEntry !== null && (itemEntry.image_order !== undefined || itemEntry.sortOrder !== undefined)
+                    ? (itemEntry.image_order ?? itemEntry.sortOrder)
+                    : i;
+
+                if (imgId) {
+                    await (prisma.life_at_xavier_images as any).updateMany({
+                        where: { id: BigInt(imgId.toString()), life_at_xavier_id: id },
+                        data: {
+                            image_order: Number(orderNum),
+                            sortOrder: Number(orderNum),
+                            updated_at: new Date()
+                        }
+                    });
+                }
+            }
+        }
+
+        // 6. Handle adding new gallery images
+        if (newGalleryImageUrls && Array.isArray(newGalleryImageUrls)) {
+            const lastImage = await (prisma.life_at_xavier_images as any).findFirst({
+                where: { life_at_xavier_id: id },
+                orderBy: { image_order: 'desc' }
+            });
+            let nextSortOrder = (lastImage?.image_order ?? lastImage?.sortOrder ?? -1) + 1;
+
+            for (let i = 0; i < newGalleryImageUrls.length; i++) {
+                const itemEntry = newGalleryImageUrls[i];
+                const url = typeof itemEntry === 'object' && itemEntry !== null ? (itemEntry.url || itemEntry.imageUrl) : itemEntry;
+                const orderNum = typeof itemEntry === 'object' && itemEntry !== null && (itemEntry.image_order !== undefined || itemEntry.sortOrder !== undefined)
+                    ? (itemEntry.image_order ?? itemEntry.sortOrder)
+                    : nextSortOrder++;
+
+                await (prisma.life_at_xavier_images as any).create({
                     data: {
                         life_at_xavier_id: id,
                         imageUrl: url,
-                        sortOrder: nextSortOrder++,
+                        sortOrder: Number(orderNum),
+                        image_order: Number(orderNum),
                         created_at: new Date(),
                         updated_at: new Date()
                     }
                 });
             }
         } else if (files?.galleryImages && files.galleryImages.length > 0) {
-            const lastImage = await prisma.life_at_xavier_images.findFirst({
+            const lastImage = await (prisma.life_at_xavier_images as any).findFirst({
                 where: { life_at_xavier_id: id },
-                orderBy: { sortOrder: 'desc' }
+                orderBy: { image_order: 'desc' }
             });
-            let nextSortOrder = (lastImage?.sortOrder ?? -1) + 1;
+            let nextSortOrder = (lastImage?.image_order ?? lastImage?.sortOrder ?? -1) + 1;
 
             for (const file of files.galleryImages) {
-                await prisma.life_at_xavier_images.create({
+                await (prisma.life_at_xavier_images as any).create({
                     data: {
                         life_at_xavier_id: id,
                         imageUrl: `/storage/${file.filename}`,
-                        sortOrder: nextSortOrder++,
+                        sortOrder: nextSortOrder,
+                        image_order: nextSortOrder,
                         created_at: new Date(),
                         updated_at: new Date()
                     }
                 });
+                nextSortOrder++;
             }
         }
 
@@ -1432,6 +1487,40 @@ router.put('/life-at-xaviers/:id', imageUpload.fields([
         res.json(serializeBigInt(updatedItem));
     } catch (e) {
         console.error('Error updating life-at-xavier:', e);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+router.put('/life-at-xaviers/:id/reorder-images', async (req, res) => {
+    try {
+        const id = BigInt(req.params.id as string);
+        const { images } = req.body;
+        if (!Array.isArray(images)) {
+            return res.status(400).json({ error: 'images array is required' });
+        }
+
+        for (let i = 0; i < images.length; i++) {
+            const item = images[i];
+            const imgId = typeof item === 'object' && item !== null ? item.id : item;
+            const orderNum = typeof item === 'object' && item !== null && (item.image_order !== undefined || item.sortOrder !== undefined)
+                ? (item.image_order ?? item.sortOrder)
+                : i;
+
+            if (imgId) {
+                await (prisma.life_at_xavier_images as any).updateMany({
+                    where: { id: BigInt(imgId.toString()), life_at_xavier_id: id },
+                    data: {
+                        image_order: Number(orderNum),
+                        sortOrder: Number(orderNum),
+                        updated_at: new Date()
+                    }
+                });
+            }
+        }
+
+        res.json({ success: true, message: 'Gallery images reordered successfully' });
+    } catch (e) {
+        console.error('Error reordering gallery images:', e);
         res.status(500).json({ error: 'Server error' });
     }
 });
