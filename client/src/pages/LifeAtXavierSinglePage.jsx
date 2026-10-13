@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import axios from 'axios';
+import { ExternalLink } from 'lucide-react';
 import { getApiUrl, getImageUrl } from '../services/apiClient';
 import Banner from '../components/Banner';
 import FooterCTA from '../components/FooterCTA';
+import { SocialPlatformIcon, PlatformBadge, getPlatformMeta } from '../components/SocialPlatformIcon';
 
 const hardcodedData = {
     'ximun': {
@@ -109,13 +111,17 @@ const LifeAtXavierSinglePage = () => {
                     date: dateDisplay,
                     description: dbData.description || null,
                     bannerImage: dbData.imageUrl || 'banner-bg.jpg', // generic banner for dynamic ones
-                    galleryUrls: dbData.galleryUrls || []
+                    galleryUrls: dbData.galleryUrls || [],
+                    socialPosts: Array.isArray(dbData.socialPosts) ? dbData.socialPosts : []
                 });
                 setLoading(false);
             })
             .catch(err => {
                 if (hardcodedData[slug]) {
-                    setEventData(hardcodedData[slug]);
+                    setEventData({
+                        ...hardcodedData[slug],
+                        socialPosts: hardcodedData[slug].socialPosts || []
+                    });
                     setLoading(false);
                 } else {
                     console.error("Error fetching event details", err);
@@ -158,6 +164,88 @@ const LifeAtXavierSinglePage = () => {
                             </div>
                         ))}
                     </div>
+
+                    {/* Social Highlights Section */}
+                    {eventData.socialPosts && eventData.socialPosts.length > 0 && (
+                        <div className="socialHighlights">
+                            <div className="socialHighlights__header">
+                                <span className="socialHighlights__badgeSubtitle">Connect & Explore</span>
+                                <h3 className="socialHighlights__title">Social Media Highlights</h3>
+                                <p className="socialHighlights__intro">
+                                    Browse featured moments, reels, and stories from {eventData.title} shared across our social channels.
+                                </p>
+                            </div>
+
+                            <div className="socialHighlights__grid">
+                                {eventData.socialPosts.map((post, idx) => {
+                                    const meta = getPlatformMeta(post.platform);
+                                    const thumbUrl = post.thumbnailUrl ? getImageUrl(post.thumbnailUrl) : null;
+                                    return (
+                                        <a
+                                            key={post.id || idx}
+                                            href={post.postUrl}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="socialHighlights__card"
+                                            aria-label={`View ${meta.name} post for ${eventData.title}`}
+                                        >
+                                            <div className="socialHighlights__media">
+                                                {thumbUrl ? (
+                                                    <img
+                                                        src={thumbUrl}
+                                                        alt={post.title || post.caption || `${meta.name} highlight thumbnail`}
+                                                        className="socialHighlights__thumbImg"
+                                                        loading="lazy"
+                                                        onError={(e) => {
+                                                            e.currentTarget.style.display = 'none';
+                                                            const fallback = e.currentTarget.parentElement?.querySelector('.socialHighlights__thumbFallback');
+                                                            if (fallback) fallback.style.display = 'flex';
+                                                        }}
+                                                    />
+                                                ) : null}
+
+                                                <div
+                                                    className="socialHighlights__thumbFallback"
+                                                    style={{
+                                                        display: thumbUrl ? 'none' : 'flex',
+                                                        background: meta.gradient
+                                                    }}
+                                                >
+                                                    <SocialPlatformIcon platform={post.platform} size={48} color="#ffffff" />
+                                                </div>
+
+                                                <div className="socialHighlights__platformBadge">
+                                                    <PlatformBadge platform={post.platform} />
+                                                </div>
+
+                                                <div className="socialHighlights__mediaOverlay">
+                                                    <span className="socialHighlights__viewBtn">
+                                                        <span>View Post</span>
+                                                        <ExternalLink size={14} />
+                                                    </span>
+                                                </div>
+                                            </div>
+
+                                            <div className="socialHighlights__body">
+                                                <h4 className="socialHighlights__caption">
+                                                    {post.title || post.caption || `Featured ${meta.name} Post`}
+                                                </h4>
+                                                <div className="socialHighlights__footer">
+                                                    <span className="socialHighlights__footerPlatform">
+                                                        <SocialPlatformIcon platform={post.platform} size={14} color={meta.color} />
+                                                        <span>{meta.name}</span>
+                                                    </span>
+                                                    <span className="socialHighlights__externalLinkText">
+                                                        Open post <ExternalLink size={12} />
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </a>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    )}
                 </div>
             </section>
 

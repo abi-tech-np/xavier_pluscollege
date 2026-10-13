@@ -2,6 +2,7 @@ import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import path from 'path';
+import { execSync } from 'child_process';
 import { PrismaClient } from '../generated/prisma';
 import adminRouter from './routes/admin';
 
@@ -47,6 +48,13 @@ const corsOptions = {
 
 app.use(cors(corsOptions));
 
+// Normalize /plus-api prefix for reverse-proxies, Vite preview, and direct Express production
+app.use((req, res, next) => {
+    if (req.url.startsWith('/plus-api/')) {
+        req.url = req.url.replace(/^\/plus-api/, '');
+    }
+    next();
+});
 
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
@@ -137,6 +145,9 @@ app.get('/api/life-at-xavier', async (req, res) => {
             include: {
                 life_at_xavier_images: {
                     orderBy: { sortOrder: 'asc' }
+                },
+                life_at_xavier_social_posts: {
+                    orderBy: { sort_order: 'asc' }
                 }
             },
             ...(take ? { take } : {})
@@ -152,11 +163,28 @@ app.get('/api/life-at-xavier', async (req, res) => {
                 return `${baseUrl}${img.imageUrl.startsWith('/') ? '' : '/'}${img.imageUrl}`;
             });
 
+            const socialPosts = (item.life_at_xavier_social_posts || []).map(p => {
+                let thumb = p.thumbnail_url;
+                if (thumb && !thumb.startsWith('http')) {
+                    thumb = `${baseUrl}${thumb.startsWith('/') ? '' : '/'}${thumb}`;
+                }
+                return {
+                    id: p.id.toString(),
+                    platform: p.platform,
+                    postUrl: p.post_url,
+                    thumbnailUrl: thumb,
+                    title: p.title,
+                    caption: p.title,
+                    sortOrder: p.sort_order
+                };
+            });
+
             return {
                 ...item,
                 imageUrl: itemMedia ? `${baseUrl}/storage/${itemMedia.id}/${itemMedia.file_name}` : null,
                 imageUrls: galleryImages,
-                galleryUrls: galleryImages
+                galleryUrls: galleryImages,
+                socialPosts
             };
         });
         res.json(serializeBigInt(data));
@@ -174,6 +202,9 @@ app.get('/api/life-at-xavier/:slug', async (req, res) => {
             include: {
                 life_at_xavier_images: {
                     orderBy: { sortOrder: 'asc' }
+                },
+                life_at_xavier_social_posts: {
+                    orderBy: { sort_order: 'asc' }
                 }
             }
         });
@@ -200,11 +231,28 @@ app.get('/api/life-at-xavier/:slug', async (req, res) => {
             galleryImages.push(`${baseUrl}/storage/${m.id}/${m.file_name}`);
         }
 
+        const socialPosts = (item.life_at_xavier_social_posts || []).map(p => {
+            let thumb = p.thumbnail_url;
+            if (thumb && !thumb.startsWith('http')) {
+                thumb = `${baseUrl}${thumb.startsWith('/') ? '' : '/'}${thumb}`;
+            }
+            return {
+                id: p.id.toString(),
+                platform: p.platform,
+                postUrl: p.post_url,
+                thumbnailUrl: thumb,
+                title: p.title,
+                caption: p.title,
+                sortOrder: p.sort_order
+            };
+        });
+
         res.json(serializeBigInt({
             ...item,
             imageUrl: itemMedia ? `${baseUrl}/storage/${itemMedia.id}/${itemMedia.file_name}` : null,
             imageUrls: galleryImages,
-            galleryUrls: galleryImages
+            galleryUrls: galleryImages,
+            socialPosts
         }));
     } catch (error) {
         console.error(error);
@@ -403,24 +451,124 @@ app.post('/api/apply', async (req, res) => {
 });
 
 /**
- * Self-healing schema sync: ensures display_order column exists on target tables
- * even if database migrations are not executed during production deployment.
+ * Self-healing schema sync:
+ * Guarantees all required columns and tables exist in the database upon server boot.
+ * Essential for zero-terminal deployment environments (such as direct git-pull on AWS)
+ * where developers do not have SSH/shell access to run Prisma CLI migration commands.
  */
-async function ensureDisplayOrderColumns() {
-    const tables = ['courses', 'life_at_xaviers', 'news_and_events', 'popups', 'upcoming_events'];
-    for (const table of tables) {
+async function ensureDatabaseSchema() {
+    // 1. Column: news_and_events.imageUrl
+    try {
+        await prisma.$executeRawUnsafe(
+            `ALTER TABLE \`news_and_events\` ADD COLUMN \`imageUrl\` VARCHAR(255) NULL`
+        );
+        console.log('[Schema Sync] Added imageUrl column to news_and_events');
+    } catch { /* Column already exists — safe to ignore */ }
+
+    // 2. Table: life_at_xavier_images
+    try {
+        await prisma.$executeRawUnsafe(`
+            CREATE TABLE IF NOT EXISTS \`life_at_xavier_images\` (
+                \`id\` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+                \`life_at_xavier_id\` BIGINT UNSIGNED NOT NULL,
+                \`imageUrl\` VARCHAR(255) NOT NULL,
+                \`sortOrder\` INTEGER NOT NULL DEFAULT 0,
+                \`created_at\` TIMESTAMP(0) NULL,
+                \`updated_at\` TIMESTAMP(0) NULL,
+                INDEX \`life_at_xavier_images_life_at_xavier_id_foreign\`(\`life_at_xavier_id\`),
+                PRIMARY KEY (\`id\`),
+                CONSTRAINT \`life_at_xavier_images_life_at_xavier_id_foreign\` 
+                    FOREIGN KEY (\`life_at_xavier_id\`) REFERENCES \`life_at_xaviers\`(\`id\`) 
+                    ON DELETE CASCADE ON UPDATE NO ACTION
+            ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+        `);
+        console.log('[Schema Sync] Verified life_at_xavier_images table');
+    } catch { /* Table or FK already exists — safe to ignore */ }
+
+    // 3. Column: display_order across all 5 content tables
+    const displayOrderTables = ['courses', 'life_at_xaviers', 'news_and_events', 'popups', 'upcoming_events'];
+    for (const table of displayOrderTables) {
         try {
             await prisma.$executeRawUnsafe(
                 `ALTER TABLE \`${table}\` ADD COLUMN \`display_order\` INT NOT NULL DEFAULT 0`
             );
             console.log(`[Schema Sync] Added display_order column to ${table}`);
-        } catch {
-            // Column already exists (ER_DUP_FIELDNAME) — safe to ignore
+        } catch { /* Column already exists (ER_DUP_FIELDNAME) — safe to ignore */ }
+    }
+
+    // 4. Column: life_at_xaviers.description
+    try {
+        await prisma.$executeRawUnsafe(
+            `ALTER TABLE \`life_at_xaviers\` ADD COLUMN \`description\` TEXT NULL`
+        );
+        console.log('[Schema Sync] Added description column to life_at_xaviers');
+    } catch { /* Column already exists — safe to ignore */ }
+
+    // 5. Table: life_at_xavier_social_posts
+    try {
+        await prisma.$executeRawUnsafe(`
+            CREATE TABLE IF NOT EXISTS \`life_at_xavier_social_posts\` (
+                \`id\` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+                \`life_at_xavier_id\` BIGINT UNSIGNED NOT NULL,
+                \`platform\` VARCHAR(50) NOT NULL,
+                \`post_url\` TEXT NOT NULL,
+                \`thumbnail_url\` TEXT NULL,
+                \`title\` VARCHAR(255) NULL,
+                \`sort_order\` INTEGER NOT NULL DEFAULT 0,
+                \`created_at\` TIMESTAMP(0) NULL,
+                \`updated_at\` TIMESTAMP(0) NULL,
+                INDEX \`life_at_xavier_social_posts_life_at_xavier_id_foreign\`(\`life_at_xavier_id\`),
+                PRIMARY KEY (\`id\`),
+                CONSTRAINT \`life_at_xavier_social_posts_life_at_xavier_id_foreign\` 
+                    FOREIGN KEY (\`life_at_xavier_id\`) REFERENCES \`life_at_xaviers\`(\`id\`) 
+                    ON DELETE CASCADE ON UPDATE NO ACTION
+            ) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+        `);
+        console.log('[Schema Sync] Verified life_at_xavier_social_posts table');
+    } catch { /* Table or FK already exists — safe to ignore */ }
+}
+
+/**
+ * Automatically applies pending Prisma migrations on server startup.
+ */
+async function runAutomatedMigrations() {
+    try {
+        const rootDir = path.resolve(__dirname, '..');
+        const output = execSync('npx prisma migrate deploy', {
+            cwd: rootDir,
+            encoding: 'utf8',
+            stdio: 'pipe'
+        });
+        const cleaned = output
+            .trim()
+            .split('\n')
+            .filter(line => !line.includes('Loaded Prisma config') && !line.includes('Prisma config detected'))
+            .join('\n')
+            .trim();
+        if (cleaned) {
+            console.log(`[Automated Migrations]\n${cleaned}`);
         }
+    } catch (error: any) {
+        console.error('[Automated Migrations] Auto-migration check encountered an error:', error.stdout || error.message);
     }
 }
 
+// Serve SPA index.html fallback for client-side routing in production (Express 5 compatible)
+app.use((req, res, next) => {
+    // Never intercept non-GET, API, or storage paths with index.html
+    if (req.method !== 'GET' || req.url.startsWith('/api') || req.url.startsWith('/storage') || req.url.startsWith('/plus-api')) {
+        return next();
+    }
+    const indexPath = path.join(clientDistPath, 'index.html');
+    res.sendFile(indexPath, (err) => {
+        if (err) {
+            next();
+        }
+    });
+});
+
 app.listen(PORT, async () => {
     console.log(`Server is running on http://localhost:${PORT}`);
-    await ensureDisplayOrderColumns();
+    await runAutomatedMigrations();
+    await ensureDatabaseSchema();
 });

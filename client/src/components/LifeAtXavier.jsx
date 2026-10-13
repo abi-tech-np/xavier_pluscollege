@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { fetchApiData, getImageUrl } from '../services/apiClient';
 import { Link } from 'react-router-dom';
+import { SocialPlatformIcon } from './SocialPlatformIcon';
 
 const LifeAtXavier = ({ limit }) => {
     const [items, setItems] = useState([]);
@@ -91,6 +92,31 @@ const LifeAtXavier = ({ limit }) => {
                         <span>{item.date ? new Date(item.date).getFullYear() : (item.created_at ? new Date(item.created_at).getFullYear() : '2024')}</span>
                         <h4 className="title">{item.title}</h4>
                         {item.description && <p>{item.description}</p>}
+                        {item.socialPosts && item.socialPosts.length > 0 && (
+                            <div className="lifeAtXavier__socialBadges" style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '10px', flexWrap: 'wrap' }}>
+                                {Array.from(new Set(item.socialPosts.map(p => (p.platform || '').toLowerCase()))).map((platformKey) => (
+                                    <span
+                                        key={platformKey}
+                                        style={{
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            justifyContent: 'center',
+                                            width: '24px',
+                                            height: '24px',
+                                            borderRadius: '9999px',
+                                            background: 'rgba(255, 255, 255, 0.22)',
+                                            backdropFilter: 'blur(6px)',
+                                            boxShadow: '0 2px 6px rgba(0,0,0,0.25)',
+                                            color: '#ffffff',
+                                            border: '1px solid rgba(255,255,255,0.3)'
+                                        }}
+                                        title={platformKey.toUpperCase()}
+                                    >
+                                        <SocialPlatformIcon platform={platformKey} size={12} color="#ffffff" />
+                                    </span>
+                                ))}
+                            </div>
+                        )}
                     </div>
                 </div>
             ))}

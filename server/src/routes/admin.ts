@@ -8,6 +8,7 @@ import multer from 'multer';
 import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
+import { fetchSocialMediaMetadata, detectPlatform } from '../utils/socialMedia';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -818,6 +819,21 @@ router.delete('/upcoming-events/:id', async (req, res) => {
     } catch (e) { res.status(500).json({ error: 'Server error' }); }
 });
 
+// --- Social Media Preview Endpoint ---
+router.post('/fetch-social-preview', async (req: Request, res: Response): Promise<any> => {
+    try {
+        const { url } = req.body;
+        if (!url || typeof url !== 'string') {
+            return res.status(400).json({ error: 'Valid URL is required' });
+        }
+        const data = await fetchSocialMediaMetadata(url);
+        res.json(data);
+    } catch (e) {
+        console.error('Error fetching social preview:', e);
+        res.status(500).json({ error: 'Failed to fetch social metadata' });
+    }
+});
+
 // --- Life At Xaviers ---
 router.get('/life-at-xaviers', async (req, res) => {
     try {
@@ -830,11 +846,17 @@ router.get('/life-at-xaviers', async (req, res) => {
             include: {
                 life_at_xavier_images: {
                     orderBy: { sortOrder: 'asc' }
+                },
+                life_at_xavier_social_posts: {
+                    orderBy: { sort_order: 'asc' }
                 }
             }
         });
         res.json(serializeBigInt(items));
-    } catch (e) { res.status(500).json({ error: 'Server error' }); }
+    } catch (e) {
+        console.error('Error fetching life-at-xaviers list:', e);
+        res.status(500).json({ error: 'Server error' });
+    }
 });
 
 router.get('/life-at-xaviers/:id', async (req, res) => {
@@ -845,6 +867,9 @@ router.get('/life-at-xaviers/:id', async (req, res) => {
             include: {
                 life_at_xavier_images: {
                     orderBy: { sortOrder: 'asc' }
+                },
+                life_at_xavier_social_posts: {
+                    orderBy: { sort_order: 'asc' }
                 }
             }
         });
@@ -875,6 +900,7 @@ router.get('/life-at-xaviers/:id', async (req, res) => {
             id: item.id.toString(),
             title: item.title,
             slug: item.slug,
+            description: item.description || '',
             status: item.status,
             meta_title: meta?.title || '',
             meta_description: meta?.description || '',
@@ -887,6 +913,14 @@ router.get('/life-at-xaviers/:id', async (req, res) => {
                 id: img.id.toString(),
                 imageUrl: img.imageUrl,
                 sortOrder: img.sortOrder
+            })),
+            socialPosts: (item.life_at_xavier_social_posts || []).map(p => ({
+                id: p.id.toString(),
+                platform: p.platform,
+                postUrl: p.post_url,
+                thumbnailUrl: p.thumbnail_url,
+                title: p.title || '',
+                sortOrder: p.sort_order
             }))
         };
 
@@ -903,7 +937,7 @@ router.post('/life-at-xaviers', imageUpload.fields([
     { name: 'galleryImages', maxCount: 50 }
 ]), async (req, res) => {
     try {
-        const { title, slug, status, meta_title, meta_description, meta_schema, thumbnailUrl, ogImageUrl, newGalleryImageUrls } = req.body;
+        const { title, slug, description, status, meta_title, meta_description, meta_schema, thumbnailUrl, ogImageUrl, newGalleryImageUrls, socialPosts } = req.body;
         const isStatusTrue = status === 'true' || status === true;
 
         const maxOrder = await prisma.life_at_xaviers.aggregate({ _max: { display_order: true } });
@@ -916,6 +950,7 @@ router.post('/life-at-xaviers', imageUpload.fields([
             data: { 
                 title, 
                 slug, 
+                description: description || null,
                 status: isStatusTrue, 
                 display_order,
                 created_at: new Date(), 
@@ -1044,6 +1079,49 @@ router.post('/life-at-xaviers', imageUpload.fields([
             }
         }
 
+        // 5. Handle social media post links
+        let parsedSocialPosts: any[] = [];
+        if (socialPosts) {
+            if (Array.isArray(socialPosts)) {
+                parsedSocialPosts = socialPosts;
+            } else if (typeof socialPosts === 'string') {
+                try { parsedSocialPosts = JSON.parse(socialPosts); } catch {}
+            }
+        }
+
+        for (let i = 0; i < parsedSocialPosts.length; i++) {
+            const post = parsedSocialPosts[i];
+            if (!post) continue;
+            const postUrl = (post.postUrl || post.post_url || '').trim();
+            if (!postUrl) continue;
+            const platform = post.platform || detectPlatform(postUrl);
+            let postThumbnail = post.thumbnailUrl || post.thumbnail_url || null;
+            let postTitle = post.title || null;
+
+            if (!postThumbnail) {
+                try {
+                    const meta = await fetchSocialMediaMetadata(postUrl);
+                    if (meta.thumbnailUrl) postThumbnail = meta.thumbnailUrl;
+                    if (!postTitle && meta.title) postTitle = meta.title;
+                } catch (err) {
+                    console.error('Error auto-fetching thumbnail on create:', err);
+                }
+            }
+
+            await prisma.life_at_xavier_social_posts.create({
+                data: {
+                    life_at_xavier_id: newItem.id,
+                    platform,
+                    post_url: postUrl,
+                    thumbnail_url: postThumbnail,
+                    title: postTitle,
+                    sort_order: post.sortOrder !== undefined ? parseInt(post.sortOrder, 10) : i,
+                    created_at: new Date(),
+                    updated_at: new Date()
+                }
+            });
+        }
+
         res.json(serializeBigInt(newItem));
     } catch (e) { 
         console.error('Error creating life-at-xavier:', e); 
@@ -1058,7 +1136,7 @@ router.put('/life-at-xaviers/:id', imageUpload.fields([
 ]), async (req, res) => {
     try {
         const id = BigInt(req.params.id as string);
-        const { title, slug, status, meta_title, meta_description, meta_schema, deletedGalleryImageIds, thumbnailUrl, ogImageUrl, newGalleryImageUrls } = req.body;
+        const { title, slug, description, status, meta_title, meta_description, meta_schema, deletedGalleryImageIds, thumbnailUrl, ogImageUrl, newGalleryImageUrls, socialPosts } = req.body;
         const isStatusTrue = status === 'true' || status === true;
 
         const updateData: any = {
@@ -1067,6 +1145,9 @@ router.put('/life-at-xaviers/:id', imageUpload.fields([
             status: isStatusTrue,
             updated_at: new Date()
         };
+        if (description !== undefined) {
+            updateData.description = description || null;
+        }
         if (req.body.display_order !== undefined) {
             updateData.display_order = parseInt(req.body.display_order, 10);
         }
@@ -1301,6 +1382,53 @@ router.put('/life-at-xaviers/:id', imageUpload.fields([
             }
         }
 
+        // 6. Handle social media posts
+        if (socialPosts !== undefined) {
+            let parsedSocialPosts: any[] = [];
+            if (Array.isArray(socialPosts)) {
+                parsedSocialPosts = socialPosts;
+            } else if (typeof socialPosts === 'string') {
+                try { parsedSocialPosts = JSON.parse(socialPosts); } catch {}
+            }
+
+            await prisma.life_at_xavier_social_posts.deleteMany({
+                where: { life_at_xavier_id: id }
+            });
+
+            for (let i = 0; i < parsedSocialPosts.length; i++) {
+                const post = parsedSocialPosts[i];
+                if (!post) continue;
+                const postUrl = (post.postUrl || post.post_url || '').trim();
+                if (!postUrl) continue;
+                const platform = post.platform || detectPlatform(postUrl);
+                let postThumbnail = post.thumbnailUrl || post.thumbnail_url || null;
+                let postTitle = post.title || null;
+
+                if (!postThumbnail) {
+                    try {
+                        const meta = await fetchSocialMediaMetadata(postUrl);
+                        if (meta.thumbnailUrl) postThumbnail = meta.thumbnailUrl;
+                        if (!postTitle && meta.title) postTitle = meta.title;
+                    } catch (err) {
+                        console.error('Error auto-fetching thumbnail on update:', err);
+                    }
+                }
+
+                await prisma.life_at_xavier_social_posts.create({
+                    data: {
+                        life_at_xavier_id: id,
+                        platform,
+                        post_url: postUrl,
+                        thumbnail_url: postThumbnail,
+                        title: postTitle,
+                        sort_order: post.sortOrder !== undefined ? parseInt(post.sortOrder, 10) : i,
+                        created_at: new Date(),
+                        updated_at: new Date()
+                    }
+                });
+            }
+        }
+
         res.json(serializeBigInt(updatedItem));
     } catch (e) {
         console.error('Error updating life-at-xavier:', e);
@@ -1329,7 +1457,12 @@ router.delete('/life-at-xaviers/:id', async (req, res) => {
             where: { life_at_xavier_id: id }
         });
 
-        // 2. Delete media (thumbnail, og_image) from disk and DB
+        // 2. Delete social posts
+        await prisma.life_at_xavier_social_posts.deleteMany({
+            where: { life_at_xavier_id: id }
+        });
+
+        // 3. Delete media (thumbnail, og_image) from disk and DB
         const mediaList = await prisma.media.findMany({
             where: {
                 model_type: 'App\\Models\\LifeAtXavier',
@@ -1351,7 +1484,7 @@ router.delete('/life-at-xaviers/:id', async (req, res) => {
             }
         });
 
-        // 3. Mark as deleted in life_at_xaviers
+        // 4. Mark as deleted in life_at_xaviers
         await prisma.life_at_xaviers.update({
             where: { id },
             data: { deleted_at: new Date() }
