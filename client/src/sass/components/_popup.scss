@@ -1,112 +1,352 @@
-.popup-menu {
-    height: 100%;
-    width: 100%;
-    background-color: rgba($color: #000000, $alpha: .6);
-    // opacity: .6;
+// ==========================================
+// Modern Responsive Popup Modal
+// ==========================================
+
+@keyframes xavierPopupFadeIn {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes xavierPopupScaleIn {
+    from {
+        opacity: 0;
+        transform: scale(0.94) translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+.xavier-popup-overlay {
     position: fixed;
-    z-index: 17;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    display: none;
     top: 0;
-
-    .popup-menu__bg-overlay {
-        background: rgba(0, 0, 0, 0);
-        height: 100%;
-        width: 100%;
-        position: fixed;
-        left: 0;
-        top: 0;
-        right: 0;
-        bottom: 0;
-        z-index: 0;
-        -webkit-transition: background 0.15s linear;
-        -o-transition: background 0.15s linear;
-        transition: background 0.15s linear;
-    }
-}
-
-.popup-menu-open {
-    z-index: 99999 !important;
-    opacity: 1 !important;
-    overflow-y: hidden !important;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(15, 23, 42, 0.78);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
     display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 999999;
+    padding: 20px;
+    animation: xavierPopupFadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 
-    @media(max-width:430px) {
-        flex-direction: column;
+    @media (max-width: 640px) {
+        padding: 12px;
     }
 }
 
-.popup-menu__inner {
+.xavier-popup-dialog {
     position: relative;
-    // width: 50%;
-    margin: 0 15px;
-    // height: 100%;
-    border: 5px solid #fefefe;
-    border-radius: 4px;
-    line-height: 0;
-    z-index: 1;
+    background-color: #ffffff;
+    border-radius: 16px;
+    width: 100%;
+    max-width: 880px;
+    box-shadow: 0 25px 60px -12px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.15);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    animation: xavierPopupScaleIn 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 
-    // @media(max-width:1024px) and (orientation: landscape){
-    //     height: 70%;
-    // }
-    // @media(max-width:815px){
-    //     height: auto;
-    // }
-    @media(min-width:1024px) {
-        width: 40%;
+    &--pdf {
+        max-width: 1020px;
     }
 
-    @media(max-width:1024px) {
-        width: 89%;
+    @media (max-width: 1024px) {
+        max-width: 90vw;
     }
 
-    // @media(max-width:430px) {
-    //     // margin-bottom: 20px;
-    //     width: 70%;
-    // }
+    @media (max-width: 640px) {
+        width: 92vw;
+        max-width: 92vw;
+        border-radius: 14px;
+    }
+}
 
-    @media(max-width:1024px) and (orientation: landscape) {
-        width: auto;
-        max-height: 89%;
+// Fixed prominent close button
+.xavier-popup-close-btn {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    z-index: 50;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background-color: #0f172a;
+    border: 2px solid #ffffff;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+    transition: background-color 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+
+    &:hover {
+        background-color: #dc2626;
+        transform: scale(1.06);
+        box-shadow: 0 6px 16px rgba(220, 38, 38, 0.4);
+    }
+
+    &:focus-visible {
+        outline: 3px solid #fbbf24;
+        outline-offset: 2px;
+    }
+
+    @media (max-width: 640px) {
+        top: 10px;
+        right: 10px;
+        width: 38px;
+        height: 38px;
+    }
+}
+
+// Multi-popup navigation badge (e.g. "Notice 1 of 2")
+.xavier-popup-badge {
+    position: absolute;
+    top: 14px;
+    left: 14px;
+    z-index: 40;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background-color: rgba(15, 23, 42, 0.85);
+    color: #ffffff;
+    padding: 5px 12px;
+    border-radius: 9999px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    backdrop-filter: blur(4px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+
+    @media (max-width: 640px) {
+        top: 10px;
+        left: 10px;
+        font-size: 0.75rem;
+        padding: 4px 10px;
+    }
+}
+
+// Scrollable inner wrapper preventing content cut-off
+.xavier-popup-scrollable {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    max-height: 88vh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+
+    @media (max-width: 640px) {
+        max-height: 85vh;
+    }
+
+    // Custom smooth scrollbar
+    &::-webkit-scrollbar {
+        width: 6px;
+    }
+    &::-webkit-scrollbar-track {
+        background: #f1f5f9;
+    }
+    &::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 9999px;
+    }
+    &::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
+    }
+}
+
+// Media section (Image or PDF)
+.xavier-popup-media {
+    width: 100%;
+    background-color: #f8fafc;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    flex-shrink: 0;
+
+    &__img {
+        width: 100%;
         height: auto;
-        max-width: 60%;
-    }
+        display: block;
+        object-fit: contain;
+        margin: 0 auto;
 
-    // temporary for Two popup Events
-    &:nth-child(2){
-        @media(max-width:430px) {
-            margin-top: 20px;
+        // When title/link are present below image
+        &--with-content {
+            max-height: min(60vh, 600px);
+
+            @media (max-width: 640px) {
+                max-height: min(52vh, 440px);
+            }
+        }
+
+        // When image is the standalone content (banner flyer)
+        &--standalone {
+            max-height: min(84vh, 800px);
+
+            @media (max-width: 640px) {
+                max-height: min(80vh, 650px);
+            }
         }
     }
-    @media(max-width:430px) {
-       width: auto;
-       max-height: 40%;
-       height: auto;
-       aspect-ratio: 1 / 1;
-    }
 
-    // temporary for Two popup Events
-    img {
+    &__iframe {
         width: 100%;
-        max-height: 100%;
-        object-fit: contain;
+        height: 75vh;
+        border: none;
+        display: block;
+
+        @media (max-width: 640px) {
+            height: 70vh;
+        }
+    }
+}
+
+// Content body (Title and CTA link)
+.xavier-popup-content {
+    padding: 24px 32px 28px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background-color: #ffffff;
+    flex-shrink: 0;
+
+    @media (max-width: 640px) {
+        padding: 16px 18px 20px;
+    }
+}
+
+.xavier-popup-title {
+    margin: 0 0 14px 0;
+    font-family: var(--primary-font, "Poppins", sans-serif);
+    font-size: clamp(1.35rem, 2.4vw, 1.85rem);
+    font-weight: 700;
+    color: #0f172a;
+    line-height: 1.25;
+    max-width: 90%;
+    word-break: break-word;
+
+    @media (max-width: 640px) {
+        font-size: 1.25rem;
+        margin-bottom: 12px;
+    }
+}
+
+.xavier-popup-cta {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 30px;
+    background-color: #fbbf24;
+    color: #0f172a;
+    font-size: 1.05rem;
+    font-weight: 600;
+    text-decoration: none;
+    border-radius: 8px;
+    box-shadow: 0 4px 14px rgba(251, 191, 36, 0.35);
+    transition: transform 0.18s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+
+    &:hover {
+        background-color: #f59e0b;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 18px rgba(245, 158, 11, 0.45);
+        color: #0f172a;
     }
 
-    .popup-menu__closebtn {
-        position: absolute;
-        background-color: #fefefe;
-        padding: 8px;
-        border-radius: 50%;
+    &:active {
+        transform: translateY(0);
+    }
 
-        top:0;
-        right: 0;
-        transform: translate(50%, -50%);
-        svg {
-            width: 12px;
-            height: 12px;
-            color: #bababa;
+    &:focus-visible {
+        outline: 3px solid #0f172a;
+        outline-offset: 2px;
+    }
+
+    @media (max-width: 640px) {
+        padding: 10px 22px;
+        font-size: 0.95rem;
+        width: 100%;
+        max-width: 280px;
+    }
+}
+
+// Carousel Controls (When multiple popups are available)
+.xavier-popup-carousel {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    margin-top: 16px;
+    padding-top: 12px;
+    border-top: 1px solid #f1f5f9;
+
+    &__btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 14px;
+        border-radius: 6px;
+        border: 1px solid #e2e8f0;
+        background-color: #f8fafc;
+        color: #334155;
+        font-size: 0.875rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.15s ease;
+
+        &:hover:not(:disabled) {
+            background-color: #e2e8f0;
+            color: #0f172a;
+        }
+
+        &:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        &:focus-visible {
+            outline: 2px solid #fbbf24;
+            outline-offset: 1px;
+        }
+    }
+
+    &__dots {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    &__dot {
+        width: 9px;
+        height: 9px;
+        border-radius: 50%;
+        background-color: #cbd5e1;
+        border: none;
+        padding: 0;
+        cursor: pointer;
+        transition: all 0.2s ease;
+
+        &--active {
+            width: 22px;
+            border-radius: 9999px;
+            background-color: #fbbf24;
+        }
+
+        &:hover:not(&--active) {
+            background-color: #94a3b8;
         }
     }
 }
