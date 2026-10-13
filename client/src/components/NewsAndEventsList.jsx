@@ -91,7 +91,16 @@ const NewsAndEventsList = ({ limit }) => {
                         </div>
                         {itemImg && (
                             <div className="img__holder">
-                                <img src={itemImg} alt={newsEvent.title || 'News & Events'} loading="lazy" decoding="async" />
+                                <img 
+                                    src={itemImg} 
+                                    alt={newsEvent.title || 'News & Events'} 
+                                    loading="lazy" 
+                                    decoding="async" 
+                                    onError={(e) => {
+                                        e.currentTarget.onerror = null;
+                                        e.currentTarget.src = '/images/homepage/news/level_up.webp';
+                                    }}
+                                />
                             </div>
                         )}
                     </div>

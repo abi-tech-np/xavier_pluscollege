@@ -4,9 +4,11 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { authenticateJWT, AuthRequest } from '../middlewares/auth';
 import { upload, imageUpload } from '../middlewares/upload';
+import multer from 'multer';
 import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
+import { fetchSocialMediaMetadata, detectPlatform } from '../utils/socialMedia';
 
 const router = Router();
 const prisma = new PrismaClient();
@@ -44,6 +46,94 @@ router.post('/login', async (req: Request, res: Response): Promise<any> => {
 // Protect all routes below
 router.use(authenticateJWT);
 
+// Bulk Reorder endpoint handler
+const handleReorder = async (req: AuthRequest, res: Response): Promise<any> => {
+    try {
+        const { entity, items } = req.body;
+
+        if (!entity || typeof entity !== 'string') {
+            return res.status(400).json({ error: 'Field "entity" is required.' });
+        }
+
+        if (!Array.isArray(items) || items.length === 0) {
+            return res.status(400).json({ error: 'Field "items" must be a non-empty array.' });
+        }
+
+        const entityKey = entity.toLowerCase().trim();
+        const entityMap: Record<string, any> = {
+            'news': prisma.news_and_events,
+            'news_and_events': prisma.news_and_events,
+            'news-and-events': prisma.news_and_events,
+            'upcoming-events': prisma.upcoming_events,
+            'upcoming_events': prisma.upcoming_events,
+            'events': prisma.upcoming_events,
+            'life-at-xaviers': prisma.life_at_xaviers,
+            'life_at_xaviers': prisma.life_at_xaviers,
+            'life-at-xavier': prisma.life_at_xaviers,
+            'popups': prisma.popups,
+            'courses': prisma.courses
+        };
+
+        const targetModel = entityMap[entityKey];
+        if (!targetModel) {
+            return res.status(400).json({ 
+                error: `Invalid entity "${entity}". Supported entities: news, upcoming-events, life-at-xaviers, popups, courses.` 
+            });
+        }
+
+        const updates: { id: bigint, display_order: number }[] = [];
+        for (let i = 0; i < items.length; i++) {
+            const item = items[i];
+            let rawId: any;
+            let displayOrder: number;
+
+            if (typeof item === 'object' && item !== null) {
+                rawId = item.id;
+                displayOrder = item.display_order !== undefined ? Number(item.display_order) : i;
+            } else {
+                rawId = item;
+                displayOrder = i;
+            }
+
+            if (rawId === undefined || rawId === null || rawId === '') {
+                return res.status(400).json({ error: `Item at index ${i} is missing an "id".` });
+            }
+
+            try {
+                const idBigInt = BigInt(rawId.toString());
+                if (isNaN(displayOrder)) {
+                    return res.status(400).json({ error: `Item at index ${i} has invalid display_order.` });
+                }
+                updates.push({ id: idBigInt, display_order: displayOrder });
+            } catch (err) {
+                return res.status(400).json({ error: `Invalid ID format for item at index ${i}.` });
+            }
+        }
+
+        // Run batch updates atomically in a Prisma transaction
+        await prisma.$transaction(
+            updates.map(({ id, display_order }) =>
+                targetModel.update({
+                    where: { id },
+                    data: { display_order, updated_at: new Date() }
+                })
+            )
+        );
+
+        return res.json({
+            success: true,
+            message: `Successfully updated order for ${updates.length} items.`,
+            count: updates.length
+        });
+    } catch (error: any) {
+        console.error('Error in bulk reorder endpoint:', error);
+        return res.status(500).json({ error: 'Failed to update item order.', details: error.message });
+    }
+};
+
+router.put('/reorder', handleReorder);
+router.post('/reorder', handleReorder);
+
 // Dashboard Stats
 router.get('/stats', async (req: AuthRequest, res: Response) => {
     try {
@@ -74,7 +164,10 @@ router.get('/stats', async (req: AuthRequest, res: Response) => {
 router.get('/news', async (req: AuthRequest, res: Response) => {
     try {
         const items = await prisma.news_and_events.findMany({
-            orderBy: { created_at: 'desc' }
+            orderBy: [
+                { display_order: 'asc' },
+                { created_at: 'desc' }
+            ]
         });
         res.json(
             items.map(item => ({
@@ -94,17 +187,29 @@ router.get('/news', async (req: AuthRequest, res: Response) => {
 // the main form payload small enough to pass through AWS WAF body inspection
 // limits, which block large multipart payloads on the production CloudFront
 // distribution.
-router.post('/upload-image', upload.single('image'), async (req: AuthRequest, res: Response): Promise<any> => {
-    try {
-        if (!req.file) {
-            return res.status(400).json({ error: 'No image file provided' });
+router.post('/upload-image', (req: AuthRequest, res: Response): void => {
+    imageUpload.single('image')(req, res, (err: any) => {
+        if (err) {
+            if (err instanceof multer.MulterError) {
+                if (err.code === 'LIMIT_FILE_SIZE') {
+                    res.status(400).json({ error: 'File size exceeds 50MB limit' });
+                    return;
+                }
+                res.status(400).json({ error: `Upload error: ${err.message}` });
+                return;
+            }
+            res.status(400).json({ error: err.message || 'Invalid image file' });
+            return;
         }
+
+        if (!req.file) {
+            res.status(400).json({ error: 'No image file provided' });
+            return;
+        }
+
         const imageUrl = `/storage/${req.file.filename}`;
         res.json({ imageUrl });
-    } catch (error) {
-        console.error('Error uploading image:', error);
-        res.status(500).json({ error: 'Internal server error' });
-    }
+    });
 });
 
 router.post('/news', upload.single('image'), async (req: AuthRequest, res: Response) => {
@@ -122,6 +227,11 @@ router.post('/news', upload.single('image'), async (req: AuthRequest, res: Respo
             imageUrl = req.body.imageUrl;
         }
 
+        const maxOrder = await prisma.news_and_events.aggregate({ _max: { display_order: true } });
+        const display_order = req.body.display_order !== undefined
+            ? parseInt(req.body.display_order, 10)
+            : (maxOrder._max.display_order ?? -1) + 1;
+
         const newItem = await prisma.news_and_events.create({
             data: {
                 title,
@@ -129,6 +239,7 @@ router.post('/news', upload.single('image'), async (req: AuthRequest, res: Respo
                 content,
                 imageUrl,
                 status: isStatusTrue,
+                display_order,
                 created_at: new Date(),
                 updated_at: new Date()
             }
@@ -153,6 +264,9 @@ router.put('/news/:id', upload.single('image'), async (req: AuthRequest, res: Re
             status: isStatusTrue,
             updated_at: new Date()
         };
+        if (req.body.display_order !== undefined) {
+            updateData.display_order = parseInt(req.body.display_order, 10);
+        }
 
         if (req.file) {
             // New image uploaded: remove previous image file if it exists in storage
@@ -261,7 +375,13 @@ const serializeBigInt = (obj: any) => {
 // --- Courses ---
 router.get('/courses', async (req, res) => {
     try {
-        const items = await prisma.courses.findMany({ where: { deleted_at: null } });
+        const items = await prisma.courses.findMany({ 
+            where: { deleted_at: null },
+            orderBy: [
+                { display_order: 'asc' },
+                { created_at: 'desc' }
+            ]
+        });
         res.json(serializeBigInt(items));
     } catch (e) { res.status(500).json({ error: 'Server error' }); }
 });
@@ -277,14 +397,33 @@ router.get('/courses/:id', async (req, res) => {
 router.post('/courses', async (req, res) => {
     try {
         const { course } = req.body;
-        const newItem = await prisma.courses.create({ data: { course, created_at: new Date(), updated_at: new Date() } });
+        const maxOrder = await prisma.courses.aggregate({ _max: { display_order: true } });
+        const display_order = req.body.display_order !== undefined
+            ? parseInt(req.body.display_order, 10)
+            : (maxOrder._max.display_order ?? -1) + 1;
+
+        const newItem = await prisma.courses.create({ 
+            data: { 
+                course, 
+                display_order,
+                created_at: new Date(), 
+                updated_at: new Date() 
+            } 
+        });
         res.json(serializeBigInt(newItem));
     } catch (e) { res.status(500).json({ error: 'Server error' }); }
 });
 router.put('/courses/:id', async (req, res) => {
     try {
         const { course } = req.body;
-        const item = await prisma.courses.update({ where: { id: BigInt(req.params.id as string) }, data: { course, updated_at: new Date() } });
+        const updateData: any = { course, updated_at: new Date() };
+        if (req.body.display_order !== undefined) {
+            updateData.display_order = parseInt(req.body.display_order, 10);
+        }
+        const item = await prisma.courses.update({ 
+            where: { id: BigInt(req.params.id as string) }, 
+            data: updateData 
+        });
         res.json(serializeBigInt(item));
     } catch (e) { res.status(500).json({ error: 'Server error' }); }
 });
@@ -312,7 +451,12 @@ router.delete('/contacts/:id', async (req, res) => {
 // --- Popups ---
 router.get('/popups', async (req, res) => {
     try {
-        const items = await prisma.popups.findMany({ orderBy: { created_at: 'desc' } });
+        const items = await prisma.popups.findMany({ 
+            orderBy: [
+                { display_order: 'asc' },
+                { created_at: 'desc' }
+            ] 
+        });
         const media = await prisma.media.findMany({
             where: {
                 model_type: 'App\\Models\\Popup',
@@ -354,11 +498,17 @@ router.post('/popups', upload.fields([{ name: 'image', maxCount: 1 }]), async (r
         const { title, link, status } = req.body;
         const isStatusTrue = status === 'true' || status === true;
         
+        const maxOrder = await prisma.popups.aggregate({ _max: { display_order: true } });
+        const display_order = req.body.display_order !== undefined
+            ? parseInt(req.body.display_order, 10)
+            : (maxOrder._max.display_order ?? -1) + 1;
+
         const newItem = await prisma.popups.create({ 
             data: { 
                 title, 
                 link, 
                 status: isStatusTrue, 
+                display_order,
                 created_at: new Date(), 
                 updated_at: new Date() 
             } 
@@ -426,14 +576,19 @@ router.put('/popups/:id', upload.fields([{ name: 'image', maxCount: 1 }]), async
         const { title, link, status, imageUrl } = req.body;
         const isStatusTrue = status === 'true' || status === true;
 
+        const updateData: any = {
+            title,
+            link,
+            status: isStatusTrue,
+            updated_at: new Date()
+        };
+        if (req.body.display_order !== undefined) {
+            updateData.display_order = parseInt(req.body.display_order, 10);
+        }
+
         const item = await prisma.popups.update({
             where: { id },
-            data: {
-                title,
-                link,
-                status: isStatusTrue,
-                updated_at: new Date()
-            }
+            data: updateData
         });
 
         const fs = require('fs');
@@ -577,7 +732,10 @@ router.delete('/popups/:id', async (req, res) => {
 router.get('/upcoming-events', async (req, res) => {
     try {
         const items = await prisma.upcoming_events.findMany({
-            orderBy: { id: 'desc' }
+            orderBy: [
+                { display_order: 'asc' },
+                { created_at: 'desc' }
+            ]
         });
         res.json(serializeBigInt(items));
     } catch (e) { res.status(500).json({ error: 'Server error' }); }
@@ -599,6 +757,11 @@ router.post('/upcoming-events', async (req, res) => {
     try {
         const { title, time, content, location, status, start_date, end_date } = req.body;
         const slug = slugify(title);
+        const maxOrder = await prisma.upcoming_events.aggregate({ _max: { display_order: true } });
+        const display_order = req.body.display_order !== undefined
+            ? parseInt(req.body.display_order, 10)
+            : (maxOrder._max.display_order ?? -1) + 1;
+
         const newItem = await prisma.upcoming_events.create({ 
             data: { 
                 title, 
@@ -607,6 +770,7 @@ router.post('/upcoming-events', async (req, res) => {
                 content: content || null, 
                 location: location || null, 
                 status: status !== undefined ? Boolean(status) : true, 
+                display_order,
                 start_date: start_date ? new Date(start_date) : null,
                 end_date: end_date ? new Date(end_date) : null,
                 created_at: new Date(), 
@@ -636,6 +800,7 @@ router.put('/upcoming-events/:id', async (req, res) => {
         if (status !== undefined) updateData.status = Boolean(status);
         if (start_date !== undefined) updateData.start_date = start_date ? new Date(start_date) : null;
         if (end_date !== undefined) updateData.end_date = end_date ? new Date(end_date) : null;
+        if (req.body.display_order !== undefined) updateData.display_order = parseInt(req.body.display_order, 10);
 
         const item = await prisma.upcoming_events.update({ 
             where: { id: BigInt(req.params.id as string) }, 
@@ -654,20 +819,48 @@ router.delete('/upcoming-events/:id', async (req, res) => {
     } catch (e) { res.status(500).json({ error: 'Server error' }); }
 });
 
+// --- Social Media Preview Endpoint ---
+router.post('/fetch-social-preview', async (req: Request, res: Response): Promise<any> => {
+    try {
+        const { url } = req.body;
+        if (!url || typeof url !== 'string') {
+            return res.status(400).json({ error: 'Valid URL is required' });
+        }
+        const data = await fetchSocialMediaMetadata(url);
+        res.json(data);
+    } catch (e) {
+        console.error('Error fetching social preview:', e);
+        res.status(500).json({ error: 'Failed to fetch social metadata' });
+    }
+});
+
 // --- Life At Xaviers ---
 router.get('/life-at-xaviers', async (req, res) => {
     try {
         const items = await prisma.life_at_xaviers.findMany({ 
             where: { deleted_at: null },
-            orderBy: { created_at: 'desc' },
+            orderBy: [
+                { display_order: 'asc' },
+                { created_at: 'desc' }
+            ],
             include: {
                 life_at_xavier_images: {
-                    orderBy: { sortOrder: 'asc' }
+                    orderBy: [
+                        { image_order: 'asc' },
+                        { sortOrder: 'asc' },
+                        { id: 'asc' }
+                    ]
+                },
+                life_at_xavier_social_posts: {
+                    orderBy: { sort_order: 'asc' }
                 }
             }
         });
         res.json(serializeBigInt(items));
-    } catch (e) { res.status(500).json({ error: 'Server error' }); }
+    } catch (e) {
+        console.error('Error fetching life-at-xaviers list:', e);
+        res.status(500).json({ error: 'Server error' });
+    }
 });
 
 router.get('/life-at-xaviers/:id', async (req, res) => {
@@ -677,7 +870,14 @@ router.get('/life-at-xaviers/:id', async (req, res) => {
             where: { id, deleted_at: null },
             include: {
                 life_at_xavier_images: {
-                    orderBy: { sortOrder: 'asc' }
+                    orderBy: [
+                        { image_order: 'asc' },
+                        { sortOrder: 'asc' },
+                        { id: 'asc' }
+                    ]
+                },
+                life_at_xavier_social_posts: {
+                    orderBy: { sort_order: 'asc' }
                 }
             }
         });
@@ -708,6 +908,7 @@ router.get('/life-at-xaviers/:id', async (req, res) => {
             id: item.id.toString(),
             title: item.title,
             slug: item.slug,
+            description: item.description || '',
             status: item.status,
             meta_title: meta?.title || '',
             meta_description: meta?.description || '',
@@ -719,7 +920,16 @@ router.get('/life-at-xaviers/:id', async (req, res) => {
             galleryImages: (item.life_at_xavier_images || []).map(img => ({
                 id: img.id.toString(),
                 imageUrl: img.imageUrl,
+                image_order: (img as any).image_order ?? img.sortOrder ?? 0,
                 sortOrder: img.sortOrder
+            })),
+            socialPosts: (item.life_at_xavier_social_posts || []).map(p => ({
+                id: p.id.toString(),
+                platform: p.platform,
+                postUrl: p.post_url,
+                thumbnailUrl: p.thumbnail_url,
+                title: p.title || '',
+                sortOrder: p.sort_order
             }))
         };
 
@@ -736,15 +946,22 @@ router.post('/life-at-xaviers', imageUpload.fields([
     { name: 'galleryImages', maxCount: 50 }
 ]), async (req, res) => {
     try {
-        const { title, slug, status, meta_title, meta_description, meta_schema, thumbnailUrl, ogImageUrl, newGalleryImageUrls } = req.body;
+        const { title, slug, description, status, meta_title, meta_description, meta_schema, thumbnailUrl, ogImageUrl, newGalleryImageUrls, socialPosts } = req.body;
         const isStatusTrue = status === 'true' || status === true;
+
+        const maxOrder = await prisma.life_at_xaviers.aggregate({ _max: { display_order: true } });
+        const display_order = req.body.display_order !== undefined
+            ? parseInt(req.body.display_order, 10)
+            : (maxOrder._max.display_order ?? -1) + 1;
 
         // 1. Create main record
         const newItem = await prisma.life_at_xaviers.create({ 
             data: { 
                 title, 
                 slug, 
+                description: description || null,
                 status: isStatusTrue, 
+                display_order,
                 created_at: new Date(), 
                 updated_at: new Date() 
             } 
@@ -846,11 +1063,17 @@ router.post('/life-at-xaviers', imageUpload.fields([
         // 4. Handle multiple gallery images
         if (newGalleryImageUrls && Array.isArray(newGalleryImageUrls)) {
             for (let i = 0; i < newGalleryImageUrls.length; i++) {
-                await prisma.life_at_xavier_images.create({
+                const itemEntry = newGalleryImageUrls[i];
+                const url = typeof itemEntry === 'object' && itemEntry !== null ? (itemEntry.url || itemEntry.imageUrl) : itemEntry;
+                const orderNum = typeof itemEntry === 'object' && itemEntry !== null && (itemEntry.image_order !== undefined || itemEntry.sortOrder !== undefined)
+                    ? (itemEntry.image_order ?? itemEntry.sortOrder)
+                    : i;
+                await (prisma.life_at_xavier_images as any).create({
                     data: {
                         life_at_xavier_id: newItem.id,
-                        imageUrl: newGalleryImageUrls[i],
-                        sortOrder: i,
+                        imageUrl: url,
+                        sortOrder: orderNum,
+                        image_order: orderNum,
                         created_at: new Date(),
                         updated_at: new Date()
                     }
@@ -859,16 +1082,60 @@ router.post('/life-at-xaviers', imageUpload.fields([
         } else if (files?.galleryImages && files.galleryImages.length > 0) {
             for (let i = 0; i < files.galleryImages.length; i++) {
                 const galleryFile = files.galleryImages[i];
-                await prisma.life_at_xavier_images.create({
+                await (prisma.life_at_xavier_images as any).create({
                     data: {
                         life_at_xavier_id: newItem.id,
                         imageUrl: `/storage/${galleryFile.filename}`,
                         sortOrder: i,
+                        image_order: i,
                         created_at: new Date(),
                         updated_at: new Date()
                     }
                 });
             }
+        }
+
+        // 5. Handle social media post links
+        let parsedSocialPosts: any[] = [];
+        if (socialPosts) {
+            if (Array.isArray(socialPosts)) {
+                parsedSocialPosts = socialPosts;
+            } else if (typeof socialPosts === 'string') {
+                try { parsedSocialPosts = JSON.parse(socialPosts); } catch {}
+            }
+        }
+
+        for (let i = 0; i < parsedSocialPosts.length; i++) {
+            const post = parsedSocialPosts[i];
+            if (!post) continue;
+            const postUrl = (post.postUrl || post.post_url || '').trim();
+            if (!postUrl) continue;
+            const platform = post.platform || detectPlatform(postUrl);
+            let postThumbnail = post.thumbnailUrl || post.thumbnail_url || null;
+            let postTitle = post.title || null;
+
+            if (!postThumbnail) {
+                try {
+                    const meta = await fetchSocialMediaMetadata(postUrl);
+                    if (meta.thumbnailUrl) postThumbnail = meta.thumbnailUrl;
+                    if (!postTitle && meta.title) postTitle = meta.title;
+                } catch (err) {
+                    console.error('Error auto-fetching thumbnail on create:', err);
+                }
+            }
+
+            await prisma.life_at_xavier_social_posts.create({
+                data: {
+                    life_at_xavier_id: newItem.id,
+                    platform,
+                    post_url: postUrl,
+                    thumbnail_url: postThumbnail,
+                    title: postTitle,
+                    sort_order: post.sortOrder !== undefined ? parseInt(post.sortOrder, 10) : i,
+                    created_at: new Date(),
+                    updated_at: new Date()
+                }
+            });
         }
 
         res.json(serializeBigInt(newItem));
@@ -885,18 +1152,26 @@ router.put('/life-at-xaviers/:id', imageUpload.fields([
 ]), async (req, res) => {
     try {
         const id = BigInt(req.params.id as string);
-        const { title, slug, status, meta_title, meta_description, meta_schema, deletedGalleryImageIds, thumbnailUrl, ogImageUrl, newGalleryImageUrls } = req.body;
+        const { title, slug, description, status, meta_title, meta_description, meta_schema, deletedGalleryImageIds, thumbnailUrl, ogImageUrl, newGalleryImageUrls, socialPosts } = req.body;
         const isStatusTrue = status === 'true' || status === true;
+
+        const updateData: any = {
+            title,
+            slug,
+            status: isStatusTrue,
+            updated_at: new Date()
+        };
+        if (description !== undefined) {
+            updateData.description = description || null;
+        }
+        if (req.body.display_order !== undefined) {
+            updateData.display_order = parseInt(req.body.display_order, 10);
+        }
 
         // 1. Update main record
         const updatedItem = await prisma.life_at_xaviers.update({
             where: { id },
-            data: {
-                title,
-                slug,
-                status: isStatusTrue,
-                updated_at: new Date()
-            }
+            data: updateData
         });
 
         // 2. Update/Create metas
@@ -1084,38 +1359,124 @@ router.put('/life-at-xaviers/:id', imageUpload.fields([
             }
         }
 
-        // 5. Handle adding new gallery images
-        if (newGalleryImageUrls && Array.isArray(newGalleryImageUrls)) {
-            const lastImage = await prisma.life_at_xavier_images.findFirst({
-                where: { life_at_xavier_id: id },
-                orderBy: { sortOrder: 'desc' }
-            });
-            let nextSortOrder = (lastImage?.sortOrder ?? -1) + 1;
+        // 5. Handle reordering of existing gallery images
+        const galleryOrder = req.body.galleryOrder || req.body.existingGalleryOrder || req.body.orderedGalleryImages;
+        if (galleryOrder) {
+            let parsedOrder: any[] = [];
+            if (Array.isArray(galleryOrder)) {
+                parsedOrder = galleryOrder;
+            } else if (typeof galleryOrder === 'string') {
+                try { parsedOrder = JSON.parse(galleryOrder); } catch {}
+            }
 
-            for (const url of newGalleryImageUrls) {
-                await prisma.life_at_xavier_images.create({
+            for (let i = 0; i < parsedOrder.length; i++) {
+                const itemEntry = parsedOrder[i];
+                const imgId = typeof itemEntry === 'object' && itemEntry !== null ? itemEntry.id : itemEntry;
+                const orderNum = typeof itemEntry === 'object' && itemEntry !== null && (itemEntry.image_order !== undefined || itemEntry.sortOrder !== undefined)
+                    ? (itemEntry.image_order ?? itemEntry.sortOrder)
+                    : i;
+
+                if (imgId) {
+                    await (prisma.life_at_xavier_images as any).updateMany({
+                        where: { id: BigInt(imgId.toString()), life_at_xavier_id: id },
+                        data: {
+                            image_order: Number(orderNum),
+                            sortOrder: Number(orderNum),
+                            updated_at: new Date()
+                        }
+                    });
+                }
+            }
+        }
+
+        // 6. Handle adding new gallery images
+        if (newGalleryImageUrls && Array.isArray(newGalleryImageUrls)) {
+            const lastImage = await (prisma.life_at_xavier_images as any).findFirst({
+                where: { life_at_xavier_id: id },
+                orderBy: { image_order: 'desc' }
+            });
+            let nextSortOrder = (lastImage?.image_order ?? lastImage?.sortOrder ?? -1) + 1;
+
+            for (let i = 0; i < newGalleryImageUrls.length; i++) {
+                const itemEntry = newGalleryImageUrls[i];
+                const url = typeof itemEntry === 'object' && itemEntry !== null ? (itemEntry.url || itemEntry.imageUrl) : itemEntry;
+                const orderNum = typeof itemEntry === 'object' && itemEntry !== null && (itemEntry.image_order !== undefined || itemEntry.sortOrder !== undefined)
+                    ? (itemEntry.image_order ?? itemEntry.sortOrder)
+                    : nextSortOrder++;
+
+                await (prisma.life_at_xavier_images as any).create({
                     data: {
                         life_at_xavier_id: id,
                         imageUrl: url,
-                        sortOrder: nextSortOrder++,
+                        sortOrder: Number(orderNum),
+                        image_order: Number(orderNum),
                         created_at: new Date(),
                         updated_at: new Date()
                     }
                 });
             }
         } else if (files?.galleryImages && files.galleryImages.length > 0) {
-            const lastImage = await prisma.life_at_xavier_images.findFirst({
+            const lastImage = await (prisma.life_at_xavier_images as any).findFirst({
                 where: { life_at_xavier_id: id },
-                orderBy: { sortOrder: 'desc' }
+                orderBy: { image_order: 'desc' }
             });
-            let nextSortOrder = (lastImage?.sortOrder ?? -1) + 1;
+            let nextSortOrder = (lastImage?.image_order ?? lastImage?.sortOrder ?? -1) + 1;
 
             for (const file of files.galleryImages) {
-                await prisma.life_at_xavier_images.create({
+                await (prisma.life_at_xavier_images as any).create({
                     data: {
                         life_at_xavier_id: id,
                         imageUrl: `/storage/${file.filename}`,
-                        sortOrder: nextSortOrder++,
+                        sortOrder: nextSortOrder,
+                        image_order: nextSortOrder,
+                        created_at: new Date(),
+                        updated_at: new Date()
+                    }
+                });
+                nextSortOrder++;
+            }
+        }
+
+        // 6. Handle social media posts
+        if (socialPosts !== undefined) {
+            let parsedSocialPosts: any[] = [];
+            if (Array.isArray(socialPosts)) {
+                parsedSocialPosts = socialPosts;
+            } else if (typeof socialPosts === 'string') {
+                try { parsedSocialPosts = JSON.parse(socialPosts); } catch {}
+            }
+
+            await prisma.life_at_xavier_social_posts.deleteMany({
+                where: { life_at_xavier_id: id }
+            });
+
+            for (let i = 0; i < parsedSocialPosts.length; i++) {
+                const post = parsedSocialPosts[i];
+                if (!post) continue;
+                const postUrl = (post.postUrl || post.post_url || '').trim();
+                if (!postUrl) continue;
+                const platform = post.platform || detectPlatform(postUrl);
+                let postThumbnail = post.thumbnailUrl || post.thumbnail_url || null;
+                let postTitle = post.title || null;
+
+                if (!postThumbnail) {
+                    try {
+                        const meta = await fetchSocialMediaMetadata(postUrl);
+                        if (meta.thumbnailUrl) postThumbnail = meta.thumbnailUrl;
+                        if (!postTitle && meta.title) postTitle = meta.title;
+                    } catch (err) {
+                        console.error('Error auto-fetching thumbnail on update:', err);
+                    }
+                }
+
+                await prisma.life_at_xavier_social_posts.create({
+                    data: {
+                        life_at_xavier_id: id,
+                        platform,
+                        post_url: postUrl,
+                        thumbnail_url: postThumbnail,
+                        title: postTitle,
+                        sort_order: post.sortOrder !== undefined ? parseInt(post.sortOrder, 10) : i,
                         created_at: new Date(),
                         updated_at: new Date()
                     }
@@ -1126,6 +1487,40 @@ router.put('/life-at-xaviers/:id', imageUpload.fields([
         res.json(serializeBigInt(updatedItem));
     } catch (e) {
         console.error('Error updating life-at-xavier:', e);
+        res.status(500).json({ error: 'Server error' });
+    }
+});
+
+router.put('/life-at-xaviers/:id/reorder-images', async (req, res) => {
+    try {
+        const id = BigInt(req.params.id as string);
+        const { images } = req.body;
+        if (!Array.isArray(images)) {
+            return res.status(400).json({ error: 'images array is required' });
+        }
+
+        for (let i = 0; i < images.length; i++) {
+            const item = images[i];
+            const imgId = typeof item === 'object' && item !== null ? item.id : item;
+            const orderNum = typeof item === 'object' && item !== null && (item.image_order !== undefined || item.sortOrder !== undefined)
+                ? (item.image_order ?? item.sortOrder)
+                : i;
+
+            if (imgId) {
+                await (prisma.life_at_xavier_images as any).updateMany({
+                    where: { id: BigInt(imgId.toString()), life_at_xavier_id: id },
+                    data: {
+                        image_order: Number(orderNum),
+                        sortOrder: Number(orderNum),
+                        updated_at: new Date()
+                    }
+                });
+            }
+        }
+
+        res.json({ success: true, message: 'Gallery images reordered successfully' });
+    } catch (e) {
+        console.error('Error reordering gallery images:', e);
         res.status(500).json({ error: 'Server error' });
     }
 });
@@ -1151,7 +1546,12 @@ router.delete('/life-at-xaviers/:id', async (req, res) => {
             where: { life_at_xavier_id: id }
         });
 
-        // 2. Delete media (thumbnail, og_image) from disk and DB
+        // 2. Delete social posts
+        await prisma.life_at_xavier_social_posts.deleteMany({
+            where: { life_at_xavier_id: id }
+        });
+
+        // 3. Delete media (thumbnail, og_image) from disk and DB
         const mediaList = await prisma.media.findMany({
             where: {
                 model_type: 'App\\Models\\LifeAtXavier',
@@ -1173,7 +1573,7 @@ router.delete('/life-at-xaviers/:id', async (req, res) => {
             }
         });
 
-        // 3. Mark as deleted in life_at_xaviers
+        // 4. Mark as deleted in life_at_xaviers
         await prisma.life_at_xaviers.update({
             where: { id },
             data: { deleted_at: new Date() }

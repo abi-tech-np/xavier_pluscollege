@@ -12,9 +12,19 @@ import {
     Check, 
     AlertCircle, 
     ArrowLeft,
-    Layers
+    Layers,
+    Share2,
+    ExternalLink,
+    RefreshCw,
+    ChevronDown,
+    ChevronLeft,
+    ChevronRight,
+    Sparkles
 } from 'lucide-react';
 import { getApiUrl, getImageUrl } from '../../services/apiClient';
+import { useReorder } from '../../hooks/useReorder';
+import OrderControlCell from '../../components/admin/OrderControlCell';
+import { PlatformBadge } from '../../components/SocialPlatformIcon';
 
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 50MB
@@ -38,11 +48,15 @@ const ManageLifeAtXavier = () => {
     const [formData, setFormData] = useState({
         title: '',
         slug: '',
+        description: '',
         status: 'Publish', // 'Publish' or 'Draft'
         meta_title: '',
         meta_description: '',
         meta_schema: ''
     });
+
+    // Social Media Posts state
+    const [socialPosts, setSocialPosts] = useState([]);
 
     // Thumbnail state
     const [thumbnailFile, setThumbnailFile] = useState(null);
@@ -59,6 +73,8 @@ const ManageLifeAtXavier = () => {
     const [deletedGalleryImageIds, setDeletedGalleryImageIds] = useState([]);
     const [newGalleryFiles, setNewGalleryFiles] = useState([]); // [{ file, previewUrl, id }]
     const [isDraggingGallery, setIsDraggingGallery] = useState(false);
+    const [draggedExistingIdx, setDraggedExistingIdx] = useState(null);
+    const [draggedNewIdx, setDraggedNewIdx] = useState(null);
 
     const thumbnailInputRef = useRef(null);
     const ogImageInputRef = useRef(null);
@@ -86,15 +102,35 @@ const ManageLifeAtXavier = () => {
         }
     };
 
+    const {
+        draggedIndex,
+        dragOverIndex,
+        isReordering,
+        handleDragStart,
+        handleDragOver,
+        handleDrop,
+        handleDragEnd,
+        moveItem,
+        updateItemOrder
+    } = useReorder({
+        entity: 'life-at-xaviers',
+        items,
+        setItems,
+        onNotify: (text, type) => showNotification(text, type),
+        getAuthHeaders
+    });
+
     const resetForm = () => {
         setFormData({
             title: '',
             slug: '',
+            description: '',
             status: 'Publish',
             meta_title: '',
             meta_description: '',
             meta_schema: ''
         });
+        setSocialPosts([]);
         setThumbnailFile(null);
         if (thumbnailPreview?.startsWith('blob:')) URL.revokeObjectURL(thumbnailPreview);
         setThumbnailPreview(null);
@@ -131,11 +167,22 @@ const ManageLifeAtXavier = () => {
             setFormData({
                 title: data.title || '',
                 slug: data.slug || '',
+                description: data.description || '',
                 status: data.status ? 'Publish' : 'Draft',
                 meta_title: data.meta_title || '',
                 meta_description: data.meta_description || '',
                 meta_schema: data.meta_schema || ''
             });
+
+            setSocialPosts((data.socialPosts || []).map((p, idx) => ({
+                id: p.id || `sp-${Date.now()}-${idx}`,
+                platform: p.platform || 'instagram',
+                postUrl: p.postUrl || p.post_url || '',
+                thumbnailUrl: p.thumbnailUrl || p.thumbnail_url || null,
+                title: p.title || '',
+                isFetching: false,
+                fetchError: null
+            })));
 
             setExistingThumbnailUrl(data.thumbnailUrl || null);
             setExistingOgImageUrl(data.ogImageUrl || null);
@@ -155,6 +202,137 @@ const ManageLifeAtXavier = () => {
         } finally {
             setLoading(false);
         }
+    };
+
+    const detectClientPlatform = (urlStr) => {
+        try {
+            const parsed = new URL(urlStr.startsWith('http') ? urlStr : `https://${urlStr}`);
+            const host = parsed.hostname.toLowerCase();
+            if (host.includes('instagram.com') || host.includes('instagr.am')) return 'instagram';
+            if (host.includes('youtube.com') || host.includes('youtu.be')) return 'youtube';
+            if (host.includes('facebook.com') || host.includes('fb.watch') || host.includes('fb.com')) return 'facebook';
+            if (host.includes('twitter.com') || host.includes('x.com')) return 'twitter';
+            if (host.includes('tiktok.com')) return 'tiktok';
+            if (host.includes('linkedin.com')) return 'linkedin';
+            return 'other';
+        } catch {
+            return 'other';
+        }
+    };
+
+    const handleAddSocialPost = () => {
+        setSocialPosts(prev => [
+            ...prev,
+            {
+                id: `sp-${Date.now()}-${Math.random().toString(36).substr(2, 6)}`,
+                platform: 'instagram',
+                postUrl: '',
+                thumbnailUrl: null,
+                title: '',
+                isFetching: false,
+                fetchError: null
+            }
+        ]);
+    };
+
+    const handleRemoveSocialPost = (idToRemove) => {
+        setSocialPosts(prev => prev.filter(p => p.id !== idToRemove));
+    };
+
+    const handleSocialPostChange = (id, field, value) => {
+        setSocialPosts(prev => prev.map(p => {
+            if (p.id !== id) return p;
+            const updated = { ...p, [field]: value };
+            if (field === 'postUrl' && value.trim()) {
+                const detected = detectClientPlatform(value.trim());
+                if (detected !== 'other') {
+                    updated.platform = detected;
+                }
+            }
+            return updated;
+        }));
+    };
+
+    const handleMoveSocialPost = (index, direction) => {
+        const targetIndex = direction === 'up' ? index - 1 : index + 1;
+        if (targetIndex < 0 || targetIndex >= socialPosts.length) return;
+        const newPosts = [...socialPosts];
+        const [moved] = newPosts.splice(index, 1);
+        newPosts.splice(targetIndex, 0, moved);
+        setSocialPosts(newPosts);
+    };
+
+    const handleFetchSocialThumbnail = async (postId) => {
+        const post = socialPosts.find(p => p.id === postId);
+        if (!post || !post.postUrl.trim()) {
+            showNotification('Please enter a post URL first.', 'error');
+            return;
+        }
+
+        setSocialPosts(prev => prev.map(p => p.id === postId ? { ...p, isFetching: true, fetchError: null } : p));
+        try {
+            const res = await axios.post(
+                getApiUrl('/admin/fetch-social-preview'),
+                { url: post.postUrl.trim() },
+                getAuthHeaders()
+            );
+            const data = res.data;
+            if (data.success) {
+                setSocialPosts(prev => prev.map(p => {
+                    if (p.id !== postId) return p;
+                    return {
+                        ...p,
+                        platform: data.platform || p.platform,
+                        thumbnailUrl: data.thumbnailUrl || p.thumbnailUrl,
+                        title: p.title || data.title || '',
+                        isFetching: false,
+                        fetchError: data.thumbnailUrl ? null : 'Could not auto-fetch thumbnail (post may be private). You can upload a thumbnail below.'
+                    };
+                }));
+                if (data.thumbnailUrl) {
+                    showNotification('Post details and thumbnail fetched successfully!');
+                } else {
+                    showNotification('Platform detected, but no thumbnail was publicly accessible. Please upload one manually.', 'error');
+                }
+            } else {
+                setSocialPosts(prev => prev.map(p => p.id === postId ? { ...p, isFetching: false, fetchError: data.error || 'Failed to fetch preview' } : p));
+                showNotification(data.error || 'Failed to fetch preview', 'error');
+            }
+        } catch (err) {
+            console.error('Error fetching preview:', err);
+            setSocialPosts(prev => prev.map(p => p.id === postId ? { ...p, isFetching: false, fetchError: 'Unable to auto-fetch. Please upload thumbnail manually.' } : p));
+            showNotification('Failed to auto-fetch. You can upload a thumbnail manually.', 'error');
+        }
+    };
+
+    const handleUploadSocialThumbnail = async (postId, file) => {
+        const error = validateFile(file);
+        if (error) {
+            showNotification(error, 'error');
+            return;
+        }
+
+        try {
+            setSocialPosts(prev => prev.map(p => p.id === postId ? { ...p, isFetching: true } : p));
+            const imgFormData = new FormData();
+            imgFormData.append('image', file);
+            const res = await axios.post(
+                getApiUrl('/admin/upload-image'),
+                imgFormData,
+                getAuthHeaders()
+            );
+            const uploadedUrl = res.data.imageUrl;
+            setSocialPosts(prev => prev.map(p => p.id === postId ? { ...p, thumbnailUrl: uploadedUrl, isFetching: false, fetchError: null } : p));
+            showNotification('Thumbnail uploaded successfully!');
+        } catch (err) {
+            console.error('Failed to upload thumbnail:', err);
+            setSocialPosts(prev => prev.map(p => p.id === postId ? { ...p, isFetching: false } : p));
+            showNotification('Failed to upload thumbnail image.', 'error');
+        }
+    };
+
+    const handleRemoveSocialThumbnail = (postId) => {
+        setSocialPosts(prev => prev.map(p => p.id === postId ? { ...p, thumbnailUrl: null, fetchError: null } : p));
     };
 
     // Route-based opening
@@ -312,6 +490,62 @@ const ManageLifeAtXavier = () => {
         setDeletedGalleryImageIds(prev => [...prev, idToRemove]);
     };
 
+    const moveExistingGalleryImage = (fromIdx, direction) => {
+        const toIdx = direction === 'left' ? fromIdx - 1 : fromIdx + 1;
+        if (toIdx < 0 || toIdx >= existingGalleryImages.length) return;
+        setExistingGalleryImages(prev => {
+            const next = [...prev];
+            const [moved] = next.splice(fromIdx, 1);
+            next.splice(toIdx, 0, moved);
+            return next;
+        });
+    };
+
+    const moveNewGalleryFile = (fromIdx, direction) => {
+        const toIdx = direction === 'left' ? fromIdx - 1 : fromIdx + 1;
+        if (toIdx < 0 || toIdx >= newGalleryFiles.length) return;
+        setNewGalleryFiles(prev => {
+            const next = [...prev];
+            const [moved] = next.splice(fromIdx, 1);
+            next.splice(toIdx, 0, moved);
+            return next;
+        });
+    };
+
+    const handleExistingDragStart = (e, index) => {
+        setDraggedExistingIdx(index);
+        e.dataTransfer.effectAllowed = 'move';
+    };
+
+    const handleExistingDrop = (e, dropIdx) => {
+        e.preventDefault();
+        if (draggedExistingIdx === null || draggedExistingIdx === dropIdx) return;
+        setExistingGalleryImages(prev => {
+            const next = [...prev];
+            const [moved] = next.splice(draggedExistingIdx, 1);
+            next.splice(dropIdx, 0, moved);
+            return next;
+        });
+        setDraggedExistingIdx(null);
+    };
+
+    const handleNewFileDragStart = (e, index) => {
+        setDraggedNewIdx(index);
+        e.dataTransfer.effectAllowed = 'move';
+    };
+
+    const handleNewFileDrop = (e, dropIdx) => {
+        e.preventDefault();
+        if (draggedNewIdx === null || draggedNewIdx === dropIdx) return;
+        setNewGalleryFiles(prev => {
+            const next = [...prev];
+            const [moved] = next.splice(draggedNewIdx, 1);
+            next.splice(dropIdx, 0, moved);
+            return next;
+        });
+        setDraggedNewIdx(null);
+    };
+
     const handleStartCreate = () => {
         resetForm();
         navigate('/admin/life-at-xaviers/create');
@@ -331,6 +565,19 @@ const ManageLifeAtXavier = () => {
         if (!formData.title.trim()) {
             showNotification('Event title is required.', 'error');
             return;
+        }
+
+        // Validate social post URLs
+        for (const post of socialPosts) {
+            if (post.postUrl.trim()) {
+                try {
+                    const testUrl = post.postUrl.trim().startsWith('http') ? post.postUrl.trim() : `https://${post.postUrl.trim()}`;
+                    new URL(testUrl);
+                } catch {
+                    showNotification(`Invalid social post URL: "${post.postUrl}". Please enter a valid URL.`, 'error');
+                    return;
+                }
+            }
         }
 
         try {
@@ -360,22 +607,43 @@ const ManageLifeAtXavier = () => {
 
             let newGalleryImageUrls = [];
             if (newGalleryFiles.length > 0) {
-                for (const item of newGalleryFiles) {
+                for (let i = 0; i < newGalleryFiles.length; i++) {
+                    const item = newGalleryFiles[i];
                     const url = await uploadFile(item.file);
-                    newGalleryImageUrls.push(url);
+                    newGalleryImageUrls.push({
+                        url,
+                        image_order: existingGalleryImages.length + i,
+                        sortOrder: existingGalleryImages.length + i
+                    });
                 }
             }
+
+            const existingGalleryOrder = existingGalleryImages.map((img, idx) => ({
+                id: img.id,
+                image_order: idx,
+                sortOrder: idx
+            }));
 
             const payload = {
                 title: formData.title,
                 slug: formData.slug,
+                description: formData.description || '',
                 status: formData.status === 'Publish' ? 'true' : 'false',
                 meta_title: formData.meta_title || '',
                 meta_description: formData.meta_description || '',
                 meta_schema: formData.meta_schema || '',
                 thumbnailUrl,
                 ogImageUrl,
-                newGalleryImageUrls
+                newGalleryImageUrls,
+                existingGalleryOrder,
+                galleryOrder: existingGalleryOrder,
+                socialPosts: socialPosts.filter(p => p.postUrl.trim()).map((p, idx) => ({
+                    platform: p.platform,
+                    postUrl: p.postUrl.trim(),
+                    thumbnailUrl: p.thumbnailUrl,
+                    title: p.title || '',
+                    sortOrder: idx
+                }))
             };
 
             if (isEditing && currentId) {
@@ -528,6 +796,28 @@ const ManageLifeAtXavier = () => {
                                 </span>
                             </div>
 
+                            {/* Description Field */}
+                            <div style={{ marginBottom: '1.5rem' }}>
+                                <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: '#d4d4d8', marginBottom: '0.5rem' }}>
+                                    Description
+                                </label>
+                                <textarea 
+                                    name="description" 
+                                    value={formData.description} 
+                                    onChange={handleChange} 
+                                    rows="4"
+                                    placeholder="Write an engaging overview or highlights of this event/experience..."
+                                    style={{ 
+                                        width: '100%', padding: '0.625rem 0.75rem', borderRadius: '0.5rem', 
+                                        backgroundColor: '#27272a', border: '1px solid #3f3f46', color: '#fafafa', outline: 'none', 
+                                        resize: 'vertical', boxSizing: 'border-box', lineHeight: 1.5
+                                    }}
+                                />
+                                <span style={{ fontSize: '0.75rem', color: '#71717a', marginTop: '0.25rem', display: 'block' }}>
+                                    Displayed on the Life at Xavier cards and event showcase page.
+                                </span>
+                            </div>
+
                             {/* Thumbnail Image Section */}
                             <div style={{ marginBottom: '1.5rem' }}>
                                 <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '500', color: '#d4d4d8', marginBottom: '0.5rem' }}>
@@ -657,27 +947,56 @@ const ManageLifeAtXavier = () => {
                                 {/* Previews for Existing Gallery Images (In Edit Mode) */}
                                 {existingGalleryImages.length > 0 && (
                                     <div style={{ marginTop: '1.25rem' }}>
-                                        <span style={{ fontSize: '0.8rem', color: '#a1a1aa', fontWeight: '500', display: 'block', marginBottom: '0.5rem' }}>
-                                            Existing Gallery Images:
-                                        </span>
-                                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(110px, 1fr))', gap: '0.75rem' }}>
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                                            <span style={{ fontSize: '0.8rem', color: '#a1a1aa', fontWeight: '500' }}>
+                                                Existing Gallery Images (Drag or use arrows to rearrange order):
+                                            </span>
+                                            <span style={{ fontSize: '0.7rem', color: '#71717a' }}>
+                                                Order will be saved on submit
+                                            </span>
+                                        </div>
+                                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: '0.75rem' }}>
                                             {existingGalleryImages.map((img, idx) => (
                                                 <div 
                                                     key={img.id || idx} 
+                                                    draggable
+                                                    onDragStart={(e) => handleExistingDragStart(e, idx)}
+                                                    onDragOver={(e) => e.preventDefault()}
+                                                    onDrop={(e) => handleExistingDrop(e, idx)}
                                                     style={{
                                                         position: 'relative',
                                                         borderRadius: '0.375rem',
                                                         overflow: 'hidden',
-                                                        border: '1px solid #3f3f46',
+                                                        border: draggedExistingIdx === idx ? '2px dashed #fbbf24' : '1px solid #3f3f46',
                                                         backgroundColor: '#18181b',
-                                                        aspectRatio: '4/3'
+                                                        aspectRatio: '4/3',
+                                                        cursor: 'grab',
+                                                        transition: 'all 0.2s ease'
                                                     }}
                                                 >
                                                     <img 
                                                         src={getImageUrl(img.imageUrl)} 
                                                         alt={`Gallery ${idx + 1}`} 
-                                                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                                        style={{ width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none' }}
                                                     />
+                                                    {/* Order Badge */}
+                                                    <span style={{
+                                                        position: 'absolute',
+                                                        top: '4px',
+                                                        left: '4px',
+                                                        backgroundColor: 'rgba(2, 37, 111, 0.9)',
+                                                        color: '#ffffff',
+                                                        fontSize: '0.7rem',
+                                                        fontWeight: '700',
+                                                        padding: '2px 6px',
+                                                        borderRadius: '4px',
+                                                        backdropFilter: 'blur(4px)',
+                                                        zIndex: 2
+                                                    }}>
+                                                        #{idx + 1}
+                                                    </span>
+
+                                                    {/* Delete button */}
                                                     <button
                                                         type="button"
                                                         onClick={() => handleRemoveExistingGalleryImage(img.id)}
@@ -696,11 +1015,65 @@ const ManageLifeAtXavier = () => {
                                                             alignItems: 'center',
                                                             justifyContent: 'center',
                                                             cursor: 'pointer',
-                                                            boxShadow: '0 2px 4px rgba(0,0,0,0.5)'
+                                                            boxShadow: '0 2px 4px rgba(0,0,0,0.5)',
+                                                            zIndex: 2
                                                         }}
                                                     >
                                                         <X size={13} />
                                                     </button>
+
+                                                    {/* Bottom reorder bar */}
+                                                    <div style={{
+                                                        position: 'absolute',
+                                                        bottom: 0,
+                                                        left: 0,
+                                                        right: 0,
+                                                        display: 'flex',
+                                                        justifyContent: 'space-between',
+                                                        alignItems: 'center',
+                                                        padding: '3px 6px',
+                                                        backgroundColor: 'rgba(0, 0, 0, 0.75)',
+                                                        backdropFilter: 'blur(4px)',
+                                                        zIndex: 2
+                                                    }}>
+                                                        <button
+                                                            type="button"
+                                                            onClick={(e) => { e.stopPropagation(); moveExistingGalleryImage(idx, 'left'); }}
+                                                            disabled={idx === 0}
+                                                            title="Move earlier"
+                                                            style={{
+                                                                background: idx === 0 ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.2)',
+                                                                color: idx === 0 ? '#52525b' : '#ffffff',
+                                                                border: 'none',
+                                                                borderRadius: '3px',
+                                                                padding: '2px 4px',
+                                                                cursor: idx === 0 ? 'default' : 'pointer',
+                                                                display: 'flex',
+                                                                alignItems: 'center'
+                                                            }}
+                                                        >
+                                                            <ChevronLeft size={13} />
+                                                        </button>
+                                                        <span style={{ fontSize: '0.65rem', color: '#a1a1aa' }}>Order</span>
+                                                        <button
+                                                            type="button"
+                                                            onClick={(e) => { e.stopPropagation(); moveExistingGalleryImage(idx, 'right'); }}
+                                                            disabled={idx === existingGalleryImages.length - 1}
+                                                            title="Move later"
+                                                            style={{
+                                                                background: idx === existingGalleryImages.length - 1 ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.2)',
+                                                                color: idx === existingGalleryImages.length - 1 ? '#52525b' : '#ffffff',
+                                                                border: 'none',
+                                                                borderRadius: '3px',
+                                                                padding: '2px 4px',
+                                                                cursor: idx === existingGalleryImages.length - 1 ? 'default' : 'pointer',
+                                                                display: 'flex',
+                                                                alignItems: 'center'
+                                                            }}
+                                                        >
+                                                            <ChevronRight size={13} />
+                                                        </button>
+                                                    </div>
                                                 </div>
                                             ))}
                                         </div>
@@ -710,27 +1083,56 @@ const ManageLifeAtXavier = () => {
                                 {/* Previews for Newly Selected Gallery Images */}
                                 {newGalleryFiles.length > 0 && (
                                     <div style={{ marginTop: '1.25rem' }}>
-                                        <span style={{ fontSize: '0.8rem', color: '#fbbf24', fontWeight: '500', display: 'block', marginBottom: '0.5rem' }}>
-                                            New Images Ready to Upload ({newGalleryFiles.length}):
-                                        </span>
-                                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(110px, 1fr))', gap: '0.75rem' }}>
-                                            {newGalleryFiles.map((item) => (
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                                            <span style={{ fontSize: '0.8rem', color: '#fbbf24', fontWeight: '500' }}>
+                                                New Images Ready to Upload ({newGalleryFiles.length}) - Rearrange order:
+                                            </span>
+                                            <span style={{ fontSize: '0.7rem', color: '#71717a' }}>
+                                                Order will be preserved on upload
+                                            </span>
+                                        </div>
+                                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 1fr))', gap: '0.75rem' }}>
+                                            {newGalleryFiles.map((item, idx) => (
                                                 <div 
                                                     key={item.id} 
+                                                    draggable
+                                                    onDragStart={(e) => handleNewFileDragStart(e, idx)}
+                                                    onDragOver={(e) => e.preventDefault()}
+                                                    onDrop={(e) => handleNewFileDrop(e, idx)}
                                                     style={{
                                                         position: 'relative',
                                                         borderRadius: '0.375rem',
                                                         overflow: 'hidden',
-                                                        border: '1px solid #fbbf24',
+                                                        border: draggedNewIdx === idx ? '2px dashed #38bdf8' : '1px solid #fbbf24',
                                                         backgroundColor: '#18181b',
-                                                        aspectRatio: '4/3'
+                                                        aspectRatio: '4/3',
+                                                        cursor: 'grab',
+                                                        transition: 'all 0.2s ease'
                                                     }}
                                                 >
                                                     <img 
                                                         src={item.previewUrl} 
                                                         alt="New gallery preview" 
-                                                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                                        style={{ width: '100%', height: '100%', objectFit: 'cover', pointerEvents: 'none' }}
                                                     />
+                                                    {/* Order Badge */}
+                                                    <span style={{
+                                                        position: 'absolute',
+                                                        top: '4px',
+                                                        left: '4px',
+                                                        backgroundColor: 'rgba(251, 191, 36, 0.9)',
+                                                        color: '#000000',
+                                                        fontSize: '0.7rem',
+                                                        fontWeight: '700',
+                                                        padding: '2px 6px',
+                                                        borderRadius: '4px',
+                                                        backdropFilter: 'blur(4px)',
+                                                        zIndex: 2
+                                                    }}>
+                                                        #{existingGalleryImages.length + idx + 1}
+                                                    </span>
+
+                                                    {/* Remove Button */}
                                                     <button
                                                         type="button"
                                                         onClick={() => handleRemoveNewGalleryImage(item.id)}
@@ -748,26 +1150,64 @@ const ManageLifeAtXavier = () => {
                                                             display: 'flex',
                                                             alignItems: 'center',
                                                             justifyContent: 'center',
-                                                            cursor: 'pointer'
+                                                            cursor: 'pointer',
+                                                            zIndex: 2
                                                         }}
                                                     >
                                                         <X size={13} />
                                                     </button>
+
+                                                    {/* Bottom reorder bar */}
                                                     <div style={{
                                                         position: 'absolute',
                                                         bottom: 0,
                                                         left: 0,
                                                         right: 0,
-                                                        backgroundColor: 'rgba(0,0,0,0.7)',
-                                                        fontSize: '0.65rem',
-                                                        color: '#e4e4e7',
-                                                        padding: '2px 4px',
-                                                        textAlign: 'center',
-                                                        overflow: 'hidden',
-                                                        textOverflow: 'ellipsis',
-                                                        whiteSpace: 'nowrap'
+                                                        display: 'flex',
+                                                        justifyContent: 'space-between',
+                                                        alignItems: 'center',
+                                                        padding: '3px 6px',
+                                                        backgroundColor: 'rgba(0, 0, 0, 0.75)',
+                                                        backdropFilter: 'blur(4px)',
+                                                        zIndex: 2
                                                     }}>
-                                                        {(item.file.size / (1024 * 1024)).toFixed(1)}MB
+                                                        <button
+                                                            type="button"
+                                                            onClick={(e) => { e.stopPropagation(); moveNewGalleryFile(idx, 'left'); }}
+                                                            disabled={idx === 0}
+                                                            title="Move earlier"
+                                                            style={{
+                                                                background: idx === 0 ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.2)',
+                                                                color: idx === 0 ? '#52525b' : '#ffffff',
+                                                                border: 'none',
+                                                                borderRadius: '3px',
+                                                                padding: '2px 4px',
+                                                                cursor: idx === 0 ? 'default' : 'pointer',
+                                                                display: 'flex',
+                                                                alignItems: 'center'
+                                                            }}
+                                                        >
+                                                            <ChevronLeft size={13} />
+                                                        </button>
+                                                        <span style={{ fontSize: '0.65rem', color: '#fbbf24' }}>New #{idx + 1}</span>
+                                                        <button
+                                                            type="button"
+                                                            onClick={(e) => { e.stopPropagation(); moveNewGalleryFile(idx, 'right'); }}
+                                                            disabled={idx === newGalleryFiles.length - 1}
+                                                            title="Move later"
+                                                            style={{
+                                                                background: idx === newGalleryFiles.length - 1 ? 'rgba(255,255,255,0.05)' : 'rgba(255,255,255,0.2)',
+                                                                color: idx === newGalleryFiles.length - 1 ? '#52525b' : '#ffffff',
+                                                                border: 'none',
+                                                                borderRadius: '3px',
+                                                                padding: '2px 4px',
+                                                                cursor: idx === newGalleryFiles.length - 1 ? 'default' : 'pointer',
+                                                                display: 'flex',
+                                                                alignItems: 'center'
+                                                            }}
+                                                        >
+                                                            <ChevronRight size={13} />
+                                                        </button>
                                                     </div>
                                                 </div>
                                             ))}
@@ -775,6 +1215,396 @@ const ManageLifeAtXavier = () => {
                                     </div>
                                 )}
                             </div>
+                        </div>
+
+                        {/* Social Media Post Links Card */}
+                        <div style={{ backgroundColor: '#18181b', borderRadius: '0.75rem', border: '1px solid #27272a', padding: '1.5rem' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.75rem' }}>
+                                <div>
+                                    <h3 style={{ fontSize: '1rem', fontWeight: '600', color: '#fafafa', margin: 0, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                        <Share2 size={18} color="#fbbf24" /> Social Media Posts
+                                    </h3>
+                                    <p style={{ color: '#a1a1aa', fontSize: '0.75rem', margin: '0.25rem 0 0 0' }}>
+                                        Link Instagram, Facebook, YouTube, X/Twitter posts. Thumbnails will auto-fetch or can be manually uploaded.
+                                    </p>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={handleAddSocialPost}
+                                    style={{
+                                        backgroundColor: 'rgba(251, 191, 36, 0.15)',
+                                        border: '1px solid rgba(251, 191, 36, 0.3)',
+                                        color: '#fbbf24',
+                                        fontSize: '0.8rem',
+                                        fontWeight: '600',
+                                        padding: '0.45rem 0.85rem',
+                                        borderRadius: '0.375rem',
+                                        cursor: 'pointer',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '0.35rem',
+                                        transition: 'all 0.2s ease'
+                                    }}
+                                >
+                                    <Plus size={15} /> Add Social Link
+                                </button>
+                            </div>
+
+                            {socialPosts.length === 0 ? (
+                                <div style={{
+                                    border: '1px dashed #3f3f46',
+                                    borderRadius: '0.5rem',
+                                    padding: '2rem 1rem',
+                                    textAlign: 'center',
+                                    backgroundColor: '#27272a'
+                                }}>
+                                    <Share2 size={32} color="#71717a" style={{ margin: '0 auto 0.5rem' }} />
+                                    <p style={{ color: '#a1a1aa', fontSize: '0.875rem', margin: '0 0 0.25rem 0' }}>
+                                        No social media posts linked yet.
+                                    </p>
+                                    <span style={{ fontSize: '0.75rem', color: '#71717a', display: 'block', marginBottom: '1rem' }}>
+                                        Link your Instagram reels, YouTube videos, or Facebook posts to showcase them on this event page.
+                                    </span>
+                                    <button
+                                        type="button"
+                                        onClick={handleAddSocialPost}
+                                        style={{
+                                            backgroundColor: '#3f3f46',
+                                            color: '#fafafa',
+                                            fontSize: '0.8rem',
+                                            fontWeight: '500',
+                                            padding: '0.45rem 1rem',
+                                            borderRadius: '0.375rem',
+                                            border: 'none',
+                                            cursor: 'pointer',
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            gap: '0.4rem'
+                                        }}
+                                    >
+                                        <Plus size={14} /> Add First Social Post
+                                    </button>
+                                </div>
+                            ) : (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                                    {socialPosts.map((post, index) => {
+                                        return (
+                                            <div
+                                                key={post.id}
+                                                style={{
+                                                    backgroundColor: '#27272a',
+                                                    border: '1px solid #3f3f46',
+                                                    borderRadius: '0.5rem',
+                                                    padding: '1rem',
+                                                    display: 'flex',
+                                                    flexDirection: 'column',
+                                                    gap: '0.85rem'
+                                                }}
+                                            >
+                                                {/* Header row: Index, Move, Platform pill, and Delete */}
+                                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                        <span style={{ fontSize: '0.75rem', fontWeight: '700', color: '#a1a1aa' }}>
+                                                            #{index + 1}
+                                                        </span>
+                                                        <PlatformBadge platform={post.platform} />
+                                                        <div style={{ display: 'flex', gap: '0.2rem', marginLeft: '0.5rem' }}>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleMoveSocialPost(index, 'up')}
+                                                                disabled={index === 0}
+                                                                style={{
+                                                                    backgroundColor: 'transparent',
+                                                                    border: 'none',
+                                                                    color: index === 0 ? '#52525b' : '#a1a1aa',
+                                                                    cursor: index === 0 ? 'not-allowed' : 'pointer',
+                                                                    padding: '0.15rem'
+                                                                }}
+                                                                title="Move Up"
+                                                            >
+                                                                <ChevronUp size={16} />
+                                                            </button>
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleMoveSocialPost(index, 'down')}
+                                                                disabled={index === socialPosts.length - 1}
+                                                                style={{
+                                                                    backgroundColor: 'transparent',
+                                                                    border: 'none',
+                                                                    color: index === socialPosts.length - 1 ? '#52525b' : '#a1a1aa',
+                                                                    cursor: index === socialPosts.length - 1 ? 'not-allowed' : 'pointer',
+                                                                    padding: '0.15rem'
+                                                                }}
+                                                                title="Move Down"
+                                                            >
+                                                                <ChevronDown size={16} />
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleRemoveSocialPost(post.id)}
+                                                        style={{
+                                                            backgroundColor: 'rgba(239, 68, 68, 0.15)',
+                                                            color: '#ef4444',
+                                                            border: 'none',
+                                                            padding: '0.35rem 0.6rem',
+                                                            borderRadius: '0.375rem',
+                                                            cursor: 'pointer',
+                                                            fontSize: '0.75rem',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            gap: '0.3rem'
+                                                        }}
+                                                        title="Delete Post Link"
+                                                    >
+                                                        <Trash2 size={13} /> Remove
+                                                    </button>
+                                                </div>
+
+                                                {/* Post URL Input & Fetch Button */}
+                                                <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '0.5rem', alignItems: 'center' }}>
+                                                    <input
+                                                        type="url"
+                                                        value={post.postUrl}
+                                                        onChange={(e) => handleSocialPostChange(post.id, 'postUrl', e.target.value)}
+                                                        placeholder="Post URL e.g. https://www.instagram.com/p/... or https://youtu.be/..."
+                                                        style={{
+                                                            width: '100%',
+                                                            padding: '0.55rem 0.75rem',
+                                                            borderRadius: '0.375rem',
+                                                            backgroundColor: '#18181b',
+                                                            border: '1px solid #3f3f46',
+                                                            color: '#fafafa',
+                                                            fontSize: '0.85rem',
+                                                            outline: 'none',
+                                                            boxSizing: 'border-box'
+                                                        }}
+                                                    />
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => handleFetchSocialThumbnail(post.id)}
+                                                        disabled={post.isFetching || !post.postUrl.trim()}
+                                                        style={{
+                                                            backgroundColor: post.isFetching ? '#3f3f46' : '#fbbf24',
+                                                            color: '#000000',
+                                                            fontWeight: '600',
+                                                            fontSize: '0.75rem',
+                                                            padding: '0.55rem 0.85rem',
+                                                            borderRadius: '0.375rem',
+                                                            border: 'none',
+                                                            cursor: post.isFetching || !post.postUrl.trim() ? 'not-allowed' : 'pointer',
+                                                            display: 'flex',
+                                                            alignItems: 'center',
+                                                            gap: '0.35rem',
+                                                            whiteSpace: 'nowrap'
+                                                        }}
+                                                    >
+                                                        {post.isFetching ? (
+                                                            <>
+                                                                <RefreshCw size={13} className="spin" /> Fetching...
+                                                            </>
+                                                        ) : (
+                                                            <>
+                                                                <Sparkles size={13} /> Auto-Fetch
+                                                            </>
+                                                        )}
+                                                    </button>
+                                                </div>
+
+                                                {/* Meta fields row: Platform select and Title/Caption */}
+                                                <div style={{ display: 'grid', gridTemplateColumns: '140px 1fr', gap: '0.75rem' }}>
+                                                    <div>
+                                                        <label style={{ display: 'block', fontSize: '0.75rem', color: '#a1a1aa', marginBottom: '0.25rem' }}>
+                                                            Platform
+                                                        </label>
+                                                        <select
+                                                            value={post.platform}
+                                                            onChange={(e) => handleSocialPostChange(post.id, 'platform', e.target.value)}
+                                                            style={{
+                                                                width: '100%',
+                                                                padding: '0.5rem 0.6rem',
+                                                                borderRadius: '0.375rem',
+                                                                backgroundColor: '#18181b',
+                                                                border: '1px solid #3f3f46',
+                                                                color: '#fafafa',
+                                                                fontSize: '0.8rem',
+                                                                outline: 'none',
+                                                                boxSizing: 'border-box'
+                                                            }}
+                                                        >
+                                                            <option value="instagram">Instagram</option>
+                                                            <option value="youtube">YouTube</option>
+                                                            <option value="facebook">Facebook</option>
+                                                            <option value="twitter">X (Twitter)</option>
+                                                            <option value="tiktok">TikTok</option>
+                                                            <option value="linkedin">LinkedIn</option>
+                                                            <option value="other">Other Website</option>
+                                                        </select>
+                                                    </div>
+                                                    <div>
+                                                        <label style={{ display: 'block', fontSize: '0.75rem', color: '#a1a1aa', marginBottom: '0.25rem' }}>
+                                                            Title / Caption (Optional)
+                                                        </label>
+                                                        <input
+                                                            type="text"
+                                                            value={post.title}
+                                                            onChange={(e) => handleSocialPostChange(post.id, 'title', e.target.value)}
+                                                            placeholder="Short caption or highlight name"
+                                                            style={{
+                                                                width: '100%',
+                                                                padding: '0.5rem 0.75rem',
+                                                                borderRadius: '0.375rem',
+                                                                backgroundColor: '#18181b',
+                                                                border: '1px solid #3f3f46',
+                                                                color: '#fafafa',
+                                                                fontSize: '0.8rem',
+                                                                outline: 'none',
+                                                                boxSizing: 'border-box'
+                                                            }}
+                                                        />
+                                                    </div>
+                                                </div>
+
+                                                {/* Thumbnail preview & override row */}
+                                                <div style={{
+                                                    padding: '0.75rem',
+                                                    borderRadius: '0.375rem',
+                                                    backgroundColor: '#18181b',
+                                                    border: '1px solid #3f3f46',
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '1rem',
+                                                    flexWrap: 'wrap'
+                                                }}>
+                                                    {post.thumbnailUrl ? (
+                                                        <div style={{ position: 'relative', width: '100px', height: '65px', borderRadius: '0.375rem', overflow: 'hidden', flexShrink: 0, border: '1px solid #52525b' }}>
+                                                            <img
+                                                                src={getImageUrl(post.thumbnailUrl)}
+                                                                alt="Post thumbnail"
+                                                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                                                onError={(e) => {
+                                                                    e.currentTarget.onerror = null;
+                                                                    e.currentTarget.src = '/images/placeholder.jpg';
+                                                                }}
+                                                            />
+                                                            <div style={{ position: 'absolute', top: '3px', left: '3px' }}>
+                                                                <PlatformBadge platform={post.platform} showName={false} />
+                                                            </div>
+                                                        </div>
+                                                    ) : (
+                                                        <div style={{
+                                                            width: '100px',
+                                                            height: '65px',
+                                                            borderRadius: '0.375rem',
+                                                            border: '1px dashed #52525b',
+                                                            backgroundColor: '#27272a',
+                                                            display: 'flex',
+                                                            flexDirection: 'column',
+                                                            alignItems: 'center',
+                                                            justifyContent: 'center',
+                                                            flexShrink: 0
+                                                        }}>
+                                                            <ImageIcon size={18} color="#71717a" />
+                                                            <span style={{ fontSize: '0.65rem', color: '#71717a', marginTop: '2px' }}>No Thumbnail</span>
+                                                        </div>
+                                                    )}
+
+                                                    <div style={{ flex: 1, minWidth: '160px' }}>
+                                                        <div style={{ fontSize: '0.8rem', fontWeight: '500', color: post.thumbnailUrl ? '#22c55e' : '#fbbf24', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                                                            {post.thumbnailUrl ? (
+                                                                <>
+                                                                    <Check size={14} /> Thumbnail Ready
+                                                                </>
+                                                            ) : (
+                                                                <>
+                                                                    <AlertCircle size={14} /> Auto-fetch or upload thumbnail
+                                                                </>
+                                                            )}
+                                                        </div>
+                                                        <span style={{ fontSize: '0.72rem', color: '#a1a1aa', display: 'block', marginTop: '0.2rem' }}>
+                                                            {post.thumbnailUrl
+                                                                ? 'Saved for public card display. You can override it anytime.'
+                                                                : 'If auto-fetch cannot access the post, upload an image manually.'}
+                                                        </span>
+                                                        {post.fetchError && (
+                                                            <span style={{ fontSize: '0.72rem', color: '#f87171', display: 'block', marginTop: '0.2rem' }}>
+                                                                {post.fetchError}
+                                                            </span>
+                                                        )}
+                                                    </div>
+
+                                                    <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                                                        {/* Upload / Override File Picker */}
+                                                        <label style={{
+                                                            backgroundColor: '#3f3f46',
+                                                            color: '#fafafa',
+                                                            fontSize: '0.75rem',
+                                                            padding: '0.4rem 0.75rem',
+                                                            borderRadius: '0.375rem',
+                                                            cursor: 'pointer',
+                                                            display: 'inline-flex',
+                                                            alignItems: 'center',
+                                                            gap: '0.3rem',
+                                                            fontWeight: '500'
+                                                        }}>
+                                                            <UploadCloud size={13} />
+                                                            {post.thumbnailUrl ? 'Override Image' : 'Upload Thumbnail'}
+                                                            <input
+                                                                type="file"
+                                                                accept="image/jpeg,image/png,image/webp"
+                                                                style={{ display: 'none' }}
+                                                                onChange={(e) => {
+                                                                    if (e.target.files?.[0]) {
+                                                                        handleUploadSocialThumbnail(post.id, e.target.files[0]);
+                                                                    }
+                                                                }}
+                                                            />
+                                                        </label>
+
+                                                        {post.thumbnailUrl && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => handleRemoveSocialThumbnail(post.id)}
+                                                                style={{
+                                                                    backgroundColor: 'transparent',
+                                                                    border: '1px solid #52525b',
+                                                                    color: '#a1a1aa',
+                                                                    fontSize: '0.75rem',
+                                                                    padding: '0.35rem 0.65rem',
+                                                                    borderRadius: '0.375rem',
+                                                                    cursor: 'pointer'
+                                                                }}
+                                                            >
+                                                                Remove Image
+                                                            </button>
+                                                        )}
+
+                                                        {post.postUrl && (
+                                                            <a
+                                                                href={post.postUrl.startsWith('http') ? post.postUrl : `https://${post.postUrl}`}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                style={{
+                                                                    color: '#0ea5e9',
+                                                                    fontSize: '0.75rem',
+                                                                    display: 'inline-flex',
+                                                                    alignItems: 'center',
+                                                                    gap: '0.2rem',
+                                                                    textDecoration: 'none'
+                                                                }}
+                                                                title="Open post in new tab"
+                                                            >
+                                                                <ExternalLink size={12} /> Test Link
+                                                            </a>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
                         </div>
 
                         {/* Publishing Card */}
@@ -1050,20 +1880,55 @@ const ManageLifeAtXavier = () => {
                         <table className="admin-table" style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.9rem' }}>
                             <thead>
                                 <tr style={{ backgroundColor: '#18181b', borderBottom: '1px solid #27272a' }}>
-                                    <th style={{ padding: '1rem 1.5rem', color: '#fafafa' }}>Title</th>
+                                    <th style={{ padding: '1rem 1.5rem', color: '#fafafa', width: '110px' }}>Order</th>
+                                    <th style={{ padding: '1rem 1.5rem', color: '#fafafa' }}>Title & Description</th>
                                     <th style={{ padding: '1rem 1.5rem', color: '#fafafa' }}>Slug</th>
                                     <th style={{ padding: '1rem 1.5rem', color: '#fafafa' }}>Gallery</th>
+                                    <th style={{ padding: '1rem 1.5rem', color: '#fafafa' }}>Social Posts</th>
                                     <th style={{ padding: '1rem 1.5rem', color: '#fafafa' }}>Status</th>
                                     <th style={{ padding: '1rem 1.5rem', color: '#fafafa', textAlign: 'right' }}>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {items.map(item => {
+                                {items.map((item, index) => {
                                     const galleryCount = item.life_at_xavier_images?.length || 0;
+                                    const socialPostsCount = item.life_at_xavier_social_posts?.length || 0;
+                                    const isDragging = draggedIndex === index;
+                                    const isDragOver = dragOverIndex === index;
                                     return (
-                                        <tr key={item.id} style={{ borderBottom: '1px solid #27272a' }}>
+                                        <tr 
+                                            key={item.id} 
+                                            draggable={!isEditing}
+                                            onDragStart={(e) => handleDragStart(e, index)}
+                                            onDragOver={(e) => handleDragOver(e, index)}
+                                            onDrop={(e) => handleDrop(e, index)}
+                                            onDragEnd={handleDragEnd}
+                                            className={`row-draggable ${isDragging ? 'row-dragging' : ''} ${isDragOver ? 'row-drag-over' : ''}`}
+                                            style={{ borderBottom: '1px solid #27272a' }}
+                                        >
+                                            <OrderControlCell
+                                                index={index}
+                                                total={items.length}
+                                                disabled={isReordering}
+                                                onMoveUp={() => moveItem(index, 'up')}
+                                                onMoveDown={() => moveItem(index, 'down')}
+                                                onUpdateOrder={(num) => updateItemOrder(index, num)}
+                                            />
                                             <td data-label="Title" style={{ padding: '1rem 1.5rem', color: '#d4d4d8', fontWeight: '500' }}>
-                                                {item.title}
+                                                <div>{item.title}</div>
+                                                {item.description && (
+                                                    <div style={{
+                                                        fontSize: '0.75rem',
+                                                        color: '#a1a1aa',
+                                                        marginTop: '0.25rem',
+                                                        maxWidth: '320px',
+                                                        whiteSpace: 'nowrap',
+                                                        overflow: 'hidden',
+                                                        textOverflow: 'ellipsis'
+                                                    }}>
+                                                        {item.description}
+                                                    </div>
+                                                )}
                                             </td>
                                             <td data-label="Slug" style={{ padding: '1rem 1.5rem', color: '#a1a1aa', fontFamily: 'monospace', fontSize: '0.85rem' }}>
                                                 /{item.slug}
@@ -1082,6 +1947,35 @@ const ManageLifeAtXavier = () => {
                                                 }}>
                                                     <ImageIcon size={13} /> {galleryCount} {galleryCount === 1 ? 'image' : 'images'}
                                                 </span>
+                                            </td>
+                                            <td data-label="Social Posts" style={{ padding: '1rem 1.5rem', color: '#d4d4d8' }}>
+                                                {socialPostsCount > 0 ? (
+                                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
+                                                        <span style={{
+                                                            display: 'inline-flex',
+                                                            alignItems: 'center',
+                                                            gap: '0.35rem',
+                                                            backgroundColor: 'rgba(14, 165, 233, 0.1)',
+                                                            color: '#38bdf8',
+                                                            padding: '0.2rem 0.5rem',
+                                                            borderRadius: '0.25rem',
+                                                            fontSize: '0.75rem',
+                                                            fontWeight: '500'
+                                                        }}>
+                                                            <Share2 size={12} /> {socialPostsCount} {socialPostsCount === 1 ? 'post' : 'posts'}
+                                                        </span>
+                                                        {item.life_at_xavier_social_posts.slice(0, 3).map((sp, sIdx) => (
+                                                            <PlatformBadge key={sIdx} platform={sp.platform} showName={false} />
+                                                        ))}
+                                                        {item.life_at_xavier_social_posts.length > 3 && (
+                                                            <span style={{ fontSize: '0.7rem', color: '#a1a1aa' }}>
+                                                                +{item.life_at_xavier_social_posts.length - 3}
+                                                            </span>
+                                                        )}
+                                                    </div>
+                                                ) : (
+                                                    <span style={{ color: '#71717a', fontSize: '0.75rem' }}>—</span>
+                                                )}
                                             </td>
                                             <td data-label="Status" style={{ padding: '1rem 1.5rem' }}>
                                                 <span style={{ 
@@ -1161,7 +2055,7 @@ const ManageLifeAtXavier = () => {
                                 })}
                                 {items.length === 0 && (
                                     <tr>
-                                        <td colSpan="5" style={{ textAlign: 'center', padding: '3rem', color: '#a1a1aa' }}>
+                                        <td colSpan="6" style={{ textAlign: 'center', padding: '3rem', color: '#a1a1aa' }}>
                                             No Life At Xavier entries found. Click "New entry" to create one.
                                         </td>
                                     </tr>

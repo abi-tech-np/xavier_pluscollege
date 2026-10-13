@@ -26,6 +26,9 @@ const Banner = ({
                             width="100%"
                             mask="url(#cut-off-bottom)"
                             preserveAspectRatio="xMidYMid slice"
+                            onError={(e) => {
+                                e.currentTarget.setAttribute('href', '/images/banner/banner-bg.jpg');
+                            }}
                         />
 
                         <defs>

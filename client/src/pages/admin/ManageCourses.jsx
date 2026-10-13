@@ -3,6 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Trash2, Edit2, Check, AlertCircle, X } from 'lucide-react';
+import { useReorder } from '../../hooks/useReorder';
+import OrderControlCell from '../../components/admin/OrderControlCell';
 
 const ManageCourses = () => {
     const [courses, setCourses] = useState([]);
@@ -37,6 +39,24 @@ const ManageCourses = () => {
             setLoading(false);
         }
     };
+
+    const {
+        draggedIndex,
+        dragOverIndex,
+        isReordering,
+        handleDragStart,
+        handleDragOver,
+        handleDrop,
+        handleDragEnd,
+        moveItem,
+        updateItemOrder
+    } = useReorder({
+        entity: 'courses',
+        items: courses,
+        setItems: setCourses,
+        onNotify: (text, type) => showFeedback(text, type),
+        getAuthHeaders
+    });
 
     const loadCourseForEdit = async (id) => {
         try {
@@ -228,21 +248,38 @@ const ManageCourses = () => {
                         <table className="admin-table">
                             <thead>
                                 <tr>
+                                    <th style={{ width: '110px' }}>Order</th>
                                     <th style={{ width: '80px' }}>ID</th>
                                     <th>Course Name</th>
                                     <th style={{ width: '120px', textAlign: 'right' }}>Actions</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {courses.map(item => {
+                                {courses.map((item, index) => {
                                     const isRowActive = isEditing && String(currentId) === String(item.id);
+                                    const isDragging = draggedIndex === index;
+                                    const isDragOver = dragOverIndex === index;
                                     return (
                                         <tr 
                                             key={item.id}
+                                            draggable={!isEditing}
+                                            onDragStart={(e) => handleDragStart(e, index)}
+                                            onDragOver={(e) => handleDragOver(e, index)}
+                                            onDrop={(e) => handleDrop(e, index)}
+                                            onDragEnd={handleDragEnd}
+                                            className={`row-draggable ${isDragging ? 'row-dragging' : ''} ${isDragOver ? 'row-drag-over' : ''}`}
                                             style={{
                                                 backgroundColor: isRowActive ? 'rgba(251, 191, 36, 0.05)' : undefined
                                             }}
                                         >
+                                            <OrderControlCell
+                                                index={index}
+                                                total={courses.length}
+                                                disabled={isReordering}
+                                                onMoveUp={() => moveItem(index, 'up')}
+                                                onMoveDown={() => moveItem(index, 'down')}
+                                                onUpdateOrder={(num) => updateItemOrder(index, num)}
+                                            />
                                             <td data-label="ID" style={{ color: '#a1a1aa' }}>{item.id}</td>
                                             <td data-label="Course Name" style={{ color: '#fafafa', fontWeight: '500' }}>
                                                 {item.course}
@@ -280,7 +317,7 @@ const ManageCourses = () => {
                                     );
                                 })}
                                 {courses.length === 0 && (
-                                    <tr><td colSpan="3" style={{ textAlign: 'center', padding: '2rem', color: '#a1a1aa' }}>No courses found.</td></tr>
+                                    <tr><td colSpan="4" style={{ textAlign: 'center', padding: '2rem', color: '#a1a1aa' }}>No courses found.</td></tr>
                                 )}
                             </tbody>
                         </table>

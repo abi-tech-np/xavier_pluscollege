@@ -1,12 +1,20 @@
 import { getApiUrl, clearApiCache, getImageUrl } from '../../services/apiClient';
 import React, { useEffect, useState, useRef } from 'react';
 import axios from 'axios';
-import { UploadCloud, Image as ImageIcon, X, Trash2, Edit } from 'lucide-react';
+import { UploadCloud, Image as ImageIcon, X, Trash2, Edit, Check, AlertCircle } from 'lucide-react';
+import { useReorder } from '../../hooks/useReorder';
+import OrderControlCell from '../../components/admin/OrderControlCell';
 
 const ManageNews = () => {
     const [news, setNews] = useState([]);
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
+    const [feedback, setFeedback] = useState(null);
+
+    const showNotify = (text, type = 'success') => {
+        setFeedback({ text, type });
+        setTimeout(() => setFeedback(null), 4000);
+    };
     
     // Form state
     const [isEditing, setIsEditing] = useState(false);
@@ -38,6 +46,24 @@ const ManageNews = () => {
             setLoading(false);
         }
     };
+
+    const {
+        draggedIndex,
+        dragOverIndex,
+        isReordering,
+        handleDragStart,
+        handleDragOver,
+        handleDrop,
+        handleDragEnd,
+        moveItem,
+        updateItemOrder
+    } = useReorder({
+        entity: 'news',
+        items: news,
+        setItems: setNews,
+        onNotify: showNotify,
+        getAuthHeaders
+    });
 
     useEffect(() => {
         fetchNews();
@@ -157,8 +183,10 @@ const ManageNews = () => {
             handleCancel();
         } catch (error) {
             console.error('Error saving news:', error);
-            // Give a more specific message for WAF/CloudFront 403 blocks
-            if (error.response?.status === 403) {
+            const serverErrorMsg = error.response?.data?.error;
+            if (serverErrorMsg) {
+                alert(serverErrorMsg);
+            } else if (error.response?.status === 403) {
                 const contentType = error.response.headers?.['content-type'] || '';
                 if (!contentType.includes('application/json')) {
                     alert('Image upload was blocked by the server\'s security rules (WAF). Try using a smaller image or contact your administrator.');
@@ -300,6 +328,10 @@ const ManageNews = () => {
                                         src={previewUrl || resolveImageUrl(existingImageUrl)} 
                                         alt="Preview" 
                                         style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                        onError={(e) => {
+                                            e.currentTarget.onerror = null;
+                                            e.currentTarget.src = '/images/homepage/news/level_up.webp';
+                                        }}
                                     />
                                 </div>
                                 <div style={{ flex: 1 }}>
@@ -411,9 +443,33 @@ const ManageNews = () => {
                 </form>
             </div>
 
+            {/* Notification Banner */}
+            {feedback && (
+                <div style={{
+                    padding: '0.85rem 1.25rem',
+                    marginBottom: '1.5rem',
+                    borderRadius: '8px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.75rem',
+                    backgroundColor: feedback.type === 'error' ? 'rgba(239, 68, 68, 0.15)' : 'rgba(34, 197, 94, 0.15)',
+                    border: `1px solid ${feedback.type === 'error' ? 'rgba(239, 68, 68, 0.3)' : 'rgba(34, 197, 94, 0.3)'}`,
+                    color: feedback.type === 'error' ? '#fca5a5' : '#86efac',
+                    fontSize: '0.95rem'
+                }}>
+                    {feedback.type === 'error' ? <AlertCircle size={18} /> : <Check size={18} />}
+                    <span style={{ fontWeight: 500 }}>{feedback.text}</span>
+                </div>
+            )}
+
             <div className="admin-card">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                    <h3 style={{ margin: 0 }}>News & Events List</h3>
+                    <div>
+                        <h3 style={{ margin: 0 }}>News & Events List</h3>
+                        <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.8rem', color: 'var(--admin-text-muted)' }}>
+                            Drag items or use the arrows/priority number to customize the public display order.
+                        </p>
+                    </div>
                     <span style={{ fontSize: '0.85rem', color: 'var(--admin-text-muted)' }}>
                         {news.length} {news.length === 1 ? 'item' : 'items'}
                     </span>
@@ -425,6 +481,7 @@ const ManageNews = () => {
                         <table className="admin-table">
                             <thead>
                                 <tr>
+                                    <th style={{ width: '110px' }}>Order</th>
                                     <th style={{ width: '80px' }}>Image</th>
                                     <th>Title</th>
                                     <th>Slug</th>
@@ -434,10 +491,28 @@ const ManageNews = () => {
                                 </tr>
                             </thead>
                             <tbody>
-                                {news.map(item => {
+                                {news.map((item, index) => {
                                     const thumbSrc = resolveImageUrl(item.imageUrl);
+                                    const isDragging = draggedIndex === index;
+                                    const isDragOver = dragOverIndex === index;
                                     return (
-                                        <tr key={item.id}>
+                                        <tr 
+                                            key={item.id}
+                                            draggable={!isEditing}
+                                            onDragStart={(e) => handleDragStart(e, index)}
+                                            onDragOver={(e) => handleDragOver(e, index)}
+                                            onDrop={(e) => handleDrop(e, index)}
+                                            onDragEnd={handleDragEnd}
+                                            className={`row-draggable ${isDragging ? 'row-dragging' : ''} ${isDragOver ? 'row-drag-over' : ''}`}
+                                        >
+                                            <OrderControlCell
+                                                index={index}
+                                                total={news.length}
+                                                disabled={isReordering}
+                                                onMoveUp={() => moveItem(index, 'up')}
+                                                onMoveDown={() => moveItem(index, 'down')}
+                                                onUpdateOrder={(orderNum) => updateItemOrder(index, orderNum)}
+                                            />
                                             <td data-label="Image" style={{ verticalAlign: 'middle' }}>
                                                 {thumbSrc ? (
                                                     <div style={{
@@ -452,6 +527,10 @@ const ManageNews = () => {
                                                             src={thumbSrc} 
                                                             alt={item.title} 
                                                             style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                                            onError={(e) => {
+                                                                e.currentTarget.onerror = null;
+                                                                e.currentTarget.src = '/images/homepage/news/level_up.webp';
+                                                            }}
                                                         />
                                                     </div>
                                                 ) : (
@@ -511,7 +590,7 @@ const ManageNews = () => {
                                 })}
                                 {news.length === 0 && (
                                     <tr>
-                                        <td colSpan="6" style={{ textAlign: 'center', padding: '2.5rem', color: 'var(--admin-text-muted)' }}>
+                                        <td colSpan="7" style={{ textAlign: 'center', padding: '2.5rem', color: 'var(--admin-text-muted)' }}>
                                             No news items found. Create your first item above.
                                         </td>
                                     </tr>

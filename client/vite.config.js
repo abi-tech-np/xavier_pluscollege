@@ -13,6 +13,11 @@ export default defineConfig({
   ],
   server: {
     proxy: {
+      '/plus-api/storage': {
+        target: 'http://localhost:5000',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/plus-api/, ''),
+      },
       '/plus-api/api': {
         target: 'http://localhost:5000',
         changeOrigin: true,
@@ -23,6 +28,11 @@ export default defineConfig({
   preview: {
     port: 4173,
     proxy: {
+      '/plus-api/storage': {
+        target: 'http://localhost:5000',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/plus-api/, ''),
+      },
       '/plus-api/api': {
         target: 'http://localhost:5000',
         changeOrigin: true,

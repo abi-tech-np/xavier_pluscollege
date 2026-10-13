@@ -9,6 +9,9 @@ export const getImageUrl = (path) => {
   if (path.startsWith('http://') || path.startsWith('https://') || path.startsWith('data:') || path.startsWith('blob:') || path.startsWith('/images/')) {
     return path;
   }
+  if (BACKEND_URL && (path.startsWith(BACKEND_URL) || path.startsWith('/plus-api'))) {
+    return path;
+  }
   const cleanPath = path.startsWith('/') ? path : `/${path}`;
   return `${BACKEND_URL}${cleanPath}`;
 };
